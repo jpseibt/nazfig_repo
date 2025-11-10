@@ -309,14 +309,15 @@ bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 ## App/Scripts shortcuts
 bindsym $mod+b exec --no-startup-id /usr/bin/chromium
 bindsym $mod+e exec --no-startup-id /usr/bin/thunar
-bindsym $mod+slash exec --no-startup-id ~/.local/bin/vial
 bindsym $mod+m exec --no-startup-id /usr/bin/spotify
-bindsym $mod+c exec --no-startup-id ~/nazcripts/whatsapp-toggle.sh 
-bindsym $mod+g exec --no-startup-id ~/nazcripts/gemini-toggle.sh 
+bindsym $mod+c exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
+bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
+bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh pinta
+bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
 bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
-bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill 
+bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill
 bindsym $mod+p exec --no-startup-id clipmenu
 
 # Power Profiles menu switcher (rofi)
@@ -336,7 +337,7 @@ set $ws3 "3:³"
 set $ws4 "4:"
 set $ws5 "5"
 set $ws6 "6:⁶"
-set $ws7 "7"
+set $ws7 "7:⁷"
 set $ws8 "8:⁸"
 set $ws9 "9:⁹"
 set $ws10 "10:⁰"
@@ -351,6 +352,7 @@ workspace $ws1 output HDMI-A-0
 #workspace $ws4 output HDMI-0
 #workspace $ws5 output HDMI-0
 workspace $ws6 output eDP
+workspace $ws7 output HDMI-A-0
 workspace $ws8 output eDP
 workspace $ws9 output eDP
 workspace $ws10 output HDMI-A-0
@@ -359,20 +361,22 @@ workspace $ws10 output HDMI-A-0
 bindsym $mod+z move workspace to output left
 
 # bind program to workspace and focus to them on startup:
-assign [instance="gemini.google.com__app"] $ws8
 assign [instance="web.whatsapp.com"] $ws6
-assign [class="Spotify"] $ws9
+assign [instance="pinta"] $ws7
+assign [instance="gemini.google.com__app"] $ws8
 assign [class="Xfce4-terminal"] $ws1
-assign [class="(?i)firefox"] $ws2
 assign [class="Chromium"] $ws2
+assign [class="(?i)firefox"] $ws2
 assign [class="Google-chrome"] $ws2
 assign [class="Thunar"] $ws3
 assign [class="thunderbird"] $ws6
 assign [class="TelegramDesktop"] $ws6
+assign [class="Spotify"] $ws9
 assign [class="Vial"] $ws10
 
 # automatic set focus new window if it opens on another workspace than the current:
 for_window [class=Xfce4-terminal] focus
+for_window [instance="pinta"] focus
 for_window [instance="web.whatsapp.com"] focus
 for_window [class=Chromium] focus
 for_window [class=Google-chrome] focus
