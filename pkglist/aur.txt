@@ -1,0 +1,6 @@
+google-chrome
+pinta
+sct
+spotify
+vim-plug
+xkblayout-state-git
