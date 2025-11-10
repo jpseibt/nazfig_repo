@@ -1,0 +1,53 @@
+set nocompatible
+
+call plug#begin()
+Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
+call plug#end()
+
+colorscheme nightfly
+filetype plugin on
+
+set number            " Show line numbers
+set relativenumber    " Show relative line numbers for easier navigation
+set scrolloff=8       " Keep 8 lines of context around the cursor
+syntax enable
+set backspace=indent,eol,start
+set showcmd
+set showcmdloc=last   " Show commands on the last line
+set laststatus=2      " Always show statusline
+set statusline=%f\ %m%r\ %=%l,%c\ %p%%
+
+" --- Compiling ---
+" Default :make (C debug build)
+set makeprg=gcc\ -g\ -O0\ -Wall\ -Wextra\ -std=c11\ %\ -o\ %<
+
+" :MakeRelease (C final build)
+command MakeRelease set makeprg=gcc\ -O3\ -Wall\ -Wextra\ -std=c11\ %\ -o\ %<
+
+" :Makecpp (C++ debug build)
+command Makecpp set makeprg=g++\ -g\ -O0\ -Wall\ -Wextra\ -std=c++11\ %\ -o\ %<
+
+" :MakecppRelease (C++ final build)
+command MakecppRelease set makeprg=g++\ -O3\ -Wall\ -Wextra\ -std=c++11\ %\ -o\ %<
+
+" --- Searching ---
+set incsearch         " Incremental search
+set hlsearch          " Highlight search results
+set ignorecase        " Ignore case when searching
+set smartcase         " But respect case if the query contains uppercase letters
+
+" --- Indentation ---
+set expandtab         " Use spaces instead of tabs
+set tabstop=4         " Number of spaces a <Tab> counts for
+set shiftwidth=4      " Number of spaces to use for auto-indentation
+set softtabstop=4     " Number of spaces <Tab> inserts in edit mode
+set autoindent        " Copy indent from current line when starting a new one
+set smartindent       " Be smart about indentation
+set cindent           " Use C-style indentation" Show trailing whitespace.
+
+" Make whitespace chars visible
+set list
+set listchars=tab:▸\ ,trail:·
+
+" Highlight matching parenthesis.
+set showmatch
