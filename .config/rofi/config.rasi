@@ -1,0 +1,20 @@
+// @theme "~/.local/share/rofi/themes/arc_dark_transparent_colors.rasi"
+ configuration {
+    terminal: "xfce4-terminal";
+}
+
+//@theme "/home/naz/.local/share/rofi/themes/deep-purple.rasi"
+
+//@theme "/usr/share/rofi/themes/material.rasi"
+
+//@theme "/usr/share/rofi/themes/DarkBlue.rasi"
+
+//@theme "/usr/share/rofi/themes/Indego.rasi"
+
+//@theme "/home/naz/.local/share/rofi/themes/arc_dark_colors.rasi"
+
+//@theme "/home/naz/.local/share/rofi/themes/arc_dark_transparent_colors.rasi"
+
+//@theme "/usr/share/rofi/themes/android_notification.rasi"
+
+@theme "/home/naz/.local/share/rofi/themes/arc_dark_transparent_colors.rasi"
