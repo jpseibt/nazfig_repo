@@ -309,7 +309,7 @@ bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 ## App/Scripts shortcuts
 bindsym $mod+b exec --no-startup-id /usr/bin/chromium
 bindsym $mod+e exec --no-startup-id /usr/bin/thunar
-bindsym $mod+m exec --no-startup-id /usr/bin/spotify
+bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
 bindsym $mod+c exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh pinta

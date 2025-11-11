@@ -2,7 +2,7 @@
 
 if [ -z $1 ]; then
     echo "Usage: app-toggle.sh <application_nickname>"
-    echo "nicknames: gemini, pinta, vial, whatsapp"
+    echo "nicknames: gemini, pinta, spotify, vial, whatsapp"
     exit 1
 fi
 
@@ -29,6 +29,11 @@ case "$APP" in
         WMCTRL_PATTERN="Pinta"
         I3_PATTERN="pinta"
         LAUNCH_CMD="pinta"
+        ;;
+    spotify)
+        WMCTRL_PATTERN="Spotify"
+        I3_PATTERN="spotify"
+        LAUNCH_CMD="spotify"
         ;;
     *)
         echo "Error: Invalid application nickname: $APP"
