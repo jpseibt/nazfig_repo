@@ -10,6 +10,11 @@ fi
 APP=$1
 
 case "$APP" in
+    monkeytype)
+        WMCTRL_PATTERN="Monkeytype"
+        I3_PATTERN="monkeytype.com"
+        LAUNCH_CMD="chromium --app=https://monkeytype.com"
+        ;;
     gemini)
         WMCTRL_PATTERN="Google Gemini"
         I3_PATTERN="gemini.google.com__app"
