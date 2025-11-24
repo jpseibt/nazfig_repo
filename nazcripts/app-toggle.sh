@@ -1,43 +1,36 @@
 #!/bin/bash
 
-if [ -z $1 ]; then
-    echo "Usage: app-toggle.sh <application_nickname>"
-    echo "nicknames: gemini, pinta, spotify, vial, whatsapp"
-    exit 1
-fi
-
-# Since the instance names aren't consistent, the cases are separated
 APP=$1
 
+# Pattern matches the window WM_CLASS and i3 instance
 case "$APP" in
+    ""|-h|--help)
+        echo "Usage: app-toggle.sh <application_nickname>"
+        echo "nicknames: gemini, monkeytype, pinta, spotify, vial, whatsapp"
+        exit 0
+        ;;
     monkeytype)
-        WMCTRL_PATTERN="Monkeytype"
-        I3_PATTERN="monkeytype.com"
+        PATTERN="monkeytype.com"
         LAUNCH_CMD="chromium --app=https://monkeytype.com"
         ;;
     gemini)
-        WMCTRL_PATTERN="Google Gemini"
-        I3_PATTERN="gemini.google.com__app"
+        PATTERN="gemini.google.com__app"
         LAUNCH_CMD="chromium --app=https://gemini.google.com/app"
         ;;
     whatsapp)
-        WMCTRL_PATTERN="web.whatsapp.com"
-        I3_PATTERN="web.whatsapp.com"
+        PATTERN="web.whatsapp.com"
         LAUNCH_CMD="chromium --app=https://web.whatsapp.com"
         ;;
     vial)
-        WMCTRL_PATTERN="Vial"
-        I3_PATTERN="Vial"
+        PATTERN="Vial"
         LAUNCH_CMD="/home/naz/.local/bin/vial"
         ;;
     pinta)
-        WMCTRL_PATTERN="Pinta"
-        I3_PATTERN="pinta"
+        PATTERN="pinta"
         LAUNCH_CMD="pinta"
         ;;
     spotify)
-        WMCTRL_PATTERN="Spotify"
-        I3_PATTERN="spotify"
+        PATTERN="spotify"
         LAUNCH_CMD="spotify"
         ;;
     *)
@@ -46,8 +39,8 @@ case "$APP" in
 esac
 
 # Toggle logic
-if wmctrl -l | grep "$WMCTRL_PATTERN"; then
-    i3-msg "[instance=\"$I3_PATTERN\"] focus"
+if wmctrl -lx | grep -Eq "^[[:alnum:]]+[[:blank:]]+[[:digit:]]+[[:blank:]]+$PATTERN"; then
+    i3-msg "[instance=\"$PATTERN\"] focus"
 else
     $LAUNCH_CMD &
 fi
