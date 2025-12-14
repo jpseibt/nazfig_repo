@@ -6,8 +6,12 @@ APP=$1
 case "$APP" in
     ""|-h|--help)
         echo "Usage: app-toggle.sh <application_nickname>"
-        echo "nicknames: gemini, monkeytype, pinta, spotify, vial, whatsapp"
+        echo "nicknames: chromium, gemini, monkeytype, pinta, spotify, vial, whatsapp"
         exit 0
+        ;;
+    chromium)
+        PATTERN="chromium"
+        LAUNCH_CMD="chromium"
         ;;
     monkeytype)
         PATTERN="monkeytype.com"

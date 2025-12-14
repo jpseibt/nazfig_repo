@@ -307,7 +307,7 @@ bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 #set $screenshots_file_name date
 
 ## App/Scripts shortcuts
-bindsym $mod+b exec --no-startup-id /usr/bin/chromium
+bindsym $mod+b exec --no-startup-id ~/nazcripts/app-toggle.sh chromium
 bindsym $mod+e exec --no-startup-id /usr/bin/thunar
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
