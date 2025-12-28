@@ -9,7 +9,7 @@ filetype plugin on
 
 syntax enable
 set number            " Show line numbers
-set relativenumber    " Show relative line numbers
+set norelativenumber  " !Show relative line numbers
 set scrolloff=8       " Keep 8 lines of context around the cursor
 set backspace=indent,eol,start
 set showcmd
@@ -18,17 +18,26 @@ set laststatus=2      " Always show statusline
 set statusline=%f\ %m%r\ %=%l,%c\ %p%%
 
 " --- Compiling ---
+let s:c_compiler = "gcc"
+let s:cpp_compiler = "g++"
+let s:out_path = "%:p:h/bin/%:t:r"
+let s:c_flags = "-Wall -Wextra -std=c11"
+let s:cpp_flags = "-Wall -Wextra -std=c++11"
+
 " Default :make (C debug build)
-set makeprg=gcc\ -g\ -O0\ -Wall\ -Wextra\ -std=c11\ %\ -o\ %<
+command Make execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:c_compiler, s:c_flags, s:out_path)
 
 " :MakeRelease (C final build)
-command MakeRelease set makeprg=gcc\ -O3\ -Wall\ -Wextra\ -std=c11\ %\ -o\ %<
+command MakeRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:c_compiler, s:c_flags, s:out_path)
 
 " :Makecpp (C++ debug build)
-command Makecpp set makeprg=g++\ -g\ -O0\ -Wall\ -Wextra\ -std=c++11\ %\ -o\ %<
+command Makecpp execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " :MakecppRelease (C++ final build)
-command MakecppRelease set makeprg=g++\ -O3\ -Wall\ -Wextra\ -std=c++11\ %\ -o\ %<
+command MakecppRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
+
+autocmd FileType c Make
+autocmd FileType cpp Makecpp
 
 " --- Searching ---
 set incsearch         " Incremental search
@@ -39,9 +48,9 @@ set showmatch         " Highlight matching parenthesis.
 
 " --- Indentation ---
 set expandtab         " Use spaces instead of tabs
-set tabstop=4         " Number of spaces a <Tab> counts for
-set shiftwidth=4      " Number of spaces to use for auto-indentation
-set softtabstop=4     " Number of spaces <Tab> inserts in edit mode
+set tabstop=2         " Number of spaces a <Tab> counts for
+set shiftwidth=2      " Number of spaces to use for auto-indentation
+set softtabstop=2     " Number of spaces <Tab> inserts in edit mode
 set autoindent        " Copy indent from current line when starting a new one
 set cindent           " Use C-style indentation
 set smartindent
@@ -49,5 +58,3 @@ set smartindent
 " Make trailing whitespace chars visible
 set list
 set listchars=tab:▸\ ,trail:·
-
-
