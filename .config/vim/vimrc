@@ -46,6 +46,10 @@ set ignorecase        " Ignore case when searching
 set smartcase         " Respect case if the query contains uppercase letters
 set showmatch         " Highlight matching parenthesis.
 
+highlight Search cterm=bold ctermfg=Cyan
+highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold,reverse
+highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold,reverse
+
 " --- Indentation ---
 set expandtab         " Use spaces instead of tabs
 set tabstop=2         " Number of spaces a <Tab> counts for
@@ -58,3 +62,7 @@ set smartindent
 " Make trailing whitespace chars visible
 set list
 set listchars=tab:▸\ ,trail:·
+
+" Copy file/dir path under the cursor on Netrw -> 'Y'
+autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")
+command Cpath :let @+ = expand("%:p")
