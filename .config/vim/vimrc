@@ -7,6 +7,8 @@ call plug#end()
 colorscheme nightfly
 filetype plugin on
 
+autocmd FileType * set formatoptions-=cro " Disable comment leader insertion
+
 syntax enable
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
