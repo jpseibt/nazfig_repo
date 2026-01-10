@@ -6,8 +6,8 @@
   <property name="color-foreground" type="string" value="#d6deeb"/>
   <property name="color-background" type="string" value="#010016152727"/>
   <property name="color-cursor-foreground" type="string" value=""/>
-  <property name="color-cursor" type="string" value="#7e57c2"/>
-  <property name="color-cursor-use-default" type="bool" value="true"/>
+  <property name="color-cursor" type="string" value="#6262a0a0eaea"/>
+  <property name="color-cursor-use-default" type="bool" value="false"/>
   <property name="color-bold" type="string" value=""/>
   <property name="color-palette" type="string" value="rgb(1,22,39);rgb(239,83,80);rgb(34,218,110);rgb(173,219,103);rgb(130,170,255);rgb(199,146,234);rgb(33,199,168);rgb(255,255,255);rgb(87,86,86);rgb(239,83,80);rgb(34,218,110);rgb(255,235,149);rgb(130,170,255);rgb(199,146,234);rgb(127,219,202);rgb(255,255,255)"/>
   <property name="color-bold-is-bright" type="bool" value="true"/>

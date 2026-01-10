@@ -49,6 +49,7 @@ command MakecppRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:c
 autocmd FileType c Make
 autocmd FileType cpp Makecpp
 
+" `:redraw!` seems to be needed on my current linux terminal emulator
 function s:BuildAndDebug()
   execute 'w'
   execute 'silent make'
@@ -59,6 +60,7 @@ function s:BuildAndDebug()
       call system(printf("start raddbg.exe \"%s/bin/%s.exe\"", expand("%:p:h"), expand("%:t:r")))
       echo "==> Build Successful - RAD Debugger Launched <=="
     else
+      execute 'redraw!'
       echo "==> Build Successful <=="
     endif
   else
@@ -69,7 +71,7 @@ endfunction
 
 command Raddbg call s:BuildAndDebug()
 nnoremap <F10> :Raddbg<CR>
-nnoremap <F5> :w <bar> silent make <bar> cw<CR>
+nnoremap <F5> :w <bar> silent make <bar> redraw! <bar> cw<CR>
 
 
 " --- Searching ---
@@ -110,7 +112,14 @@ autocmd FileType * set formatoptions-=cro " Disable comment leader insertion
 autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>") " Copy file/dir path under the cursor on Netrw -> 'Y'
 command Cpath :let @+ = expand("%:p")
 
-nnoremap <leader>cpth :Cpath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
+nnoremap <leader>cpth :Cath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
+
+" --- Cursor ---
+if s:is_win == 0
+  let &t_SI = "\e[5 q" " Blinking bar for Insert mode
+  let &t_SR = "\e[3 q" " Blinking underline for Replace mode
+  let &t_EI = "\e[1 q" " Blinking block for Normal mode
+endif
