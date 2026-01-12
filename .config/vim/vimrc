@@ -18,7 +18,9 @@ set laststatus=2      " Always show statusline
 set statusline=%f\ %m%r\ %=%l,%c\ %p%%
 
 
-" --- Compiling & Debugging ---
+"==============================
+" Compiling & Debugging
+"==============================
 let s:is_win = has('win32') || has('win64')
 
 if s:is_win
@@ -34,16 +36,16 @@ endif
 let s:c_flags = "-Wall -Wextra -std=c99"
 let s:cpp_flags = "-Wall -Wextra -std=c++03"
 
-" Default :make (C debug build)
+" C debug build (default for .c)
 command Make execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:c_compiler, s:c_flags, s:out_path)
 
-" :MakeRelease (C final build)
+" C final build
 command MakeRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:c_compiler, s:c_flags, s:out_path)
 
-" :Makecpp (C++ debug build)
+" C++ debug build (default for .cpp)
 command Makecpp execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
-" :MakecppRelease (C++ final build)
+" C++ final build
 command MakecppRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 autocmd FileType c Make
@@ -60,8 +62,10 @@ function s:BuildAndDebug()
       call system(printf("start raddbg.exe \"%s/bin/%s.exe\"", expand("%:p:h"), expand("%:t:r")))
       echo "==> Build Successful - RAD Debugger Launched <=="
     else
+      let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
+      execute printf("tab term gdb %s %s/bin/%s", l:gdb_args, expand("%:p:h"), expand("%:t:r"))
       execute 'redraw!'
-      echo "==> Build Successful <=="
+      echo "==> Build Successful - GDB Launched <=="
     endif
   else
     execute 'cw'
@@ -73,8 +77,9 @@ command Raddbg call s:BuildAndDebug()
 nnoremap <F10> :Raddbg<CR>
 nnoremap <F5> :w <bar> silent make <bar> redraw! <bar> cw<CR>
 
-
-" --- Searching ---
+"==============================
+" Searching
+"==============================
 set incsearch         " Incremental search
 set hlsearch          " Highlight search results
 set ignorecase        " Ignore case when searching
@@ -86,7 +91,9 @@ highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold,revers
 highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold,reverse
 
 
-" --- Indentation ---
+"==============================
+" Indentation
+"==============================
 set expandtab         " Use spaces instead of tabs
 set tabstop=2         " Number of spaces a <Tab> counts for
 set shiftwidth=2      " Number of spaces to use for auto-indentation
@@ -100,7 +107,9 @@ set list
 set listchars=tab:▸\ ,trail:·
 
 
-" --- Misc & Netrw
+"==============================
+" Misc & Netrw
+"==============================
 if s:is_win
   set shellslash
 endif
@@ -112,12 +121,14 @@ autocmd FileType * set formatoptions-=cro " Disable comment leader insertion
 autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>") " Copy file/dir path under the cursor on Netrw -> 'Y'
 command Cpath :let @+ = expand("%:p")
 
-nnoremap <leader>cpth :Cath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
+nnoremap <leader>cpth :Cpath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
-" --- Cursor ---
+"==============================
+" Cursor 
+"==============================
 if s:is_win == 0
   let &t_SI = "\e[5 q" " Blinking bar for Insert mode
   let &t_SR = "\e[3 q" " Blinking underline for Replace mode
