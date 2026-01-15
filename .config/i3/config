@@ -422,6 +422,9 @@ for_window [class=TelegramDesktop] focus
 # autostart applications/services on login: #
 #############################################
 
+#typematic delay and rate customization
+exec --no-startup-id /usr/bin/xset r rate 200 60
+
 #get auth work with polkit-gnome
 exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 
