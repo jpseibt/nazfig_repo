@@ -48,6 +48,15 @@ command Makecpp execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:cpp_c
 " C++ final build
 command MakecppRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
+" C fsyntax-only
+command Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s %%'", s:c_compiler, s:c_flags)
+
+" C++ fsyntax-only
+command Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s %%'", s:cpp_compiler, s:cpp_flags)
+
+" Copy expanded makeprg to clipboard
+command Cpmakeprg :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+
 autocmd FileType c Make
 autocmd FileType cpp Makecpp
 
@@ -77,6 +86,7 @@ command Raddbg call s:BuildAndDebug()
 nnoremap <F10> :Raddbg<CR>
 nnoremap <F5> :w <bar> silent make <bar> redraw! <bar> cw<CR>
 
+
 "==============================
 " Searching
 "==============================
@@ -86,9 +96,9 @@ set ignorecase        " Ignore case when searching
 set smartcase         " Respect case if the query contains uppercase letters
 set showmatch         " Highlight matching parenthesis.
 
-highlight Search cterm=bold ctermfg=Cyan
-highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold,reverse
-highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold,reverse
+highlight Search cterm=bold ctermfg=Cyan gui=bold
+highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
+highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
 
 
 "==============================
@@ -126,8 +136,9 @@ nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
+
 "==============================
-" Cursor 
+" Cursor
 "==============================
 if s:is_win == 0
   let &t_SI = "\e[5 q" " Blinking bar for Insert mode
