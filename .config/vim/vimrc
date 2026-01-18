@@ -2,6 +2,7 @@ set nocompatible
 
 call plug#begin()
 Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
+Plug 'gcmt/taboo.vim'
 call plug#end()
 
 colorscheme nightfly "let s:black = '#010f20' on /vimfiles/plugged/nightfly/autoload/nightfly.vim
@@ -15,7 +16,7 @@ set backspace=indent,eol,start
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 set laststatus=2      " Always show statusline
-set statusline=%f\ %m%r\ %=%l,%c\ %p%%
+set statusline=%F\ %m%r\ %=%l,%c\ %p%%\|%L
 
 
 "==============================
@@ -126,6 +127,10 @@ endif
 
 let g:netrw_keepdir = 0
 let mapleader = ","
+
+" Taboo custom tab formatting
+let g:taboo_tab_format = '%U[%N] %F%m  '
+let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
 autocmd FileType * set formatoptions-=cro " Disable comment leader insertion
 autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>") " Copy file/dir path under the cursor on Netrw -> 'Y'
