@@ -11,12 +11,13 @@ filetype plugin on
 syntax enable
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
-set scrolloff=8       " Keep 8 lines of context around the cursor
+set scrolloff=0       " Keep no lines of context around the cursor
 set backspace=indent,eol,start
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 set laststatus=2      " Always show statusline
 set statusline=%F\ %m%r\ %=%l,%c\ %p%%\|%L
+set formatoptions-=c fo-=r fo-=o fo-=t" Disable comment leader insertion and automatic line breaks
 
 
 "==============================
@@ -55,8 +56,11 @@ command Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s %%'", s:
 " C++ fsyntax-only
 command Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s %%'", s:cpp_compiler, s:cpp_flags)
 
+" Copy makeprg to clipboard
+command Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+
 " Copy expanded makeprg to clipboard
-command Cpmakeprg :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+command Cpmake :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 autocmd FileType c Make
 autocmd FileType cpp Makecpp
@@ -132,15 +136,14 @@ let mapleader = ","
 let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
-autocmd FileType * set formatoptions-=cro " Disable comment leader insertion
 autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>") " Copy file/dir path under the cursor on Netrw -> 'Y'
 command Cpath :let @+ = expand("%:p")
 
 nnoremap <leader>cpth :Cpath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
+nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
-
 
 "==============================
 " Cursor
