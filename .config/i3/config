@@ -38,6 +38,23 @@ workspace_layout default
 # default term
 set $term xfce4-terminal
 
+####################
+# Quake-like term: #
+####################
+
+# using the $term on the var declaration breaks the command, idk why
+set $quake_term_cmd xfce4-terminal --class=quake_term --disable-server
+exec $quake_term_cmd
+
+for_window [class="quake_term"] floating enable, sticky enable,  resize set 1200 600, move scratchpad
+
+# `move position center` on the bindsym to center to the current active display
+bindsym $mod+grave [class="quake_term"] scratchpad show, move position center, border pixel 1
+
+# Launch shortcut in case the the quake_term is closed
+bindsym $mod+Ctrl+grave exec --no-startup-id $quake_term_cmd
+
+
 # i3 stacking layout:
 # Each window will be fullscreen and tabbed top to bottom.
 #workspace_layout stacking
@@ -52,6 +69,9 @@ set $term xfce4-terminal
 
 #border indicator on windows:
 new_window pixel 2
+for_window [tiling] border pixel 2
+for_window [floating] border normal 1
+set $floating_toggle_cmd floating toggle; [tiling] border pixel 2; [floating] border normal 1
 
 # thin borders
 # hide_edge_borders both
@@ -145,31 +165,6 @@ bindcode $mod+Shift+80   move container to workspace  $ws8
 bindcode $mod+Shift+81   move container to workspace  $ws9
 bindcode $mod+Shift+90   move container to workspace  $ws10
 
-# resize window (you can also use the mouse for that):
-mode "resize" {
-# These bindings trigger as soon as you enter the resize mode
-# Pressing left will shrink the window's width.
-# Pressing right will grow the window's width.
-# Pressing up will shrink the window's height.
-# Pressing down will grow the window's height.
-	set $resize_amount 5
-        bindsym h resize shrink width $resize_amount px or $resize_amount ppt
-        bindsym j resize grow height $resize_amount px or $resize_amount ppt
-        bindsym k resize shrink height $resize_amount px or $resize_amount ppt
-        bindsym l resize grow width $resize_amount px or $resize_amount ppt
-
-# same bindings, but for the arrow keys
-        bindsym Left resize shrink width $resize_amount px or $resize_amount ppt
-        bindsym Down resize grow height $resize_amount px or $resize_amount ppt
-        bindsym Up resize shrink height $resize_amount px or $resize_amount ppt
-        bindsym Right resize grow width $resize_amount px or $resize_amount ppt
-
-# back to normal: Enter or Escape
-        bindsym Return mode "default"
-        bindsym Escape mode "default"
-}
-
-bindsym $mod+Ctrl+r mode "resize"
 
 ######################################
 # keybindings for different actions: #
@@ -188,7 +183,7 @@ bindsym $mod+Escape exec --no-startup-id ~/.config/i3/scripts/powermenu
 # lock with a picture:
 #bindsym $mod+l exec --no-startup-id i3lock -i  ~/.config/i3/i3-lock-screen.png -p default|win -t
 # lock by blurring the screen:
-bindsym $mod+grave exec --no-startup-id ~/.config/i3/scripts/blur-lock
+bindsym $mod+Shift+Escape exec --no-startup-id ~/.config/i3/scripts/blur-lock
 # lock in case after sleep
 exec --no-startup-id xss-lock -l ~/.config/i3/scripts/blur-lock
 
@@ -221,6 +216,78 @@ bindsym XF86MonBrightnessDown exec --no-startup-id ~/.config/i3/scripts/volume_b
 #bindsym XF86MonBrightnessUp   exec --no-startup-id ~/.config/i3/scripts/volume_brightness2.sh screen_brightness_up
 #bindsym XF86MonBrightnessDown exec --no-startup-id ~/.config/i3/scripts/volume_brightness2.sh screen_brightness_down
 
+#######################
+# Resize & Move modes #
+#######################
+
+# resize window (you can also use the mouse for that):
+mode "resize" {
+# These bindings trigger as soon as you enter the resize mode
+# Pressing left will shrink the window's width.
+# Pressing right will grow the window's width.
+# Pressing up will shrink the window's height.
+# Pressing down will grow the window's height.
+	set $resize_amount 32
+	set $resize_small_amount 8
+        bindsym h resize shrink width $resize_amount px
+        bindsym j resize grow height $resize_amount px
+        bindsym k resize shrink height $resize_amount px
+        bindsym l resize grow width $resize_amount px
+
+        bindsym Left resize shrink width $resize_small_amount px
+        bindsym Down resize grow height $resize_small_amount px
+        bindsym Up resize shrink height $resize_small_amount px
+        bindsym Right resize grow width $resize_small_amount px
+
+# back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+        bindsym Ctrl+f $floating_toggle_cmd
+        bindsym m mode "move"
+        bindsym c resize set 50 ppt 50 ppt; move position center
+        bindsym w resize set width 100 ppt
+        bindsym f resize set 100 ppt 96 ppt; move position center
+}
+bindsym $mod+Ctrl+r mode "resize"
+
+# move window
+mode "move" {
+	set $move_amount 32
+	set $move_small_amount 8
+        bindsym h move left  $move_amount px
+        bindsym j move down  $move_amount px
+        bindsym k move up    $move_amount px
+        bindsym l move right $move_amount px
+
+        bindsym Left  move left  $move_small_amount px
+        bindsym Down  move down  $move_small_amount px
+        bindsym Up    move up    $move_small_amount px
+        bindsym Right move right $move_small_amount px
+
+# back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+        bindsym Ctrl+f $floating_toggle_cmd
+        bindsym r mode "resize"
+        bindsym c move position center
+        bindsym t move position 0 px 0 px
+
+        # move and follow focused container to workspace
+        bindsym 1 move container to workspace $ws1;  workspace $ws1
+        bindsym 2 move container to workspace $ws2;  workspace $ws2
+        bindsym 3 move container to workspace $ws3;  workspace $ws3
+        bindsym 4 move container to workspace $ws4;  workspace $ws4
+        bindsym 5 move container to workspace $ws5;  workspace $ws5
+        bindsym 6 move container to workspace $ws6;  workspace $ws6
+        bindsym 7 move container to workspace $ws7;  workspace $ws7
+        bindsym 8 move container to workspace $ws8;  workspace $ws8
+        bindsym 9 move container to workspace $ws9;  workspace $ws9
+        bindsym 0 move container to workspace $ws10; workspace $ws10
+}
+
+bindsym $mod+Ctrl+m mode "move"
+bindsym $mod+Shift+minus mode "move"
+
 # change focus
 bindsym $mod+h focus left
 bindsym $mod+j focus down
@@ -245,11 +312,11 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-# split in horizontal orientation
-bindsym $mod+s split h
+# split in horizontal orientation (Vim's vertical)
+bindsym $mod+v split h
 
-# split in vertical orientation
-bindsym $mod+v split v
+# split in vertical orientation (Vim's horizontal)
+bindsym $mod+s split v
 
 # enter fullscreen mode for the focused container
 bindsym $mod+f fullscreen toggle
@@ -259,11 +326,8 @@ bindsym $mod+y layout stacking
 bindsym $mod+i layout tabbed
 bindsym $mod+u layout toggle split
 
-# toggle tiling / floating
-bindsym $mod+Shift+space floating toggle
-
 # change focus between tiling / floating windows
-#bindsym $mod+space focus mode_toggle
+bindsym $mod+Ctrl+f focus mode_toggle
 
 # focus the parent container
 bindsym $mod+a focus parent
@@ -302,16 +366,13 @@ bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 # toggle between audio devices for output
 bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 
-#set $screenshots_path ~/Pictures/screenshots
-#set $screenshots_notify_msg "Screenshot saved to $screenshots_path/$(date +"%Y-%m-%d-%T")-screenshot.png"
-#set $screenshots_file_name date
 
 ## App/Scripts shortcuts
 bindsym $mod+b exec --no-startup-id ~/nazcripts/app-toggle.sh chromium
 bindsym $mod+e exec --no-startup-id /usr/bin/thunar
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
-bindsym $mod+c exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
+bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh pinta
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
