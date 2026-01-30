@@ -1,3 +1,4 @@
+bridge-utils
 google-chrome
 pinta
 sct

@@ -18,7 +18,6 @@ bash-completion
 bind
 bluez
 bluez-utils
-bridge-utils
 brightnessctl
 btop
 btrfs-progs
@@ -26,6 +25,7 @@ cantarell-fonts
 chromium
 clipmenu
 cryptsetup
+ctags
 device-mapper
 dex
 diffutils
@@ -58,6 +58,7 @@ eos-quickstart
 eos-rankmirrors
 eos-settings-i3wm
 ethtool
+ex-vi-compat
 exfatprogs
 f2fs-tools
 feh
@@ -65,6 +66,7 @@ ffmpegthumbnailer
 firefox
 firewalld
 galculator
+gdb
 git
 glances
 gnome-keyring
@@ -159,6 +161,7 @@ python-defusedxml
 python-packaging
 python-pyqt6
 qemu-full
+rclone
 rebuild-detector
 reflector
 reflector-simple
@@ -190,7 +193,6 @@ unzip
 upower
 usb_modeswitch
 usbutils
-vi
 virt-manager
 virt-viewer
 welcome

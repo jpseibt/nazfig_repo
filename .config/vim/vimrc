@@ -62,22 +62,24 @@ command Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the cl
 " Copy expanded makeprg to clipboard
 command Cpmake :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
-autocmd FileType c Make
-autocmd FileType cpp Makecpp
+autocmd FileType c Makefsyntax
+autocmd FileType cpp Makefsyntax
 
 " `:redraw!` seems to be needed on my current linux terminal emulator
 function s:BuildAndDebug()
+  let l:prg_path = expand("%:p:h") . "/bin/" . expand("%:t:r")
+
   execute 'w'
   execute 'silent make'
 
   if v:shell_error == 0
     " Lauch RAD Debugger on Windows
     if s:is_win
-      call system(printf("start raddbg.exe \"%s/bin/%s.exe\"", expand("%:p:h"), expand("%:t:r")))
+      call system(printf("start raddbg.exe \"%s.exe\"", l:prg_path))
       echo "==> Build Successful - RAD Debugger Launched <=="
     else
       let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
-      execute printf("tab term gdb %s %s/bin/%s", l:gdb_args, expand("%:p:h"), expand("%:t:r"))
+      call system(printf("xfce4-terminal --execute gdb %s %s", l:gdb_args, l:prg_path))
       execute 'redraw!'
       echo "==> Build Successful - GDB Launched <=="
     endif
