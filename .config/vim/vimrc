@@ -5,7 +5,7 @@ Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
 Plug 'gcmt/taboo.vim'
 call plug#end()
 
-colorscheme nightfly "let s:black = '#010f20' on /vimfiles/plugged/nightfly/autoload/nightfly.vim
+colorscheme nightfly "let s:black = '#000d1a' on /vimfiles/plugged/nightfly/autoload/nightfly.vim
 filetype plugin on
 
 syntax enable
@@ -70,7 +70,7 @@ function s:BuildAndDebug()
   let l:prg_path = expand("%:p:h") . "/bin/" . expand("%:t:r")
 
   execute 'w'
-  execute 'silent make'
+  execute 'silent make!'
 
   if v:shell_error == 0
     " Lauch RAD Debugger on Windows
@@ -89,9 +89,21 @@ function s:BuildAndDebug()
   endif
 endfunction
 
+function s:BuildAndCheck()
+  execute 'w'
+  execute 'silent make!'
+
+  " Check if the Quickfix Window have entries
+  if len(getqflist()) > 0
+    let @/ = "error"
+    execute 'cw'
+  endif
+endfunction
+
 command Raddbg call s:BuildAndDebug()
+command Build call s:BuildAndCheck()
 nnoremap <F10> :Raddbg<CR>
-nnoremap <F5> :w <bar> silent make <bar> redraw! <bar> cw<CR>
+nnoremap <F5> :Build<CR>
 
 
 "==============================
