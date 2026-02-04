@@ -4,7 +4,6 @@ call plug#begin()
 Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
 Plug 'gcmt/taboo.vim'
 call plug#end()
-
 colorscheme nightfly "let s:black = '#000d1a' on /vimfiles/plugged/nightfly/autoload/nightfly.vim
 filetype plugin on
 
@@ -92,6 +91,7 @@ endfunction
 function s:BuildAndCheck()
   execute 'w'
   execute 'silent make!'
+  execute 'redraw!'
 
   " Check if the Quickfix Window have entries
   if len(getqflist()) > 0
@@ -119,6 +119,8 @@ highlight Search cterm=bold ctermfg=Cyan gui=bold
 highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
 highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
 
+set tags+=tags;
+command Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
 
 "==============================
 " Indentation
