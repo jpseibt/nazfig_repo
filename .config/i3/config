@@ -395,7 +395,7 @@ set $ws1 "1:¹"
 #set $ws2 "2:"
 set $ws2 "2:²"
 set $ws3 "3:³"
-set $ws4 "4:"
+set $ws4 "4"
 set $ws5 "5"
 set $ws6 "6:⁶"
 set $ws7 "7:⁷"
@@ -423,6 +423,7 @@ bindsym $mod+z move workspace to output left
 
 # bind program to workspace and focus to them on startup:
 assign [instance="web.whatsapp.com"] $ws6
+assign [instance="Mail"] $ws6
 assign [instance="pinta"] $ws7
 assign [instance="gemini.google.com__app"] $ws8
 assign [instance="monkeytype"] $ws10
@@ -431,7 +432,6 @@ assign [class="Chromium"] $ws2
 assign [class="(?i)firefox"] $ws2
 assign [class="Google-chrome"] $ws2
 assign [class="Thunar"] $ws3
-assign [class="thunderbird"] $ws6
 assign [class="TelegramDesktop"] $ws6
 assign [class="Spotify"] $ws9
 assign [class="Vial"] $ws10
@@ -440,14 +440,13 @@ assign [class="Vial"] $ws10
 for_window [class=Xfce4-terminal] focus
 for_window [instance="pinta"] focus
 for_window [instance="web.whatsapp.com"] focus
+for_window [instance="Mail"] focus
 for_window [class=Chromium] focus
 for_window [class=Google-chrome] focus
 for_window [class=(?i)firefox] focus
 for_window [class=Thunar] focus
 for_window [class=Vial] focus
 for_window [class=Spotify] focus
-for_window [class=Thunderbird] focus
-for_window [class=TelegramDesktop] focus
 
 ##############
 # compositor #
@@ -642,7 +641,7 @@ bar {
 #           i3bar_command i3bar --transparency
 # it could be that you have no primary display set: set one (xrandr --output <output> --primary)
 # reference: https://i3wm.org/docs/userguide.html#_tray_output
-            #tray_output primary
+            tray_output primary
             tray_padding 0
 
 # When strip_workspace_numbers is set to yes,
