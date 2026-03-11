@@ -37,6 +37,10 @@ case "$APP" in
         PATTERN="spotify"
         LAUNCH_CMD="spotify"
         ;;
+    thunar)
+        PATTERN="thunar"
+        LAUNCH_CMD="thunar"
+        ;;
     *)
         echo "Error: Invalid application nickname: $APP"
         exit 1

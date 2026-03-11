@@ -11,7 +11,7 @@
   <property name="color-bold" type="string" value=""/>
   <property name="color-palette" type="string" value="rgb(1,22,39);rgb(239,83,80);rgb(34,218,110);rgb(173,219,103);rgb(130,170,255);rgb(199,146,234);rgb(33,199,168);rgb(255,255,255);rgb(87,86,86);rgb(239,83,80);rgb(34,218,110);rgb(255,235,149);rgb(130,170,255);rgb(199,146,234);rgb(127,219,202);rgb(255,255,255)"/>
   <property name="color-bold-is-bright" type="bool" value="true"/>
-  <property name="font-name" type="string" value="Monospace 10"/>
+  <property name="font-name" type="string" value="Liberation Mono 12"/>
   <property name="misc-always-show-tabs" type="bool" value="false"/>
   <property name="misc-bell" type="bool" value="false"/>
   <property name="misc-bell-urgent" type="bool" value="false"/>
@@ -43,12 +43,13 @@
   <property name="scrolling-lines" type="uint" value="50000"/>
   <property name="scrolling-unlimited" type="bool" value="true"/>
   <property name="tab-activity-color" type="string" value="#aa0000"/>
-  <property name="font-use-system" type="bool" value="true"/>
+  <property name="font-use-system" type="bool" value="false"/>
   <property name="color-background-vary" type="bool" value="false"/>
   <property name="color-use-theme" type="bool" value="false"/>
   <property name="color-selection" type="string" value=""/>
   <property name="color-selection-background" type="string" value=""/>
   <property name="color-selection-use-default" type="bool" value="true"/>
   <property name="color-bold-use-default" type="bool" value="true"/>
-  <property name="cell-height-scale" type="double" value="1"/>
+  <property name="cell-height-scale" type="double" value="1.2000000000000002"/>
+  <property name="cell-width-scale" type="double" value="1"/>
 </channel>
