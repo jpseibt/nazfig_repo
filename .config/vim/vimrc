@@ -4,6 +4,7 @@ call plug#begin()
 Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
 Plug 'gcmt/taboo.vim'
 call plug#end()
+
 colorscheme nightfly "let s:black = '#000d1a' on /vimfiles/plugged/nightfly/autoload/nightfly.vim
 filetype plugin on
 

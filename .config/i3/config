@@ -27,6 +27,7 @@ font pango: Noto Sans Regular 12
 
 # set the mod key to the winkey:
 set $mod Mod4
+set $alt Mod1
 
 #####################
 # workspace layout: #
@@ -46,7 +47,7 @@ set $term xfce4-terminal
 set $quake_term_cmd xfce4-terminal --class=quake_term --disable-server
 exec $quake_term_cmd
 
-for_window [class="quake_term"] floating enable, sticky enable,  resize set 1200 600, move scratchpad
+for_window [class="quake_term"] floating enable, sticky enable, resize set 1200 600, move scratchpad
 
 # `move position center` on the bindsym to center to the current active display
 bindsym $mod+grave [class="quake_term"] scratchpad show, move position center, border pixel 1
@@ -365,21 +366,23 @@ bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 # toggle between audio devices for output
 bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 
-
-## App/Scripts shortcuts
+##########################################
+# App/Scripts shortcuts
+##########################################
 bindsym $mod+b exec --no-startup-id ~/nazcripts/app-toggle.sh chromium
 bindsym $mod+e exec --no-startup-id ~/nazcripts/app-toggle.sh thunar
-bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
 bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh pinta
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
+bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
 bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
 bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill
 bindsym $mod+p exec --no-startup-id clipmenu
+bindsym $mod+n exec --no-startup-id gvim ~/naznotes.txt
 
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec --no-startup-id ~/.config/i3/scripts/power-profiles
