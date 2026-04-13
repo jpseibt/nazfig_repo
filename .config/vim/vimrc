@@ -28,33 +28,40 @@ let s:is_win = has('win32') || has('win64')
 if s:is_win
   let s:c_compiler = "clang"
   let s:cpp_compiler = "clang++"
-  let s:out_path = "%:p:h" . "/bin/" . "%:t:r" . ".exe"
 else
   let s:c_compiler = "gcc"
   let s:cpp_compiler = "g++"
-  let s:out_path = "%:p:h" . "/bin/" . "%:t:r"
 endif
 
-let s:c_flags = "-Wall -Wextra -std=c99"
-let s:cpp_flags = "-Wall -Wextra -std=c++03"
+" Base and warning flags
+let s:common_flags = "-Wall -Wextra -Wpedantic"
+let s:c_flags = s:common_flags . " -std=c99"
+let s:cpp_flags = s:common_flags . " -std=c++03"
+
+" Output program path
+let s:out_path = "%:p:h" . "/bin/" . "%:t:r" . (s:is_win ? ".exe" : "")
+
+"------------------------------
+" Commands
+"------------------------------
 
 " C debug build (default for .c)
-command Make execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:c_compiler, s:c_flags, s:out_path)
+command Make execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 
 " C final build
-command MakeRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:c_compiler, s:c_flags, s:out_path)
+command MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 
 " C++ debug build (default for .cpp)
-command Makecpp execute printf("let &makeprg = '%s -g -O0 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " C++ final build
-command MakecppRelease execute printf("let &makeprg = '%s -O3 %s %% -o %s'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " C fsyntax-only
-command Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s %%'", s:c_compiler, s:c_flags)
+command Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:c_compiler, s:c_flags)
 
 " C++ fsyntax-only
-command Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s %%'", s:cpp_compiler, s:cpp_flags)
+command Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:cpp_compiler, s:cpp_flags)
 
 " Copy makeprg to clipboard
 command Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
@@ -63,41 +70,61 @@ command Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the cl
 command Cpmake :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 autocmd FileType c Makefsyntax
-autocmd FileType cpp Makefsyntax
+autocmd FileType cpp Makecppfsyntax
 
 " `:redraw!` seems to be needed on my current linux terminal emulator
 function s:BuildAndDebug()
-  let l:prg_path = expand("%:p:h") . "/bin/" . expand("%:t:r")
+  " Create bin directory
+  let l:bin_dir = expand("%:p:h") . "/bin"
+  if !isdirectory(l:bin_dir)
+    call mkdir(l:bin_dir, "p")
+  endif
+
+  let l:prg_path = l:bin_dir . "/" . expand("%:t:r")
 
   execute 'w'
   execute 'silent make!'
 
   if v:shell_error == 0
-    " Lauch RAD Debugger on Windows
     if s:is_win
+      " Lauch RAD Debugger on Windows
       call system(printf("start raddbg.exe \"%s.exe\"", l:prg_path))
       echo "==> Build Successful - RAD Debugger Launched <=="
     else
+      " Launch GDB in a new terminal
       let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
-      call system(printf("xfce4-terminal --execute gdb %s %s", l:gdb_args, l:prg_path))
+      call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
       execute 'redraw!'
       echo "==> Build Successful - GDB Launched <=="
     endif
   else
+    echohl ErrorMsg | echo "==> Build Failed - Opening Quickfix <==" | echohl None
     execute 'cw'
-    echo "==> Build Failed - Opening Quickfix <=="
   endif
 endfunction
 
 function s:BuildAndCheck()
+ " Create bin directory
+  let l:bin_dir = expand("%:p:h") . "/bin"
+  if !isdirectory(l:bin_dir)
+    call mkdir(l:bin_dir, "p")
+  endif
+
   execute 'w'
   execute 'silent make!'
   execute 'redraw!'
 
-  " Check if the Quickfix Window have entries
-  if len(getqflist()) > 0
+  if v:shell_error != 0
     let @/ = "error"
     execute 'cw'
+    echohl ErrorMsg | echo "==> Build Failed - Opening Quickfix <==" | echohl None
+  else
+    " Check if the Quickfix Window have entries
+    if len(getqflist()) > 0
+      echohl WarningMsg | echo "==> Build Successful - Quickfix Filled <==" | echohl none
+    else
+      echo "==> Build Successful - No Warnings <=="
+    endif
   endif
 endfunction
 
