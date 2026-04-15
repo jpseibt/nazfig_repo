@@ -1,6 +1,6 @@
 set nocompatible
 
-call plug#begin()
+call plug#begin('~/vimfiles/plugged')
 Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
 Plug 'gcmt/taboo.vim'
 call plug#end()
@@ -16,8 +16,8 @@ set backspace=indent,eol,start
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 set laststatus=2      " Always show statusline
-set statusline=%F\ %m%r\ %=%l,%c\ %p%%\|%L
-set formatoptions-=c fo-=r fo-=o fo-=t" Disable comment leader insertion and automatic line breaks
+set statusline=%F\ %m%r\ %=%l:%c\ \|\ %L\ ↓%p%%
+set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
 
 "==============================
@@ -169,10 +169,6 @@ set listchars=tab:▸\ ,trail:·
 "==============================
 " Misc & Netrw
 "==============================
-if s:is_win
-  set shellslash
-endif
-
 let g:netrw_keepdir = 0
 let mapleader = ","
 
@@ -180,7 +176,8 @@ let mapleader = ","
 let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
-autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>") " Copy file/dir path under the cursor on Netrw -> 'Y'
+" Copy file/dir path under the cursor on Netrw -> 'Y'<CR>
+autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")
 command Cpath :let @+ = expand("%:p")
 
 nnoremap <leader>cpth :Cpath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
@@ -189,11 +186,65 @@ nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
+command Term tabnew | term
+
 "==============================
-" Cursor
+" Cursor & Background
 "==============================
 if s:is_win == 0
   let &t_SI = "\e[5 q" " Blinking bar for Insert mode
   let &t_SR = "\e[3 q" " Blinking underline for Replace mode
   let &t_EI = "\e[1 q" " Blinking block for Normal mode
+endif
+
+set cursorline
+
+let s:bg_colors = ['#171a22', '#101622', '#000d1a', '#171d2a']
+let s:bg_index = 0
+
+function s:CycleBackground(prev)
+  if a:prev
+    let s:bg_index = (s:bg_index - 1 + len(s:bg_colors)) % len(s:bg_colors)
+  else
+    let s:bg_index = (s:bg_index + 1) % len(s:bg_colors)
+  endif
+
+  let l:next_color = s:bg_colors[s:bg_index]
+
+  execute 'highlight Normal guibg=' . l:next_color
+endfunction
+
+command CycleBGNext call s:CycleBackground(0)
+command CycleBGPrev call s:CycleBackground(1)
+
+nnoremap <leader>bgn :CycleBGNext<CR>
+nnoremap <leader>bgN :CycleBGPrev<CR>
+
+
+"==============================
+" GUI & Neovide
+"==============================
+if exists("g:neovide")
+  set guifont=Liberation\ Mono:h12
+
+  set guicursor=n-v-c:block-Cursor,i-ci-ve:ver25-iCursor,r-cr:hor20-iCursor,o:hor50
+  highlight Cursor gui=NONE guifg=Red guibg=#00ff00
+  highlight iCursor gui=NONE guifg=Black guibg=#ff0000
+
+  " Initial scale
+  let g:neovide_scale_factor = 1.0
+
+  " Ctrl + = (Increase), Ctrl + - (Decrease)
+  nnoremap <C-=> :let g:neovide_scale_factor += 0.1<CR>
+  nnoremap <C--> :let g:neovide_scale_factor -= 0.1<CR>
+
+  " Reset scale with Control + 0
+  nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
+
+  "------------------------------
+  " Terminal
+  "------------------------------
+  tnoremap <Esc> <C-\><C-n>
+  cabbrev term split \| term
+
 endif
