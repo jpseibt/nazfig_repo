@@ -1,12 +1,12 @@
 set nocompatible
+filetype plugin on
 
 call plug#begin('~/vimfiles/plugged')
-Plug 'bluz71/vim-nightfly-colors', { 'as': 'nightfly' }
 Plug 'gcmt/taboo.vim'
 call plug#end()
 
-colorscheme nightfly "let s:black = '#000d1a' on /vimfiles/plugged/nightfly/autoload/nightfly.vim
-filetype plugin on
+set termguicolors
+colorscheme naz
 
 syntax enable
 set number            " Show line numbers
@@ -197,7 +197,8 @@ if s:is_win == 0
   let &t_EI = "\e[1 q" " Blinking block for Normal mode
 endif
 
-set cursorline
+autocmd InsertEnter * set cursorline
+autocmd InsertLeave * set nocursorline
 
 let s:bg_colors = ['#171a22', '#101622', '#000d1a', '#171d2a']
 let s:bg_index = 0
@@ -225,7 +226,8 @@ nnoremap <leader>bgN :CycleBGPrev<CR>
 " GUI & Neovide
 "==============================
 if exists("g:neovide")
-  set guifont=Liberation\ Mono:h12
+  "set guifont=Liberation\ Mono:h12
+  set guifont=Cousine:h12
 
   set guicursor=n-v-c:block-Cursor,i-ci-ve:ver25-iCursor,r-cr:hor20-iCursor,o:hor50
   highlight Cursor gui=NONE guifg=Red guibg=#00ff00
