@@ -16,13 +16,17 @@ set backspace=indent,eol,start
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 set laststatus=2      " Always show statusline
-set statusline=%F\ %m%r\ %=%l:%c\ \|\ %L\ ↓%p%%
+set statusline=%F\ %m%r\ %{QFStatusline()}\ %=%l:%c\ \|\ %L\ ↓%p%%
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
 
-"==============================
+"============================================================
 " Compiling & Debugging
-"==============================
+"============================================================
+
+"------------------------------
+" Compiler
+"
 let s:is_win = has('win32') || has('win64')
 
 if s:is_win
@@ -41,39 +45,97 @@ let s:cpp_flags = s:common_flags . " -std=c++03"
 " Output program path
 let s:out_path = "%:p:h" . "/bin/" . "%:t:r" . (s:is_win ? ".exe" : "")
 
+
 "------------------------------
 " Commands
-"------------------------------
-
+"
 " C debug build (default for .c)
-command Make execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 
 " C final build
-command MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+command! MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 
 " C++ debug build (default for .cpp)
-command Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command! Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " C++ final build
-command MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command! MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " C fsyntax-only
-command Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:c_compiler, s:c_flags)
+command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:c_compiler, s:c_flags)
 
 " C++ fsyntax-only
-command Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:cpp_compiler, s:cpp_flags)
+command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:cpp_compiler, s:cpp_flags)
 
 " Copy makeprg to clipboard
-command Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+command! Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 " Copy expanded makeprg to clipboard
-command Cpmake :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+command! Cpmake :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 autocmd FileType c Makefsyntax
 autocmd FileType cpp Makecppfsyntax
 
+
+"------------------------------
+" Quickfix List
+"
+" Prepend to &errorformat regex to parse 'type' correctly in Clang/GCC
+set errorformat^=%f:%l:%c:\ %t%*[^:]:\ %m
+
+let g:qf_entries = 0
+let g:qf_errors = 0
+let g:qf_warnings = 0
+
+function! s:QFListCount()
+  let l:qf_list = getqflist()
+
+  let l:entries = 0
+  let l:errors = 0
+  let l:warnings = 0
+
+  for l:item in l:qf_list
+    if l:item.valid
+      let l:entries += 1
+      if l:item.type ==# 'E'
+        let l:errors += 1
+      elseif l:item.type ==# 'W'
+        let l:warnings += 1
+      endif
+    endif
+  endfor
+
+  let g:qf_entries = l:entries
+  let g:qf_errors = l:errors
+  let g:qf_warnings = l:warnings
+
+  if g:qf_entries > 0
+    echom printf("[s:QFListCount] Entries: %d | Errors: %d | Warnings: %d", g:qf_entries, g:qf_errors, g:qf_warnings)
+  else
+    echom "[s:QFListCount] Quickfix list is empty"
+  endif
+endfunction
+
+function! QFStatusline()
+  if g:qf_entries < 1
+    return ""
+  endif
+  return printf("[E:%d|W:%d]", g:qf_errors, g:qf_warnings)
+endfunction
+
+augroup QFUpdate
+  autocmd!
+  autocmd QuickFixCmdPost [^l]* call s:QFListCount()
+augroup END
+
+command! Ccount call s:QFListCount()
+
+
+"------------------------------
+" Build
+"
 " `:redraw!` seems to be needed on my current linux terminal emulator
-function s:BuildAndDebug()
+function! s:BuildAndDebug()
   " Create bin directory
   let l:bin_dir = expand("%:p:h") . "/bin"
   if !isdirectory(l:bin_dir)
@@ -85,25 +147,28 @@ function s:BuildAndDebug()
   execute 'w'
   execute 'silent make!'
 
-  if v:shell_error == 0
+  if g:qf_errors < 1
     if s:is_win
       " Lauch RAD Debugger on Windows
       call system(printf("start raddbg.exe \"%s.exe\"", l:prg_path))
-      echo "==> Build Successful - RAD Debugger Launched <=="
+      echo "==> Build Successful (g:qf_entries:" . g:qf_entries . ") - RAD Debugger Launched <=="
+      if g:qf_entries < 1
+        execute 'cclose'
+      endif
     else
       " Launch GDB in a new terminal
       let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
       call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
+      echo "==> Build Successful (g:qf_entries:" . g:qf_entries . ") - GDB Launched <=="
       execute 'redraw!'
-      echo "==> Build Successful - GDB Launched <=="
     endif
   else
-    echohl ErrorMsg | echo "==> Build Failed - Opening Quickfix <==" | echohl None
+    echohl ErrorMsg | echo "==> Build Failed <==" | echohl None
     execute 'cw'
   endif
 endfunction
 
-function s:BuildAndCheck()
+function! s:BuildAndCheck()
  " Create bin directory
   let l:bin_dir = expand("%:p:h") . "/bin"
   if !isdirectory(l:bin_dir)
@@ -112,31 +177,32 @@ function s:BuildAndCheck()
 
   execute 'w'
   execute 'silent make!'
-  execute 'redraw!'
 
-  if v:shell_error != 0
+  if s:is_win != 0
+    execute 'redraw!'
+  endif
+
+  if g:qf_errors > 0
     let @/ = "error"
-    execute 'cw'
-    echohl ErrorMsg | echo "==> Build Failed - Opening Quickfix <==" | echohl None
+    execute 'copen'
+    echohl ErrorMsg | echo "==> Build Failed <==" | echohl None
+  elseif g:qf_warnings > 0
+    echo "==> Build finished with " . g:qf_entries . " issue(s) <=="
   else
-    " Check if the Quickfix Window have entries
-    if len(getqflist()) > 0
-      echohl WarningMsg | echo "==> Build Successful - Quickfix Filled <==" | echohl none
-    else
-      echo "==> Build Successful - No Warnings <=="
-    endif
+    echohl WarningMsg | echo "==> Build Successful <==" | echohl None
+    execute 'cclose'
   endif
 endfunction
 
-command Raddbg call s:BuildAndDebug()
-command Build call s:BuildAndCheck()
+command! Raddbg call s:BuildAndDebug()
+command! Build call s:BuildAndCheck()
 nnoremap <F10> :Raddbg<CR>
 nnoremap <F5> :Build<CR>
 
 
-"==============================
+"============================================================
 " Searching
-"==============================
+"============================================================
 set incsearch         " Incremental search
 set hlsearch          " Highlight search results
 set ignorecase        " Ignore case when searching
@@ -148,11 +214,11 @@ highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
 highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
 
 set tags+=tags;
-command Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
+command! Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
 
-"==============================
+"============================================================
 " Indentation
-"==============================
+"============================================================
 set expandtab         " Use spaces instead of tabs
 set tabstop=2         " Number of spaces a <Tab> counts for
 set shiftwidth=2      " Number of spaces to use for auto-indentation
@@ -166,9 +232,9 @@ set list
 set listchars=tab:▸\ ,trail:·
 
 
-"==============================
+"============================================================
 " Misc & Netrw
-"==============================
+"============================================================
 let g:netrw_keepdir = 0
 let mapleader = ","
 
@@ -177,8 +243,8 @@ let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
 " Copy file/dir path under the cursor on Netrw -> 'Y'<CR>
-autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")
-command Cpath :let @+ = expand("%:p")
+autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR>
+command! Cpath :let @+ = expand("%:p")
 
 nnoremap <leader>cpth :Cpath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
 nnoremap <leader>cop :copen<CR>
@@ -186,11 +252,11 @@ nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
-command Term tabnew | term
+command! Term tabnew | term
 
-"==============================
+"============================================================
 " Cursor & Background
-"==============================
+"============================================================
 if s:is_win == 0
   let &t_SI = "\e[5 q" " Blinking bar for Insert mode
   let &t_SR = "\e[3 q" " Blinking underline for Replace mode
@@ -200,10 +266,10 @@ endif
 autocmd InsertEnter * set cursorline
 autocmd InsertLeave * set nocursorline
 
-let s:bg_colors = ['#171a22', '#101622', '#000d1a', '#171d2a']
+let s:bg_colors = ['#101622', '#000d1a', '#171d2a', '#171a22']
 let s:bg_index = 0
 
-function s:CycleBackground(prev)
+function! s:CycleBackground(prev)
   if a:prev
     let s:bg_index = (s:bg_index - 1 + len(s:bg_colors)) % len(s:bg_colors)
   else
@@ -215,16 +281,16 @@ function s:CycleBackground(prev)
   execute 'highlight Normal guibg=' . l:next_color
 endfunction
 
-command CycleBGNext call s:CycleBackground(0)
-command CycleBGPrev call s:CycleBackground(1)
+command! CycleBGNext call s:CycleBackground(0)
+command! CycleBGPrev call s:CycleBackground(1)
 
 nnoremap <leader>bgn :CycleBGNext<CR>
 nnoremap <leader>bgN :CycleBGPrev<CR>
 
 
-"==============================
+"============================================================
 " GUI & Neovide
-"==============================
+"============================================================
 if exists("g:neovide")
   "set guifont=Liberation\ Mono:h12
   set guifont=Cousine:h12
@@ -245,7 +311,7 @@ if exists("g:neovide")
 
   "------------------------------
   " Terminal
-  "------------------------------
+  "
   tnoremap <Esc> <C-\><C-n>
   cabbrev term split \| term
 
