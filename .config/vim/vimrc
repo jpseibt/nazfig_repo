@@ -97,9 +97,9 @@ function! s:QFListCount()
   for l:item in l:qf_list
     if l:item.valid
       let l:entries += 1
-      if l:item.type ==# 'E'
+      if l:item.type ==? 'E'
         let l:errors += 1
-      elseif l:item.type ==# 'W'
+      elseif l:item.type ==? 'W'
         let l:warnings += 1
       endif
     endif
@@ -129,6 +129,7 @@ augroup QFUpdate
 augroup END
 
 command! Ccount call s:QFListCount()
+Ccount " Run it on every vimrc source
 
 
 "------------------------------
@@ -178,7 +179,7 @@ function! s:BuildAndCheck()
   execute 'w'
   execute 'silent make!'
 
-  if s:is_win != 0
+  if !s:is_win
     execute 'redraw!'
   endif
 

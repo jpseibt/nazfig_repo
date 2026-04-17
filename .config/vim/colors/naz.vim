@@ -12,29 +12,31 @@ let g:colors_name = 'naz'
 " Background: #101622  | Foreground:  #c3ccdc
 " Comments:   #7c8f8f  | Functions:   #0094ea
 " Strings:    #37b166  | Types:       #c77212
-" Statements: #db9e60  | Constants:   #18d05f
+" Statements: #db9e60  | Constants:   #90ee90
 " PreProc:    #ff5874  | Identifiers: #7fdbca
 " ====================================================================
 
 " --- Core UI Elements ---
-hi Normal       guibg=#101622 guifg=#c3ccdc
-hi LineNr       guibg=NONE    guifg=#4b6479
-hi CursorLine   guibg=#11324d guifg=NONE    gui=NONE cterm=NONE
-hi CursorLineNr guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE
-hi VertSplit    guibg=NONE    guifg=#252c3f gui=NONE cterm=NONE
-hi Visual       guibg=#1d3b53 guifg=NONE
-hi Search       guibg=#38507a guifg=#d6deeb gui=NONE cterm=NONE
-hi IncSearch    guibg=#ffcb8b guifg=#171a22 gui=NONE cterm=NONE
-hi Pmenu        guibg=#09243a guifg=#c3ccdc
-hi PmenuSel     guibg=#316394 guifg=#d6deeb
-hi StatusLine   guibg=#11324d guifg=#c3ccdc gui=NONE cterm=NONE
-hi StatusLineNC guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
-hi MatchParen   guibg=#171a22 guifg=#18d05f gui=underline cterm=underline
-hi ColorColumn  guibg=#2c3043 guifg=NONE
+hi Normal           guibg=#101622 guifg=#c3ccdc
+hi LineNr           guibg=NONE    guifg=#4b6479
+hi CursorLine       guibg=#11324d guifg=NONE    gui=NONE cterm=NONE
+hi CursorLineNr     guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE
+hi VertSplit        guibg=NONE    guifg=#252c3f gui=NONE cterm=NONE
+hi Visual           guibg=#1d3b53 guifg=NONE
+hi Search           guibg=#38507a guifg=#d6deeb gui=NONE cterm=NONE
+hi IncSearch        guibg=#ffcb8b guifg=#171a22 gui=NONE cterm=NONE
+hi Pmenu            guibg=#09243a guifg=#c3ccdc
+hi PmenuSel         guibg=#316394 guifg=#d6deeb
+hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold
+hi StatusLineNC     guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
+hi StatusLineTerm   guibg=#588c58 guifg=#90ee90 gui=bold cterm=bold
+hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
+hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
+hi ColorColumn      guibg=#2c3043 guifg=NONE
 
 " --- Standard Syntax (C) ---
 hi Comment      guifg=#7c8f8f gui=italic
-hi Constant     guifg=#18d05f            " Numbers
+hi Constant     guifg=#90ee90            " Numbers
 hi String       guifg=#37b166            " String literals
 hi Character    guifg=#ae81ff            " Char literals
 hi Identifier   guifg=#7fdbca            " Variables
@@ -58,19 +60,19 @@ hi cppStructure   guifg=#db9e60
 
 " --- QuickFix / Diagnostic ---
 hi ErrorMsg       guibg=NONE guifg=#cc514e gui=bold cterm=bold
-hi WarningMsg     guibg=NONE guifg=#18d05f gui=bold cterm=bold
+hi WarningMsg     guibg=NONE guifg=#90ee90 gui=bold cterm=bold
 hi QuickFixLine   guibg=#11324d guifg=NONE
 hi qfFileName     guifg=#c77212
 
 " --- netrw ---
 hi netrwDir       guifg=#0094ea gui=bold cterm=bold " Directories
 hi netrwClassify  guifg=#ff5874                     " Trailing symbols like / or *
-hi netrwExe       guifg=#37b166                     " Executable files
+hi netrwExe       guifg=#90ee90                     " Executable files
 hi netrwSymLink   guifg=#7fdbca                     " Symlinks
 hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters (|)
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
 
 " --- Tabs (Native & Taboo) ---
 hi TabLineFill  guibg=#252c3f guifg=NONE    gui=NONE cterm=NONE " The empty space behind tabs
-hi TabLine      guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE " Inactive tabs
+hi TabLine      guibg=#11324d guifg=#a1aab8 gui=NONE cterm=NONE " Inactive tabs
 hi TabLineSel   guibg=#11324d guifg=#0094ea gui=bold cterm=bold " The currently active tab
