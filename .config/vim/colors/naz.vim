@@ -35,7 +35,7 @@ hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 
 " --- Standard Syntax (C) ---
-hi Comment      guifg=#7c8f8f gui=italic
+hi Comment      guifg=#7c8f8f
 hi Constant     guifg=#90ee90            " Numbers
 hi String       guifg=#37b166            " String literals
 hi Character    guifg=#ae81ff            " Char literals
@@ -74,5 +74,24 @@ hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
 
 " --- Tabs (Native & Taboo) ---
 hi TabLineFill  guibg=#252c3f guifg=NONE    gui=NONE cterm=NONE " The empty space behind tabs
-hi TabLine      guibg=#11324d guifg=#a1aab8 gui=NONE cterm=NONE " Inactive tabs
-hi TabLineSel   guibg=#11324d guifg=#0094ea gui=bold cterm=bold " The currently active tab
+hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
+hi TabLineSel   guibg=#11324d guifg=#90ee90 gui=bold cterm=bold " The currently active tab
+
+" --- Terminal Colors (ANSI Palette) ---
+let g:terminal_color_0  = '#000000' " Black
+let g:terminal_color_1  = '#e06c75' " Red
+let g:terminal_color_2  = '#98c379' " Green
+let g:terminal_color_3  = '#c77212' " Yellow
+let g:terminal_color_4  = '#0094ea' " Blue
+let g:terminal_color_5  = '#c678dd' " Magenta
+let g:terminal_color_6  = '#56b6c2' " Cyan
+let g:terminal_color_7  = '#c3ccdc' " White
+
+let g:terminal_color_8  = '#222222' " Bright Black
+let g:terminal_color_9  = '#ff5874' " Bright Red
+let g:terminal_color_10 = '#90ee90' " Bright Green
+let g:terminal_color_11 = '#ffcb8b' " Bright Yellow
+let g:terminal_color_12 = '#51afef' " Bright Blue
+let g:terminal_color_13 = '#d670d6' " Bright Magenta
+let g:terminal_color_14 = '#46ddff' " Bright Cyan
+let g:terminal_color_15 = '#eeeeee' " Bright White

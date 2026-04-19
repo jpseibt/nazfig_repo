@@ -19,6 +19,103 @@ set laststatus=2      " Always show statusline
 set statusline=%F\ %m%r\ %{QFStatusline()}\ %=%l:%c\ \|\ %L\ ↓%p%%
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
+"============================================================
+" Terminal
+"============================================================
+tnoremap <Esc> <C-\><C-n>
+
+"------------------------------
+" Global terminal buffer
+"
+let s:germinal_name = "GERMINAL"
+let s:germinal_bufnr = bufnr(s:germinal_name)
+
+" The mode arg is used to change the way to invoke the germinal (should only be one instance).
+" A function call will have different behaviors based on the fact that:
+"     A. (modes [0-3]) The germinal buf is `UNLISTED` (does not exist, buffer not created)
+"     B. (modes [0-3]) The germinal buf is `IN_VIEW`  (open on any window in the active tab);
+"     C. (mode 3)      The germinal buf is `IN_A_TAB` (open on any tab).
+"
+" `a:modes`:
+"     0:
+"       A.`UNLISTED`-> create and open a germinal buf on the active window;
+"       B.`IN_VIEW` -> jump the cursor to the germinal buf.
+"     1:
+"       A.`UNLISTED`-> do a horizontal split on the active window, and create and open a germinal buf;
+"       B.`IN_VIEW` -> hide/close the germinal buf window, do a horizontal split on the active window,
+"                      and open a germinal buf;
+"     2:
+"       A.`UNLISTED`-> same as mode 1, but doing a vertical split
+"       B.`IN_VIEW` -> same as mode 1, but doing a vertical split
+"     3:
+"       A.`UNLISTED`-> create a new tab, and create and open a germinal buf;
+"       B.`IN_VIEW` -> hide/close the germinal buf window, and (C)... ;
+"       C.`IN_A_TAB`-> activate the first tab that has a germinal buf open, else create a new tab, and
+"                      open the germinal buf.
+function! GlobalTerminal(mode)
+  let s:germinal_bufnr = bufnr(s:germinal_name)
+
+  if s:germinal_bufnr == -1
+    echom "[GlobalTerminal] New terminal buffer assigned to " . s:germinal_name
+
+    if a:mode == 1
+      execute 'horizontal split'
+    elseif a:mode == 2
+      execute 'vertical split'
+    elseif a:mode == 3
+      execute 'tabnew'
+    endif
+
+    execute 'terminal'
+    execute 'file ' . s:germinal_name
+  else
+    echom "[GlobalTerminal] Using " . s:germinal_name
+
+    " Check if the buf is visible and will split
+    let l:winnr = bufwinnr(s:germinal_bufnr)
+    if l:winnr != -1
+      " Is in view
+      if a:mode == 0
+        execute l:winnr . 'wincmd w'
+        return
+      else
+        execute l:winnr . 'hide'
+      endif
+    endif
+
+    if a:mode == 3
+      " Loop through the tabs checking if there's one germinal buf open
+      let l:first_tabpagenr_with_germinal = -1
+      for i in range(tabpagenr('$'))
+        if index(tabpagebuflist(i + 1), s:germinal_bufnr) != -1
+          let l:first_tabpagenr_with_germinal = i + 1
+          break
+        endif
+      endfor
+
+      if l:first_tabpagenr_with_germinal > 0
+        execute 'tabnext ' . l:first_tabpagenr_with_germinal
+        execute bufwinnr(s:germinal_bufnr) . 'wincmd w'
+        return
+      else
+        execute '$tabnew'
+      endif
+    else
+      if a:mode == 1
+        execute 'horizontal split'
+      elseif a:mode == 2
+        execute 'vertical split'
+      endif
+    endif
+
+    execute 'buf ' . s:germinal_bufnr
+  endif
+endfunction
+
+command! Germ call GlobalTerminal(0)
+command! Serm call GlobalTerminal(1)
+command! Verm call GlobalTerminal(2)
+command! Term call GlobalTerminal(3)
 
 "============================================================
 " Compiling & Debugging
@@ -253,7 +350,6 @@ nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
-command! Term tabnew | term
 
 "============================================================
 " Cursor & Background
@@ -296,7 +392,7 @@ if exists("g:neovide")
   "set guifont=Liberation\ Mono:h12
   set guifont=Cousine:h12
 
-  set guicursor=n-v-c:block-Cursor,i-ci-ve:ver25-iCursor,r-cr:hor20-iCursor,o:hor50
+  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50
   highlight Cursor gui=NONE guifg=Red guibg=#00ff00
   highlight iCursor gui=NONE guifg=Black guibg=#ff0000
 
@@ -310,10 +406,5 @@ if exists("g:neovide")
   " Reset scale with Control + 0
   nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
 
-  "------------------------------
-  " Terminal
-  "
-  tnoremap <Esc> <C-\><C-n>
-  cabbrev term split \| term
-
 endif
+
