@@ -1,21 +1,32 @@
 @echo off
 
-:: v [--vim] <-e or -t> [Vim/Nvim arguments]
+:: v [--vim] <-e, -t, -d> [Vim/Nvim arguments]
 :: Possible commands ...
 :: Neovide/NeoVim:
-::   > v (`nvim --server $NVIM` --remote .)
-::   > v -e <NVIM ARGS> (`nvim --server $NVIM` --remote <NVIM ARGS>)
-::   > v -t <NVIM ARGS> (`nvim --server $NVIM` --remote-tab <NVIM ARGS>)
+::   > v (`nvim --server $NVIM --remote .`)
+::   > v -e <NVIM ARGS>   (`nvim --server $NVIM --remote <NVIM ARGS>`)
+::   > v -t <NVIM ARGS>   (`nvim --server $NVIM --remote-tab <NVIM ARGS>`)
+::   > v -d <file> <file> (`nvim --server $NVIM --remote-tab <NVIM ARGS>`)
 :: Vim:
 ::   > v --vim (`vim --server VIM --remote .`)
 ::   > v --vim -e <VIM ARGS> (`vim --server VIM --remote <VIM ARGS>`)
 ::   > v --vim -t <VIM ARGS> (`vim --server VIM --remote-tab <VIM ARGS>`)
+::   > v --vim -d {file_a} {file_b} (
+::     `vim --server VIM --remote-tab {file_a}`
+::     `vim --server VIM --remote-send ":vert split | edit {file_b} | windo diffthis`
+::   )
 
 set "V_PRG="
 set "V_SERVER="
 set "V_REMOTE_OP=--remote"
 set "V_ARGS="
+set "V_DIFF=0"
+set "V_FILE_A="
+set "V_FILE_B="
 
+:: ==================================================
+:: Argument parsing
+:: ==================================================
 :: Check for the `--vim` (only on %1) flag to set V_PRG to Vim or NeoVim
 if "%~1" == "--vim" (
   set "V_PRG=vim"
@@ -32,6 +43,14 @@ if "%~1" == "-e" (
 ) else if "%~1" == "-t" (
   set "V_REMOTE_OP=--remote-tab"
   shift
+) else if "%~1" == "-d" (
+  set "V_DIFF=1"
+  set "V_FILE_A="%~f2""
+  set "V_FILE_B="%~f3""
+
+  echo [DEBUG] V_FILE_A: %V_FILE_A%
+  echo [DEBUG] V_FILE_B: %V_FILE_B%
+  goto end
 )
 
 :: If there are no arguments left, default to current directory
@@ -40,16 +59,32 @@ if "%~1" == "" (
   goto end
 )
 
-:: Prevent leading zero on the first argument
-if "%V_ARGS%" == "" (
-  set "V_ARGS=%~1"
-  shift
-)
 
 :: Build variable with every arg from the new %1 onwards
 :loop
 if "%~1" == "" goto end
-set "V_ARGS=%V_ARGS% %1"
+
+:: Expand file paths (chek for `-` or `+` for flags)
+:: Syntax for getting chars from arguments: %variable:~start_index,length%
+set "curr_arg=%~1"
+echo [DEBUG] curr_arg: %curr_arg%
+
+set "prefix=%curr_arg:~0,1%"
+echo [DEBUG] prefix: [%prefix%]
+
+if not "%prefix%" == "-" (
+  if not "%prefix%" == "+" (
+    echo [DEBUG] Expanding absolute path: %~f1
+    set "curr_arg="%~f1""
+  )
+)
+
+if "%V_ARGS%" == "" (
+  set "V_ARGS=%curr_arg%"
+) else (
+  set "V_ARGS=%V_ARGS% %curr_arg%"
+)
+
 shift
 goto loop
 :end
@@ -66,5 +101,12 @@ if "%NVIM%" == "" (
 )
 
 :: Launch the V_PRG with server (NeoVim server path is stored in %NVIM% or custom pipe)
-echo Run: %V_PRG% --server %V_SERVER% %V_REMOTE_OP% %V_ARGS%
-%V_PRG% --server %V_SERVER% %V_REMOTE_OP% %V_ARGS%
+if "%V_DIFF%" == "1" (
+  echo Run: %V_PRG% --server %V_SERVER% --remote-tab %V_FILE_A%
+  echo Run: %V_PRG% --server %V_SERVER% --remote-send "<C-\><C-n>:execute 'vert split ' . fnameescape('%V_FILE_B%') | windo diffthis<CR>"
+  %V_PRG% --server %V_SERVER% --remote-tab %V_FILE_A%
+  %V_PRG% --server %V_SERVER% --remote-send "<C-\><C-n>:execute 'vert split ' . fnameescape('%V_FILE_B%') | windo diffthis<CR>"
+) else (
+  echo Run: %V_PRG% --server %V_SERVER% %V_REMOTE_OP% %V_ARGS%
+  %V_PRG% --server %V_SERVER% %V_REMOTE_OP% %V_ARGS%
+)

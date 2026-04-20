@@ -9,6 +9,10 @@ set termguicolors
 colorscheme naz
 
 syntax enable
+set hidden            " :q will act like :hide
+set confirm           " Ask to save changes or not if closing last window
+set nobackup          " Don't keep a backup file after overwriting a file
+set nowritebackup     " Don't make a backup before overwriting a file
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
 set scrolloff=0       " Keep no lines of context around the cursor
@@ -66,7 +70,7 @@ function! GlobalTerminal(mode)
       execute 'tabnew'
     endif
 
-    execute 'terminal'
+    execute has('nvim') ? 'terminal' : 'terminal ++curwin'
     execute 'file ' . s:germinal_name
   else
     echom "[GlobalTerminal] Using " . s:germinal_name
@@ -116,6 +120,11 @@ command! Germ call GlobalTerminal(0)
 command! Serm call GlobalTerminal(1)
 command! Verm call GlobalTerminal(2)
 command! Term call GlobalTerminal(3)
+command! Germinal call GlobalTerminal(0)
+command! Serminal call GlobalTerminal(1)
+command! Verminal call GlobalTerminal(2)
+command! Terminal call GlobalTerminal(3)
+
 
 "============================================================
 " Compiling & Debugging
@@ -334,17 +343,19 @@ set listchars=tab:▸\ ,trail:·
 " Misc & Netrw
 "============================================================
 let g:netrw_keepdir = 0
-let mapleader = ","
 
 " Taboo custom tab formatting
 let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
-" Copy file/dir path under the cursor on Netrw -> 'Y'<CR>
+" 'Y'-> Copy file/dir path under the cursor on Netrw
 autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR>
-command! Cpath :let @+ = expand("%:p")
+autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR>
 
-nnoremap <leader>cpth :Cpath<CR> :echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="<CR>
+command! Cpath :let @+ = expand("%:p") | echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="
+
+let mapleader = ","
+nnoremap <leader>term :Term<CR>
 nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
@@ -354,7 +365,15 @@ nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 "============================================================
 " Cursor & Background
 "============================================================
-if s:is_win == 0
+if has("gui_running") || exists("g:neovide")
+  "set guifont=Liberation\ Mono:h12
+  set guifont=Cousine:h12
+
+  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
+  highlight Cursor gui=NONE guifg=Red guibg=#00ff00
+  highlight iCursor gui=NONE guifg=Black guibg=#ff0000
+  highlight oCursor gui=NONE guifg=Black guibg=#00ffff
+else
   let &t_SI = "\e[5 q" " Blinking bar for Insert mode
   let &t_SR = "\e[3 q" " Blinking underline for Replace mode
   let &t_EI = "\e[1 q" " Blinking block for Normal mode
@@ -384,18 +403,10 @@ command! CycleBGPrev call s:CycleBackground(1)
 nnoremap <leader>bgn :CycleBGNext<CR>
 nnoremap <leader>bgN :CycleBGPrev<CR>
 
-
 "============================================================
-" GUI & Neovide
+"  Neovide
 "============================================================
 if exists("g:neovide")
-  "set guifont=Liberation\ Mono:h12
-  set guifont=Cousine:h12
-
-  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50
-  highlight Cursor gui=NONE guifg=Red guibg=#00ff00
-  highlight iCursor gui=NONE guifg=Black guibg=#ff0000
-
   " Initial scale
   let g:neovide_scale_factor = 1.0
 
@@ -405,6 +416,4 @@ if exists("g:neovide")
 
   " Reset scale with Control + 0
   nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
-
 endif
-
