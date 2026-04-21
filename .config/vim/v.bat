@@ -1,6 +1,6 @@
 @echo off
 
-:: v [--vim] <-e, -t, -d> [Vim/Nvim arguments]
+:: v [--vim] <-e, -t, -d> [--edit] [Vim/Nvim arguments]
 :: Possible commands ...
 :: Neovide/NeoVim:
 ::   > v (`nvim --server $NVIM --remote .`)
@@ -24,9 +24,11 @@ set "V_DIFF=0"
 set "V_FILE_A="
 set "V_FILE_B="
 
+
 :: ==================================================
 :: Argument parsing
 :: ==================================================
+
 :: Check for the `--vim` (only on %1) flag to set V_PRG to Vim or NeoVim
 if "%~1" == "--vim" (
   set "V_PRG=vim"
@@ -37,7 +39,7 @@ if "%~1" == "--vim" (
   set "V_SERVER=%NVIM%"
 )
 
-:: Set var based on the flag `-e = --remote` or `-t = remote-tab)`
+:: Set var based on the flag `-e = --remote`, `-t` = remote-tab)
 if "%~1" == "-e" (
   shift
 ) else if "%~1" == "-t" (
@@ -47,18 +49,19 @@ if "%~1" == "-e" (
   set "V_DIFF=1"
   set "V_FILE_A="%~f2""
   set "V_FILE_B="%~f3""
-
-  echo [DEBUG] V_FILE_A: %V_FILE_A%
-  echo [DEBUG] V_FILE_B: %V_FILE_B%
   goto end
 )
+::echo [DEBUG] V_FILE_A: %V_FILE_A%
+::echo [DEBUG] V_FILE_B: %V_FILE_B%
 
-:: If there are no arguments left, default to current directory
+:: If there are no arguments left, default to current directory (`--edit` = edit v.bat)
 if "%~1" == "" (
   set "V_ARGS=."
   goto end
+) else if "%~1" == "--edit" (
+  set "V_ARGS="%userprofile%\vimfiles\v\v.bat""
+  goto end
 )
-
 
 :: Build variable with every arg from the new %1 onwards
 :loop
@@ -67,14 +70,13 @@ if "%~1" == "" goto end
 :: Expand file paths (chek for `-` or `+` for flags)
 :: Syntax for getting chars from arguments: %variable:~start_index,length%
 set "curr_arg=%~1"
-echo [DEBUG] curr_arg: %curr_arg%
+::echo [DEBUG] curr_arg: %curr_arg%
 
 set "prefix=%curr_arg:~0,1%"
-echo [DEBUG] prefix: [%prefix%]
+::echo [DEBUG] prefix: [%prefix%]
 
 if not "%prefix%" == "-" (
   if not "%prefix%" == "+" (
-    echo [DEBUG] Expanding absolute path: %~f1
     set "curr_arg="%~f1""
   )
 )
@@ -89,6 +91,11 @@ shift
 goto loop
 :end
 
+
+:: ==================================================
+:: Running commands
+:: ==================================================
+
 :: If V_PRG is nvim and there's no Neovide instance, define a server pipe name
 :: and launch Neovide, passing --listen to nvim (sleep to wait for Neovide to open)
 if "%NVIM%" == "" (
@@ -102,11 +109,8 @@ if "%NVIM%" == "" (
 
 :: Launch the V_PRG with server (NeoVim server path is stored in %NVIM% or custom pipe)
 if "%V_DIFF%" == "1" (
-  echo Run: %V_PRG% --server %V_SERVER% --remote-tab %V_FILE_A%
-  echo Run: %V_PRG% --server %V_SERVER% --remote-send "<C-\><C-n>:execute 'vert split ' . fnameescape('%V_FILE_B%') | windo diffthis<CR>"
   %V_PRG% --server %V_SERVER% --remote-tab %V_FILE_A%
   %V_PRG% --server %V_SERVER% --remote-send "<C-\><C-n>:execute 'vert split ' . fnameescape('%V_FILE_B%') | windo diffthis<CR>"
 ) else (
-  echo Run: %V_PRG% --server %V_SERVER% %V_REMOTE_OP% %V_ARGS%
   %V_PRG% --server %V_SERVER% %V_REMOTE_OP% %V_ARGS%
 )

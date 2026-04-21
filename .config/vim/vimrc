@@ -15,13 +15,14 @@ set nobackup          " Don't keep a backup file after overwriting a file
 set nowritebackup     " Don't make a backup before overwriting a file
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
-set scrolloff=0       " Keep no lines of context around the cursor
+set scrolloff=8       " Keep lines of context around the cursor
 set backspace=indent,eol,start
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 set laststatus=2      " Always show statusline
 set statusline=%F\ %m%r\ %{QFStatusline()}\ %=%l:%c\ \|\ %L\ ↓%p%%
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
+
 
 "============================================================
 " Terminal
@@ -124,6 +125,18 @@ command! Germinal call GlobalTerminal(0)
 command! Serminal call GlobalTerminal(1)
 command! Verminal call GlobalTerminal(2)
 command! Terminal call GlobalTerminal(3)
+
+function! GerminalHere(mode)
+  execute "let @g= expand('%:p:h')"
+  call GlobalTerminal(a:mode)
+  call feedkeys("i\<C-c>cd " . @g . "\<CR>\<Esc>", 't')
+endfunction
+
+command! Germhere call GerminalHere(0)
+command! Sermhere call GerminalHere(1)
+command! Vermhere call GerminalHere(2)
+command! Termhere call GerminalHere(3)
+command! Herm call GerminalHere(3)
 
 
 "============================================================
@@ -323,6 +336,7 @@ highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
 set tags+=tags;
 command! Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
 
+
 "============================================================
 " Indentation
 "============================================================
@@ -349,13 +363,10 @@ let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
 " 'Y'-> Copy file/dir path under the cursor on Netrw
-autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR>
-autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR>
-
-command! Cpath :let @+ = expand("%:p") | echo "==> \"" . expand("%:p") . "\" copied to the clipboard <=="
+autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
+command! Cpath :let @+ = expand("%:p") | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 let mapleader = ","
-nnoremap <leader>term :Term<CR>
 nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
@@ -369,7 +380,7 @@ if has("gui_running") || exists("g:neovide")
   "set guifont=Liberation\ Mono:h12
   set guifont=Cousine:h12
 
-  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
+  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver20-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
   highlight Cursor gui=NONE guifg=Red guibg=#00ff00
   highlight iCursor gui=NONE guifg=Black guibg=#ff0000
   highlight oCursor gui=NONE guifg=Black guibg=#00ffff
@@ -403,6 +414,7 @@ command! CycleBGPrev call s:CycleBackground(1)
 nnoremap <leader>bgn :CycleBGNext<CR>
 nnoremap <leader>bgN :CycleBGPrev<CR>
 
+
 "============================================================
 "  Neovide
 "============================================================
@@ -417,3 +429,33 @@ if exists("g:neovide")
   " Reset scale with Control + 0
   nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
 endif
+
+"------------------------------
+" Contents of init.lua
+"
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+" Linux path: `~/.config/nvim/init.lua`
+" Windows path: `%localappdata%\nvim\init.lua`
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"-- Vim paths to Neovim
+"local vimrc_path = ""
+"local vimfiles_dir = ""
+"
+"if vim.fn.has('win32') == 1 or vim.fn.has('win64') == 1 then
+"  vimrc_path = vim.fn.expand('~/vimfiles/vimrc')
+"  vimfiles_dir = vim.fn.expand('~/vimfiles')
+"else
+"  local vimrc_path = vim.fn.expand('~/.config/vim/vimrc')
+"  local vimfiles_dir = vim.fn.expand('~/.config/vim/')
+"end
+"
+"vim.opt.runtimepath:prepend(vimfiles_dir)
+"vim.opt.runtimepath:append(vimfiles_dir .. '/after')
+"vim.opt.packpath = vim.opt.runtimepath:get()
+"
+"-- Source my vimrc
+"vim.cmd('source ' .. vimrc_path)
+"
+"-- Override $MYVIMRC (for <leader> 'erc' and 'src')
+"vim.env.MYVIMRC = vimrc_path
+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
