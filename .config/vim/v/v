@@ -1,20 +1,28 @@
 #!/bin/bash
 
-# v [--vim] <-e, -t, -d> [--edit] [Vim/Nvim arguments]
-# Possible commands ...
-# Neovide/NeoVim:
-#   > v (`nvim --server $NVIM --remote .`)
-#   > v -e <NVIM ARGS>   (`nvim --server $NVIM --remote <NVIM ARGS>`)
-#   > v -t <NVIM ARGS>   (`nvim --server $NVIM --remote-tab <NVIM ARGS>`)
-#   > v -d <file> <file> (`nvim --server $NVIM --remote-tab <NVIM ARGS>`)
-# Vim:
-#   > v --vim (`vim --server VIM --remote .`)
-#   > v --vim -e <VIM ARGS> (`vim --server VIM --remote <VIM ARGS>`)
-#   > v --vim -t <VIM ARGS> (`vim --server VIM --remote-tab <VIM ARGS>`)
-#   > v --vim -d {file_a} {file_b} (
-#     `vim --server VIM --remote-tab {file_a}`
-#     `vim --server VIM --remote-send ":vert split | edit {file_b} | windo diffthis`
-#   )
+# Usage:
+#   v [--vim] [--edit | --term] [-e | -t | -d] [files...]
+#
+# Description:
+#   Generate terminal-to-host / remote Vim or Nvim command calls
+#
+# Options:
+#   --vim     Use Vim instead of Neovim (must be the first argument)
+#   -e        Edit file in the current window (default)
+#   -t        Edit file in a new tab
+#   -d        Open two files in a new tab and `windo diffthis`
+#   --edit    Open the `v` script for editing (at $HOME/.config/vim/v/v)
+#   --term    Open current directory (netrw) and launch germinal on a new tab
+#
+# Examples:
+#   v .                   Open current directory     ($ nvim --server $NVIM --remote .)
+#   v --vim -t main.c     Open `main.c` in a new tab ($ vim --servername SERVER --remote-tab main.c)
+#   v -d file_a file_b    Diff `file_a` (lhs) and `file_b` (rhs)
+#     ($ nvim --server $NVIM --remote-tab file_a
+#      $ nvim --server $NVIM --remote-send "<C-\><C-n> :execute 'vert split ' . fnameescape('file_b') | windo diffthis<CR>")
+#
+#  Note: if there's no Vim or Neovim server, launch new Vim/Neovide instance
+
 
 V_PRG="nvim"
 V_SERVER_OP="--server"
@@ -25,6 +33,7 @@ V_DIFF=0
 V_TERM=0
 V_FILE_A=""
 V_FILE_B=""
+
 
 # ==================================================
 # Argument parsing
@@ -100,7 +109,6 @@ if [ "$V_DIFF" -eq 1 ]; then
   "$V_PRG" "$V_SERVER_OP" "$V_SERVER" --remote-send "<C-\><C-n>:execute 'vert split ' . fnameescape('$V_FILE_B') | windo diffthis<CR>"
 else
   # [@] expand the elements of the array with spaces between them
-  echo "$V_PRG"
   "$V_PRG" "$V_SERVER_OP" "$V_SERVER" "$V_REMOTE_OP" "${V_ARGS[@]}"
   if [ "$V_TERM" -eq 1 ]; then
     sleep 1

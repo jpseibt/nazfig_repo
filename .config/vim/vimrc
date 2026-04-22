@@ -8,6 +8,8 @@ call plug#end()
 set termguicolors
 colorscheme naz
 
+let s:is_win = has('win32') || has('win64')
+
 syntax enable
 set hidden            " :q will act like :hide
 set confirm           " Ask to save changes or not if closing last window
@@ -73,6 +75,7 @@ function! GlobalTerminal(mode)
 
     execute has('nvim') ? 'terminal' : 'terminal ++curwin'
     execute 'file ' . s:germinal_name
+    sleep 500m
   else
     echom "[GlobalTerminal] Using " . s:germinal_name
 
@@ -146,7 +149,6 @@ command! Herm call GerminalHere(3)
 "------------------------------
 " Compiler
 "
-let s:is_win = has('win32') || has('win64')
 
 if s:is_win
   let s:c_compiler = "clang"
@@ -362,9 +364,18 @@ let g:netrw_keepdir = 0
 let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
-" 'Y'-> Copy file/dir path under the cursor on Netrw
-autocmd FileType netrw execute 'TabooRename NETRW'
-autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
+let g:os_slash = '/'
+if s:is_win
+  let g:os_slash = '\'
+endif
+
+augroup NazNetrw
+  autocmd!
+  " [Y]-> Copy file/dir path under the cursor on Netrw
+  autocmd Filetype netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . g:os_slash . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
+  autocmd Filetype netrw execute 'file NETRW'
+augroup END
+
 command! Cpath :let @+ = expand("%:p") | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 let mapleader = ","
