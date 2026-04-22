@@ -14,7 +14,7 @@ RESET="\[\e[0m\]"
 #PS1='[\u@\h \W]\[\e[38;5;82m\]\$\[\e[0m\] '
 PS1="${GREEN}[\u]\$PWD/\$${RESET} "
 
-export PATH=$PATH:$HOME/.local/bin
+export PATH="$PATH:$HOME/.config/vim/v/:$HOME/.local/bin"
 
-# Alias for operations on the ~/.nazdotfiles git repo
+# Alias for operations on the ~/.nazfig_repo
 alias nazfig='/usr/bin/git --git-dir=$HOME/.nazfig_repo/ --work-tree=$HOME'

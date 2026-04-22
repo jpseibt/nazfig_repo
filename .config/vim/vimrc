@@ -129,7 +129,7 @@ command! Terminal call GlobalTerminal(3)
 function! GerminalHere(mode)
   execute "let @g= expand('%:p:h')"
   call GlobalTerminal(a:mode)
-  call feedkeys("i\<C-c>cd " . @g . "\<CR>\<Esc>", 't')
+  call feedkeys("i\<C-c> cd " . @g . "\<CR>\<Esc>", 't')
 endfunction
 
 command! Germhere call GerminalHere(0)
