@@ -363,8 +363,8 @@ let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
 " 'Y'-> Copy file/dir path under the cursor on Netrw
-autocmd! FileType netrw execute 'TabooRename NETRW'
-autocmd! FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
+autocmd FileType netrw execute 'TabooRename NETRW'
+autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
 command! Cpath :let @+ = expand("%:p") | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 let mapleader = ","
@@ -381,7 +381,7 @@ if has("gui_running") || exists("g:neovide")
   "set guifont=Liberation\ Mono:h12
   set guifont=Cousine:h12
 
-  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver20-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
+  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
   highlight Cursor gui=NONE guifg=Red guibg=#00ff00
   highlight iCursor gui=NONE guifg=Black guibg=#ff0000
   highlight oCursor gui=NONE guifg=Black guibg=#00ffff
