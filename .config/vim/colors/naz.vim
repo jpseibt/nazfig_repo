@@ -30,7 +30,7 @@ hi PmenuSel         guibg=#316394 guifg=#d6deeb
 hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold
 hi StatusLineNC     guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
 hi StatusLineTerm   guibg=#588c58 guifg=#90ee90 gui=bold cterm=bold
-hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
+hi StatusLineTermNC guibg=#354f40 guifg=#a1aab8 gui=NONE cterm=NONE
 hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 

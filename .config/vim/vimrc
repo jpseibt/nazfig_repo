@@ -248,7 +248,7 @@ augroup QFUpdate
 augroup END
 
 command! Ccount call s:QFListCount()
-Ccount " Run it on every vimrc source
+"Ccount " Run it on every vimrc source
 
 
 "------------------------------
@@ -363,7 +363,8 @@ let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
 " 'Y'-> Copy file/dir path under the cursor on Netrw
-autocmd FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
+autocmd! FileType netrw execute 'TabooRename NETRW'
+autocmd! FileType netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . '/' . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
 command! Cpath :let @+ = expand("%:p") | echo "==> \"" . @+ . "\" copied to the clipboard <=="
 
 let mapleader = ","
@@ -445,8 +446,8 @@ endif
 "  vimrc_path = vim.fn.expand('~/vimfiles/vimrc')
 "  vimfiles_dir = vim.fn.expand('~/vimfiles')
 "else
-"  local vimrc_path = vim.fn.expand('~/.config/vim/vimrc')
-"  local vimfiles_dir = vim.fn.expand('~/.config/vim/')
+"  vimrc_path = vim.fn.expand('~/.config/vim/vimrc')
+"  vimfiles_dir = vim.fn.expand('~/.config/vim')
 "end
 "
 "vim.opt.runtimepath:prepend(vimfiles_dir)

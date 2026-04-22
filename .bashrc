@@ -12,7 +12,7 @@ GREEN="\[\e[38;5;120m\]"
 RESET="\[\e[0m\]"
 
 #PS1='[\u@\h \W]\[\e[38;5;82m\]\$\[\e[0m\] '
-PS1="${GREEN}[\u@\h \W]\$${RESET} "
+PS1="${GREEN}[\u]\$PWD/\$${RESET} "
 
 export PATH=$PATH:$HOME/.local/bin
 
