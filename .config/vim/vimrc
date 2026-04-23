@@ -37,8 +37,8 @@ tnoremap <Esc> <C-\><C-n>
 let s:germinal_name = "GERMINAL"
 let s:germinal_bufnr = bufnr(s:germinal_name)
 
-" The mode arg is used to change the way to invoke the germinal (should only be one instance).
-" A function call will have different behaviors based on the fact that:
+" The mode arg is used to change the way to invoke the germinal (should only be one instance/buffer).
+" A function call will have different behaviors based on the fact that: -> `X. (applies to modes) ...`
 "     A. (modes [0-3]) The germinal buf is `UNLISTED` (does not exist, buffer not created)
 "     B. (modes [0-3]) The germinal buf is `IN_VIEW`  (open on any window in the active tab);
 "     C. (mode 3)      The germinal buf is `IN_A_TAB` (open on any tab).
@@ -149,7 +149,6 @@ command! Herm call GerminalHere(3)
 "------------------------------
 " Compiler
 "
-
 if s:is_win
   let s:c_compiler = "clang"
   let s:cpp_compiler = "clang++"
@@ -164,11 +163,11 @@ let s:c_flags = s:common_flags . " -std=c99"
 let s:cpp_flags = s:common_flags . " -std=c++03"
 
 " Output program path
-let s:out_path = "%:p:h" . "/bin/" . "%:t:r" . (s:is_win ? ".exe" : "")
+let s:out_path = "%:p:h" . "/build/" . "%:t:r" . (s:is_win ? ".exe" : "")
 
 
 "------------------------------
-" Commands
+" Commands (makeprg)
 "
 " C debug build (default for .c)
 command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
@@ -187,6 +186,12 @@ command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'
 
 " C++ fsyntax-only
 command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:cpp_compiler, s:cpp_flags)
+
+" MSVC debug build (need vcvars env)
+command! Makecl let &makeprg = 'cd build && cl /Zi /Od /W4 "%:p"'
+
+" MSVC final build (need vcvars env)
+command! Makecl let &makeprg = 'cd build && cl /O2 /W4 "%:p"'
 
 " Copy makeprg to clipboard
 command! Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
@@ -258,13 +263,13 @@ command! Ccount call s:QFListCount()
 "
 " `:redraw!` seems to be needed on my current linux terminal emulator
 function! s:BuildAndDebug()
-  " Create bin directory
-  let l:bin_dir = expand("%:p:h") . "/bin"
-  if !isdirectory(l:bin_dir)
-    call mkdir(l:bin_dir, "p")
+  " Create build directory
+  let l:build_dir = expand("%:p:h") . "/build"
+  if !isdirectory(l:build_dir)
+    call mkdir(l:build_dir, "p")
   endif
 
-  let l:prg_path = l:bin_dir . "/" . expand("%:t:r")
+  let l:prg_path = l:build_dir . "/" . expand("%:t:r")
 
   execute 'w'
   execute 'silent make!'
@@ -291,10 +296,10 @@ function! s:BuildAndDebug()
 endfunction
 
 function! s:BuildAndCheck()
- " Create bin directory
-  let l:bin_dir = expand("%:p:h") . "/bin"
-  if !isdirectory(l:bin_dir)
-    call mkdir(l:bin_dir, "p")
+ " Create build directory
+  let l:build_dir = expand("%:p:h") . "/build"
+  if !isdirectory(l:build_dir)
+    call mkdir(l:build_dir, "p")
   endif
 
   execute 'w'
@@ -358,11 +363,14 @@ set listchars=tab:▸\ ,trail:·
 "============================================================
 " Misc & Netrw
 "============================================================
-let g:netrw_keepdir = 0
-
 " Taboo custom tab formatting
 let g:taboo_tab_format = '%U[%N] %F%m  '
 let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
+
+nnoremap <C-S-PageDown> :tabmove +1<CR>
+nnoremap <C-S-PageUp> :tabmove -1<CR>
+
+let g:netrw_keepdir = 0
 
 let g:os_slash = '/'
 if s:is_win
