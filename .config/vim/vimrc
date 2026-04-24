@@ -1,9 +1,9 @@
 set nocompatible
 filetype plugin on
 
-call plug#begin('~/vimfiles/plugged')
-Plug 'gcmt/taboo.vim'
-call plug#end()
+"[legacy]call plug#begin('~/vimfiles/plugged')
+"[legacy]Plug 'gcmt/taboo.vim'
+"[legacy]call plug#end()
 
 set termguicolors
 colorscheme naz
@@ -34,7 +34,7 @@ tnoremap <Esc> <C-\><C-n>
 "------------------------------
 " Global terminal buffer
 "
-let s:germinal_name = "GERMINAL"
+let s:germinal_name = "(GERMINAL)"
 let s:germinal_bufnr = bufnr(s:germinal_name)
 
 " The mode arg is used to change the way to invoke the germinal (should only be one instance/buffer).
@@ -130,9 +130,12 @@ command! Verminal call GlobalTerminal(2)
 command! Terminal call GlobalTerminal(3)
 
 function! GerminalHere(mode)
-  execute "let @g= expand('%:p:h')"
+  let l:head_dir = expand('%:p:h:S')
+  if &filetype == 'netrw'
+    let l:head_dir = fnamemodify(b:netrw_curdir, ':S')
+  endif
   call GlobalTerminal(a:mode)
-  call feedkeys("i\<C-c> cd " . @g . "\<CR>\<Esc>", 't')
+  call feedkeys("i\<C-c> cd " . l:head_dir . "\<CR>\<Esc>", 't')
 endfunction
 
 command! Germhere call GerminalHere(0)
@@ -191,7 +194,7 @@ command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%
 command! Makecl let &makeprg = 'cd build && cl /Zi /Od /W4 "%:p"'
 
 " MSVC final build (need vcvars env)
-command! Makecl let &makeprg = 'cd build && cl /O2 /W4 "%:p"'
+command! MakeclRelease let &makeprg = 'cd build && cl /O2 /W4 "%:p"'
 
 " Copy makeprg to clipboard
 command! Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
@@ -363,34 +366,93 @@ set listchars=tab:▸\ ,trail:·
 "============================================================
 " Misc & Netrw
 "============================================================
-" Taboo custom tab formatting
-let g:taboo_tab_format = '%U[%N] %F%m  '
-let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
-
-nnoremap <C-S-PageDown> :tabmove +1<CR>
-nnoremap <C-S-PageUp> :tabmove -1<CR>
+"[legacy] Taboo custom tab formatting
+"[legacy] let g:taboo_tab_format = '%U[%N] %F%m  '
+"[legacy] let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
 
 let g:netrw_keepdir = 0
-
-let g:os_slash = '/'
-if s:is_win
-  let g:os_slash = '\'
-endif
 
 augroup NazNetrw
   autocmd!
   " [Y]-> Copy file/dir path under the cursor on Netrw
-  autocmd Filetype netrw nnoremap <buffer> Y :let @+ = expand("%:p:h") . g:os_slash . expand("<cfile>")<CR> :echo "==> \"" . @+ . "\" copied to the clipboard <=="<CR>
-  autocmd Filetype netrw execute 'file NETRW'
+  autocmd Filetype netrw nnoremap <buffer> Y :let @+ = fnamemodify(b:netrw_curdir . '/' . expand("<cfile>"), ':p:S')<CR> :echo "==> [" . @+ . "] copied to the clipboard <=="<CR>
 augroup END
 
-command! Cpath :let @+ = expand("%:p") | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+command! Cpath :let @+ = (&filetype == 'netrw' ? fnamemodify(b:netrw_curdir, ':S') : expand('%:p:S')) | echo "==> [" . @+ . "] copied to the clipboard <=="
 
 let mapleader = ","
 nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
+
+
+"============================================================
+" Tabline
+"============================================================
+nnoremap <C-S-PageDown> :tabmove +1<CR>
+nnoremap <C-S-PageUp> :tabmove -1<CR>
+
+let s:superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹']
+
+" :help setting-tabline
+function! NazTabLine()
+  let l:tabline_str = ''
+
+  " Loop through each tab page
+  for l:i in range(tabpagenr('$'))
+    " Set the highlighting
+    if l:i + 1 == tabpagenr()
+      let l:tabline_str .= '%#TabLineSel#'
+    else
+      let l:tabline_str .= '%#TabLine#'
+    endif
+
+    " Set the tab page number ('T' enables mouse support)
+    let l:tabline_str .= '%' . (l:i + 1) . 'T'
+
+    " Generate tab label: " ³[2] main.c "
+    " Convert window count to superscript (`³` part)
+    let l:win_count = tabpagewinnr(l:i + 1, '$')
+    let l:win_count_sup = l:win_count < 10 ? s:superscripts[l:win_count] : '^' . l:win_count
+
+    " Get active buffer name in curr tab (buflist is 0-indexed, winnr is 1-indexed)
+    let l:buflist = tabpagebuflist(l:i + 1)
+    let l:winnr = tabpagewinnr(l:i + 1)
+    let l:bufnr = l:buflist[l:winnr - 1] 
+    let l:bufname = bufname(l:bufnr)
+
+    " Set filename (`main.c` part)
+    if getbufvar(l:bufnr, '&filetype') == 'netrw'
+      let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
+    else
+      let l:filename = fnamemodify(l:bufname, ':t')
+      if l:filename == ''
+        let l:filename = '-No Name-'
+      endif
+    endif
+
+    " Append a '+' if the buffer has unsaved changes
+    if getbufvar(l:bufnr, '&modified')
+      let l:filename .= '*'
+    endif
+
+    let l:tabline_str .= ' ' . l:win_count_sup . '[' . (l:i + 1) . '] ' . l:filename . ' '
+  endfor
+
+  " Add the label to close the current tab page
+  if tabpagenr('$') > 1
+    let l:tabline_str .= ' %#TabLine#%999X|x|'
+  endif
+
+  " Fill the remaining blank space with TabLineFill highlighting
+  let l:tabline_str .= '%#TabLineFill#%T'
+
+  return l:tabline_str
+endfunction
+
+" Tell Vim to evaluate this function to draw the tabline
+set tabline=%!NazTabLine()
 
 
 "============================================================
@@ -443,8 +505,8 @@ if exists("g:neovide")
   let g:neovide_scale_factor = 1.0
 
   " Ctrl + = (Increase), Ctrl + - (Decrease)
-  nnoremap <C-=> :let g:neovide_scale_factor += 0.1<CR>
-  nnoremap <C--> :let g:neovide_scale_factor -= 0.1<CR>
+  nnoremap <C-=> :let g:neovide_scale_factor += 0.2<CR>
+  nnoremap <C--> :let g:neovide_scale_factor -= 0.2<CR>
 
   " Reset scale with Control + 0
   nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>

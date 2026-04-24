@@ -30,7 +30,7 @@ hi PmenuSel         guibg=#316394 guifg=#d6deeb
 hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold
 hi StatusLineNC     guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
 hi StatusLineTerm   guibg=#588c58 guifg=#90ee90 gui=bold cterm=bold
-hi StatusLineTermNC guibg=#354f40 guifg=#a1aab8 gui=NONE cterm=NONE
+hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
 hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 
@@ -75,7 +75,7 @@ hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
 " --- Tabs (Native & Taboo) ---
 hi TabLineFill  guibg=#252c3f guifg=NONE    gui=NONE cterm=NONE " The empty space behind tabs
 hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
-hi TabLineSel   guibg=#11324d guifg=#90ee90 gui=bold cterm=bold " The currently active tab
+hi TabLineSel   guibg=#366656 guifg=#90ee90 gui=bold cterm=bold " The currently active tab
 
 " --- Terminal Colors (ANSI Palette) ---
 let g:terminal_color_0  = '#000000' " Black
