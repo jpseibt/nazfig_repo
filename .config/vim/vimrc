@@ -1,29 +1,58 @@
-set nocompatible
-filetype plugin on
-
-"[legacy]call plug#begin('~/vimfiles/plugged')
-"[legacy]Plug 'gcmt/taboo.vim'
-"[legacy]call plug#end()
-
-set termguicolors
-colorscheme naz
-
 let s:is_win = has('win32') || has('win64')
 
 syntax enable
+set nocompatible
+set termguicolors
+colorscheme naz
+
 set hidden            " :q will act like :hide
 set confirm           " Ask to save changes or not if closing last window
 set nobackup          " Don't keep a backup file after overwriting a file
 set nowritebackup     " Don't make a backup before overwriting a file
+
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
 set scrolloff=8       " Keep lines of context around the cursor
 set backspace=indent,eol,start
+
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 set laststatus=2      " Always show statusline
 set statusline=%F\ %m%r\ %{QFStatusline()}\ %=%l:%c\ \|\ %L\ ↓%p%%
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
+
+
+"============================================================
+" Searching
+"============================================================
+set incsearch         " Incremental search
+set hlsearch          " Highlight search results
+set ignorecase        " Ignore case when searching
+set smartcase         " Respect case if the query contains uppercase letters
+set showmatch         " Highlight matching parenthesis.
+
+highlight Search cterm=bold ctermfg=Cyan gui=bold
+highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
+highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
+
+set tags+=tags;
+command! Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
+
+
+"============================================================
+" Indentation
+"============================================================
+set expandtab         " Use spaces instead of tabs
+set tabstop=2         " Number of spaces a <Tab> counts for
+set shiftwidth=2      " Number of spaces to use for auto-indentation
+set softtabstop=2     " Number of spaces <Tab> inserts in edit mode
+set autoindent        " Copy indent from current line when starting a new one
+set cindent           " Use C-style indentation
+set smartindent
+
+" Make trailing whitespace chars visible
+set list
+set listchars=tab:▸\ ,trail:·
 
 
 "============================================================
@@ -148,7 +177,6 @@ command! Herm call GerminalHere(3)
 "============================================================
 " Compiling & Debugging
 "============================================================
-
 "------------------------------
 " Compiler
 "
@@ -173,22 +201,22 @@ let s:out_path = "%:p:h" . "/build/" . "%:t:r" . (s:is_win ? ".exe" : "")
 " Commands (makeprg)
 "
 " C debug build (default for .c)
-command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 
 " C final build
-command! MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+command! MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 
 " C++ debug build (default for .cpp)
-command! Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command! Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " C++ final build
-command! MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command! MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 
 " C fsyntax-only
-command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:c_compiler, s:c_flags)
+command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:c_compiler, s:c_flags)
 
 " C++ fsyntax-only
-command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%\"'", s:cpp_compiler, s:cpp_flags)
+command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:cpp_compiler, s:cpp_flags)
 
 " MSVC debug build (need vcvars env)
 command! Makecl let &makeprg = 'cd build && cl /Zi /Od /W4 "%:p"'
@@ -197,10 +225,10 @@ command! Makecl let &makeprg = 'cd build && cl /Zi /Od /W4 "%:p"'
 command! MakeclRelease let &makeprg = 'cd build && cl /O2 /W4 "%:p"'
 
 " Copy makeprg to clipboard
-command! Cpmakeprg :let @+ = &makeprg | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+command! Cpmakeprg :let @+ = &makeprg | echo '==> [' . @+ . '] copied to the clipboard <=='
 
 " Copy expanded makeprg to clipboard
-command! Cpmake :let @+ = expandcmd(&makeprg) | echo "==> \"" . @+ . "\" copied to the clipboard <=="
+command! Cpmake :let @+ = expandcmd(&makeprg) | echo '==> [' . @+ . '] copied to the clipboard <=='
 
 autocmd FileType c Makefsyntax
 autocmd FileType cpp Makecppfsyntax
@@ -331,51 +359,15 @@ nnoremap <F5> :Build<CR>
 
 
 "============================================================
-" Searching
-"============================================================
-set incsearch         " Incremental search
-set hlsearch          " Highlight search results
-set ignorecase        " Ignore case when searching
-set smartcase         " Respect case if the query contains uppercase letters
-set showmatch         " Highlight matching parenthesis.
-
-highlight Search cterm=bold ctermfg=Cyan gui=bold
-highlight IncSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
-highlight CurSearch cterm=bold,reverse ctermfg=White ctermbg=Red gui=bold
-
-set tags+=tags;
-command! Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
-
-
-"============================================================
-" Indentation
-"============================================================
-set expandtab         " Use spaces instead of tabs
-set tabstop=2         " Number of spaces a <Tab> counts for
-set shiftwidth=2      " Number of spaces to use for auto-indentation
-set softtabstop=2     " Number of spaces <Tab> inserts in edit mode
-set autoindent        " Copy indent from current line when starting a new one
-set cindent           " Use C-style indentation
-set smartindent
-
-" Make trailing whitespace chars visible
-set list
-set listchars=tab:▸\ ,trail:·
-
-
-"============================================================
 " Misc & Netrw
 "============================================================
-"[legacy] Taboo custom tab formatting
-"[legacy] let g:taboo_tab_format = '%U[%N] %F%m  '
-"[legacy] let g:taboo_renamed_tab_format = '[%N]%U %l%m  '
-
 let g:netrw_keepdir = 0
 
 augroup NazNetrw
   autocmd!
   " [Y]-> Copy file/dir path under the cursor on Netrw
   autocmd Filetype netrw nnoremap <buffer> Y :let @+ = fnamemodify(b:netrw_curdir . '/' . expand("<cfile>"), ':p:S')<CR> :echo "==> [" . @+ . "] copied to the clipboard <=="<CR>
+  autocmd Filetype netrw nnoremap <buffer> ~ :e ~/<CR>
 augroup END
 
 command! Cpath :let @+ = (&filetype == 'netrw' ? fnamemodify(b:netrw_curdir, ':S') : expand('%:p:S')) | echo "==> [" . @+ . "] copied to the clipboard <=="
