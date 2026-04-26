@@ -17,8 +17,9 @@ set backspace=indent,eol,start
 
 set showcmd
 set showcmdloc=last   " Show commands on the last line
+set showtabline=2     " Always show tabline
 set laststatus=2      " Always show statusline
-set statusline=%F\ %m%r\ %{QFStatusline()}\ %=%l:%c\ \|\ %L\ ↓%p%%
+set statusline=[%n]\ %F\ %m%r\ %=ch(%b)\ \|\ %l:%c-%L\ ↓%p%%
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
 
@@ -87,7 +88,7 @@ function! GlobalTerminal(mode)
   let s:germinal_bufnr = bufnr(s:germinal_name)
 
   if s:germinal_bufnr == -1
-    echom "[GlobalTerminal] New terminal buffer assigned to " . s:germinal_name
+    echom '[GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
 
     if a:mode == 1
       execute 'horizontal split'
@@ -101,7 +102,7 @@ function! GlobalTerminal(mode)
     execute 'file ' . s:germinal_name
     sleep 500m
   else
-    echom "[GlobalTerminal] Using " . s:germinal_name
+    echom '[GlobalTerminal] Using ' . s:germinal_name
 
     " Check if the buf is visible and will split
     let l:winnr = bufwinnr(s:germinal_bufnr)
@@ -195,38 +196,60 @@ let s:out_path = "%:p:h" . "/build/" . "%:t:r" . (s:is_win ? ".exe" : "")
 "------------------------------
 " Commands (makeprg)
 "
+if !exists('s:makeprg_cmd_name')
+  let s:makeprg_cmd_name = '____'
+endif
+
+command! Makeclear let &makeprg='' | let s:makeprg_cmd_name = '____' | redrawtabline
+
+function! s:SetMakeprg(name, cmd)
+  let s:makeprg_cmd_name = a:name
+  let &makeprg = a:cmd
+  redrawtabline
+  echo '==> ' . a:name . ' [' . a:cmd . '] set as &makeprg <=='
+endfunction
+
 " C debug build (default for .c)
-command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+"[legacy] command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+command! Make call s:SetMakeprg('Make', printf('%s -g -O0 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C final build
-command! MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+"[legacy] command! MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
+command! MakeRelease call s:SetMakeprg('MakeRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C++ debug build (default for .cpp)
-command! Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+"[legacy] command! Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command! Makecpp call s:SetMakeprg('Makecpp', printf('%s -g -O0 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:out_path))
 
 " C++ final build
-command! MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+"[legacy] command! MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
+command! MakecppRelease call s:SetMakeprg('MakecppRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:out_path))
 
 " C fsyntax-only
-command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:c_compiler, s:c_flags)
+"[legacy] command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:c_compiler, s:c_flags)
+command! Makefsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %s "%%:p"', s:c_compiler, s:c_flags))
 
 " C++ fsyntax-only
-command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:cpp_compiler, s:cpp_flags)
+"[legacy] command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:cpp_compiler, s:cpp_flags)
+command! Makecppfsyntax call s:SetMakeprg('Makecppfsyntax', printf('%s -fsyntax-only %s "%%:p"', s:cpp_compiler, s:cpp_flags))
 
 " MSVC debug build (need vcvars env)
-command! Makecl let &makeprg = 'cd build && cl /Zi /Od /W4 "%:p"'
+command! Makecl call s:SetMakeprg('Makecl', 'cd build && cl /Zi /Od /W4 "%:p"')
 
 " MSVC final build (need vcvars env)
-command! MakeclRelease let &makeprg = 'cd build && cl /O2 /W4 "%:p"'
+command! MakeclRelease call s:SetMakeprg('MakeclRelease', 'cd build && cl /O2 /W4 "%:p"')
 
 " Copy makeprg to clipboard
-command! Cpmakeprg :let @+ = &makeprg | echo '==> [' . @+ . '] copied to the clipboard <=='
+command! Cpmakeprg :let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' . @+ . '] copied to the clipboard <=='
 
 " Copy expanded makeprg to clipboard
-command! Cpmake :let @+ = expandcmd(&makeprg) | echo '==> [' . @+ . '] copied to the clipboard <=='
+command! Cpmake :let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name . ' (expanded) [' . @+ . '] copied to the clipboard <=='
 
-autocmd FileType c Makefsyntax
-autocmd FileType cpp Makecppfsyntax
+augroup MakeprgCmds
+  autocmd!
+  autocmd Filetype c Makefsyntax
+  autocmd Filetype cpp Makecppfsyntax
+augroup END
 
 
 "------------------------------
@@ -235,9 +258,11 @@ autocmd FileType cpp Makecppfsyntax
 " Prepend to &errorformat regex to parse 'type' correctly in Clang/GCC
 set errorformat^=%f:%l:%c:\ %t%*[^:]:\ %m
 
-let g:qf_entries = 0
-let g:qf_errors = 0
-let g:qf_warnings = 0
+if !exists('s:qf_entries')
+  let s:qf_entries = 0
+  let s:qf_errors = 0
+  let s:qf_warnings = 0
+endif
 
 function! s:QFListCount()
   let l:qf_list = getqflist()
@@ -257,22 +282,19 @@ function! s:QFListCount()
     endif
   endfor
 
-  let g:qf_entries = l:entries
-  let g:qf_errors = l:errors
-  let g:qf_warnings = l:warnings
+  let s:qf_entries = l:entries
+  let s:qf_errors = l:errors
+  let s:qf_warnings = l:warnings
 
-  if g:qf_entries > 0
-    echom printf("[s:QFListCount] Entries: %d | Errors: %d | Warnings: %d", g:qf_entries, g:qf_errors, g:qf_warnings)
+  if s:qf_entries > 0
+    echom printf("[s:QFListCount] Entries: %d | Errors: %d | Warnings: %d", s:qf_entries, s:qf_errors, s:qf_warnings)
   else
-    echom "[s:QFListCount] Quickfix list is empty"
+    echom '[s:QFListCount] Quickfix list is empty'
   endif
 endfunction
 
-function! QFStatusline()
-  if g:qf_entries < 1
-    return ""
-  endif
-  return printf("[E:%d|W:%d]", g:qf_errors, g:qf_warnings)
+function! QFTabline()
+  return (s:qf_entries > 0) ? printf("E:%d|W:%d", s:qf_errors, s:qf_warnings) : 'E:_|W:_'
 endfunction
 
 augroup QFUpdate
@@ -281,8 +303,6 @@ augroup QFUpdate
 augroup END
 
 command! Ccount call s:QFListCount()
-"Ccount " Run it on every vimrc source
-
 
 "------------------------------
 " Build
@@ -300,23 +320,23 @@ function! s:BuildAndDebug()
   execute 'w'
   execute 'silent make!'
 
-  if g:qf_errors < 1
+  if s:qf_errors < 1
     if s:is_win
       " Lauch RAD Debugger on Windows
       call system(printf("start raddbg.exe \"%s.exe\"", l:prg_path))
-      echo "==> Build Successful (g:qf_entries:" . g:qf_entries . ") - RAD Debugger Launched <=="
-      if g:qf_entries < 1
+      echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - RAD Debugger Launched <=='
+      if s:qf_entries < 1
         execute 'cclose'
       endif
     else
       " Launch GDB in a new terminal
       let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
       call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
-      echo "==> Build Successful (g:qf_entries:" . g:qf_entries . ") - GDB Launched <=="
+      echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - GDB Launched <=='
       execute 'redraw!'
     endif
   else
-    echohl ErrorMsg | echo "==> Build Failed <==" | echohl None
+    echohl ErrorMsg | echo '==> Build Failed <==' | echohl None
     execute 'cw'
   endif
 endfunction
@@ -335,14 +355,14 @@ function! s:BuildAndCheck()
     execute 'redraw!'
   endif
 
-  if g:qf_errors > 0
+  if s:qf_errors > 0
     let @/ = "error"
     execute 'copen'
-    echohl ErrorMsg | echo "==> Build Failed <==" | echohl None
-  elseif g:qf_warnings > 0
-    echohl WarningMsg | "==> Build finished with " . g:qf_entries . " issue(s) <==" | echohl None
+    echohl ErrorMsg | echo '==> Build Failed <==' | echohl None
+  elseif s:qf_warnings > 0
+    echohl WarningMsg | echo '==> Build finished with ' . s:qf_entries . ' issue(s) <==' | echohl None
   else
-    echohl OkMsg | echo "==> Build Successful <==" | echohl None
+    echohl OkMsg | echo '==> Build Successful <==' | echohl None
     execute 'cclose'
   endif
 endfunction
@@ -423,8 +443,8 @@ augroup NazNetrw
   autocmd Filetype netrw nnoremap <buffer> ~ :e ~/<CR>
   autocmd Filetype netrw nnoremap <buffer> l :Marklist<CR>
   autocmd Filetype netrw nnoremap <buffer> cp :Nazrwcp<CR>
-  autocmd Filetype netrw nnoremap <buffer> Mv :Nazrwmv<CR>
   autocmd Filetype netrw nmap <buffer> <Space> mfj
+  autocmd Filetype netrw nnoremap <buffer> Mv :Nazrwmv<CR>
 augroup END
 
 command! Cpath :let @+ = (&filetype == 'netrw' ? shellescape(b:netrw_curdir) : expand('%:p:S')) | echo "==> [" . @+ . "] copied to the clipboard <=="
@@ -432,7 +452,7 @@ command! Cpath :let @+ = (&filetype == 'netrw' ? shellescape(b:netrw_curdir) : e
 let mapleader = ","
 nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
-nnoremap <leader>src :source $MYVIMRC <CR> :echo "==> sourced vimrc <=="<CR>
+nnoremap <leader>src :source $MYVIMRC <bar> redrawtabline <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
 
@@ -474,6 +494,8 @@ function! NazTabLine()
     " Set filename (`main.c` part)
     if getbufvar(l:bufnr, '&filetype') == 'netrw'
       let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
+    elseif getbufvar(l:bufnr, '&filetype') == 'qf'
+      let l:filename = '(QF)'
     else
       let l:filename = fnamemodify(l:bufname, ':t')
       if l:filename == ''
@@ -491,16 +513,19 @@ function! NazTabLine()
 
   " Add the label to close the current tab page
   if tabpagenr('$') > 1
-    let l:tabline_str .= ' %#TabLine#%999X|x|'
+    let l:tabline_str .= '%#TabLine#%999X|x|'
   endif
 
   " Fill the remaining blank space with TabLineFill highlighting
   let l:tabline_str .= '%#TabLineFill#%T'
+  let l:tabline_str .= '%#TabLineInfo#%T'
+
+  let l:tabline_str .= '%=[%{QFTabline()}] ' . s:makeprg_cmd_name
+  let l:tabline_str .= " | %{strftime('%H:%M')}"
 
   return l:tabline_str
 endfunction
 
-" Tell Vim to evaluate this function to draw the tabline
 set tabline=%!NazTabLine()
 
 
@@ -551,14 +576,16 @@ nnoremap <leader>bgN :CycleBGPrev<CR>
 "============================================================
 if exists("g:neovide")
   " Initial scale
-  let g:neovide_scale_factor = 1.0
+  if !exists('g:neovide_scale_factor')
+    let g:neovide_scale_factor = 1.0
+  endif
 
-  " Ctrl + = (Increase), Ctrl + - (Decrease)
-  nnoremap <C-=> :let g:neovide_scale_factor += 0.2<CR>
-  nnoremap <C--> :let g:neovide_scale_factor -= 0.2<CR>
+  let g:neovide_scroll_animation_length = 0.2
 
-  " Reset scale with Control + 0
+  nnoremap <C-=> :let g:neovide_scale_factor += 0.1<CR>
+  nnoremap <C--> :let g:neovide_scale_factor -= 0.1<CR>
   nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
+  nnoremap <A-Enter> :let g:neovide_fullscreen = (g:neovide_fullscreen) ? v:false : v:true<CR>
 endif
 
 "------------------------------

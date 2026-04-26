@@ -34,6 +34,8 @@ hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
 hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 
+hi Directory        guibg=NONE    guifg=#ffaa00
+
 " --- Standard Syntax (C) ---
 hi Comment      guifg=#7c8f8f
 hi Constant     guifg=#90ee90            " Numbers
@@ -59,8 +61,9 @@ hi cppStatement   guifg=#7fdbca
 hi cppStructure   guifg=#db9e60
 
 " --- QuickFix / Diagnostic ---
-hi ErrorMsg       guibg=NONE guifg=#cc514e gui=bold cterm=bold
-hi WarningMsg     guibg=NONE guifg=#90ee90 gui=bold cterm=bold
+hi ErrorMsg       guibg=NONE guifg=#ff514e gui=bold cterm=bold
+hi WarningMsg     guibg=NONE guifg=#ffc64b gui=bold cterm=bold
+hi OkMsg          guibg=NONE guifg=#90ee90 gui=bold cterm=bold
 hi QuickFixLine   guibg=#11324d guifg=NONE
 hi qfFileName     guifg=#c77212
 
@@ -73,9 +76,11 @@ hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
 
 " --- Tabs (Native & Taboo) ---
-hi TabLineFill  guibg=#252c3f guifg=NONE    gui=NONE cterm=NONE " The empty space behind tabs
 hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
 hi TabLineSel   guibg=#366656 guifg=#90ee90 gui=bold cterm=bold " The currently active tab
+hi TabLineFill  guibg=#252c3f guifg=#8c9f9f gui=NONE cterm=NONE " The empty space behind tabs
+hi TabLineInfo  guibg=#252c3f guifg=#8c9f9f gui=italic cterm=italic
+" TabLineInfo needed to apply style without affecting the other tab highlights
 
 " --- Terminal Colors (ANSI Palette) ---
 let g:terminal_color_0  = '#000000' " Black
