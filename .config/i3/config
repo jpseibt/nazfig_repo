@@ -45,7 +45,7 @@ set $term xfce4-terminal
 
 # using the $term on the var declaration breaks the command, idk why
 set $quake_term_cmd xfce4-terminal --class=quake_term --disable-server
-exec $quake_term_cmd
+exec --no-startup-id $quake_term_cmd
 
 for_window [class="quake_term"] floating enable, sticky enable, resize set 1200 600, move scratchpad
 
@@ -78,8 +78,8 @@ set $floating_toggle_cmd floating toggle; [tiling] border pixel 2; [floating] bo
 # hide_edge_borders both
 
 # Set inner/outer gaps
-gaps inner 4
-gaps outer 2
+gaps inner 2
+gaps outer 1
 
 # show window title bars (not officially supported with i3gaps)
 #default_border normal
@@ -170,7 +170,6 @@ bindcode $mod+Shift+90   move container to workspace  $ws10
 ######################################
 # keybindings for different actions: #
 ######################################
-
 # start a terminal
 bindsym $mod+Return exec --no-startup-id xfce4-terminal
 
@@ -366,6 +365,7 @@ bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 # toggle between audio devices for output
 bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 
+
 ##########################################
 # App/Scripts shortcuts
 ##########################################
@@ -382,15 +382,14 @@ bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
 bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill
 bindsym $mod+p exec --no-startup-id clipmenu
-bindsym $mod+n exec --no-startup-id gvim ~/naznotes.txt
-
+bindsym $mod+n exec --no-startup-id neovide ~/naznotes.txt --x11-wm-class neovide_floating
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec --no-startup-id ~/.config/i3/scripts/power-profiles
+
 
 ##########################################
 # configuration for workspace behaviour: #
 ##########################################
-
 #¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁰
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
@@ -431,6 +430,7 @@ assign [instance="pinta"] $ws7
 assign [instance="gemini.google.com__app"] $ws8
 assign [instance="monkeytype"] $ws10
 assign [class="Xfce4-terminal"] $ws1
+assign [class="neovide"] $ws1
 assign [class="Chromium"] $ws2
 assign [class="(?i)firefox"] $ws2
 assign [class="Google-chrome"] $ws2
@@ -557,10 +557,8 @@ exec --no-startup-id /usr/bin/dunst
 #exec_always --no-startup-id autotiling
 
 # Autostart apps as you like
-#exec --no-startup-id sleep 2 && xfce4-terminal
-#exec --no-startup-id sleep 7 && firefox https://github.com/endeavouros-team/endeavouros-i3wm-setup/blob/main/force-knowledge.md
+exec --no-startup-id sleep 2 && ~/.config/vim/v/v --term
 exec --no-startup-id sleep 7 && chromium https://git-scm.com/docs/gittutorial#_managing_branches
-#exec --no-startup-id sleep 3 && thunar
 exec --no-startup-id clipmenud
 
 ###############
@@ -578,14 +576,17 @@ exec --no-startup-id clipmenud
 # clipman-applet
 #exec --no-startup-id xfce4-clipman
 
+
 ##################
 # floating rules #
 ##################
-
 # set floating (nontiling) for apps needing it
 for_window [class="Yad" instance="yad"] floating enable
 for_window [class="Galculator" instance="galculator"] floating enable
 for_window [class="Blueberry.py" instance="blueberry.py"] floating enable
+
+for_window [class="neovide_floating"] floating enable, move container to workspace current, resize set 1200 700, move position center, focus
+
 
 # set floating (nontiling) for special apps
 for_window [class="Xsane" instance="xsane"] floating enable
@@ -606,14 +607,14 @@ for_window [class="urxvt"] border pixel 1
 # set position of floating window
 #for_window [class=".*"] move position center
 
+
 ######################################
 # color settings for bar and windows #
 ######################################
-
 # Define colors variables:
 set $darkbluetrans  #08052be6
 set $darkblue       #08052b
-set $lightblue      #1d3c6b
+set $lightblue      #90ee90
 set $urgentred      #e53935
 set $white          #ffffff
 set $black          #000000
@@ -630,10 +631,10 @@ client.unfocused            $darkblue   $darkblue   $grey       $darkgrey   $dar
 client.focused_inactive     $darkblue   $darkblue   $grey       $black      $black
 client.urgent               $urgentred  $urgentred  $white      $yellowbrown    $yellowbrown
 
+
 ############################################
 # bar settings (input comes from i3blocks) #
 ############################################
-
 # Start i3bar to display a workspace bar
 # (plus the system information i3status finds out, if available)
 bar {
@@ -695,10 +696,10 @@ strip_workspace_numbers yes
 #   }
 #}
 
+
 #####################################
 # Application menu handled by rofi: #
 #####################################
-
 ## rofi bindings fancy application menu ($mod+d /F9 optional disabled)
 
 bindsym $mod+r exec --no-startup-id rofi -modi drun -show drun \
