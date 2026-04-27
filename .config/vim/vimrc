@@ -12,7 +12,7 @@ set nowritebackup     " Don't make a backup before overwriting a file
 
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
-set scrolloff=8       " Keep lines of context around the cursor
+set scrolloff=5       " Keep lines of context around the cursor
 set backspace=indent,eol,start
 
 set showcmd
@@ -20,6 +20,8 @@ set showcmdloc=last   " Show commands on the last line
 set showtabline=2     " Always show tabline
 set laststatus=2      " Always show statusline
 set statusline=[%n]\ %F\ %m%r\ %=ch(%b)\ \|\ %l:%c-%L\ ↓%p%%
+
+set wildoptions=pum
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
 
@@ -214,23 +216,18 @@ endfunction
 command! Make call s:SetMakeprg('Make', printf('%s -g -O0 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C final build
-"[legacy] command! MakeRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 command! MakeRelease call s:SetMakeprg('MakeRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C++ debug build (default for .cpp)
-"[legacy] command! Makecpp execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 command! Makecpp call s:SetMakeprg('Makecpp', printf('%s -g -O0 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:out_path))
 
 " C++ final build
-"[legacy] command! MakecppRelease execute printf("let &makeprg = '%s -O3 %s \"%%:p\" -o \"%s\"'", s:cpp_compiler, s:cpp_flags, s:out_path)
 command! MakecppRelease call s:SetMakeprg('MakecppRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:out_path))
 
 " C fsyntax-only
-"[legacy] command! Makefsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:c_compiler, s:c_flags)
 command! Makefsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %s "%%:p"', s:c_compiler, s:c_flags))
 
 " C++ fsyntax-only
-"[legacy] command! Makecppfsyntax execute printf("let &makeprg = '%s -fsyntax-only %s \"%%:p\"'", s:cpp_compiler, s:cpp_flags)
 command! Makecppfsyntax call s:SetMakeprg('Makecppfsyntax', printf('%s -fsyntax-only %s "%%:p"', s:cpp_compiler, s:cpp_flags))
 
 " MSVC debug build (need vcvars env)
@@ -452,8 +449,14 @@ command! Cpath :let @+ = (&filetype == 'netrw' ? shellescape(b:netrw_curdir) : e
 let mapleader = ","
 nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
-nnoremap <leader>src :source $MYVIMRC <bar> redrawtabline <CR> :echo "==> sourced vimrc <=="<CR>
+nnoremap <leader>src :source $MYVIMRC <bar> redraw! <bar> redrawtabline <bar> redrawstatus <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
+
+if has('nvim') " Make arrow keys behave like Vim in wildmenu
+  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
+  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
+  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
+endif
 
 
 "============================================================

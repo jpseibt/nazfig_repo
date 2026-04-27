@@ -19,6 +19,8 @@ let g:colors_name = 'naz'
 " --- Core UI Elements ---
 hi Normal           guibg=#101622 guifg=#c3ccdc
 hi LineNr           guibg=NONE    guifg=#4b6479
+hi LineNrAbove      guibg=NONE    guifg=#4b6479
+hi LineNrBelow      guibg=NONE    guifg=#4b6479
 hi CursorLine       guibg=#11324d guifg=NONE    gui=NONE cterm=NONE
 hi CursorLineNr     guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE
 hi VertSplit        guibg=NONE    guifg=#252c3f gui=NONE cterm=NONE
@@ -35,6 +37,18 @@ hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 
 hi Directory        guibg=NONE    guifg=#ffaa00
+hi EndOfBuffer      guibg=NONE    guifg=#444466
+hi NonText          guibg=NONE    guifg=#444466
+hi Folded           guibg=#336666 guifg=#000000
+hi FoldColumn       guibg=#336666 guifg=#000000 gui=bold cterm=bold
+hi SignColumn       guibg=NONE    guifg=#ffffff gui=bold cterm=bold
+hi ModeMsg          guibg=NONE    guifg=#90ee90
+hi MsgArea          guibg=NONE    guifg=NONE
+hi MsgSeparator     guibg=#11324d guifg=#0094ea gui=bold cterm=bold
+hi MoreMsg          guibg=NONE    guifg=#40ffbb
+
+hi Pmenu            guibg=#002244
+hi WildMenu         guibg=#dddddd guifg=#0094ea
 
 " --- Standard Syntax (C) ---
 hi Comment      guifg=#7c8f8f
@@ -64,8 +78,17 @@ hi cppStructure   guifg=#db9e60
 hi ErrorMsg       guibg=NONE guifg=#ff514e gui=bold cterm=bold
 hi WarningMsg     guibg=NONE guifg=#ffc64b gui=bold cterm=bold
 hi OkMsg          guibg=NONE guifg=#90ee90 gui=bold cterm=bold
+hi StderrMsg      guibg=NONE guifg=#ff514e gui=bold cterm=bold
+hi StdoutMsg      guibg=NONE guifg=NONE
 hi QuickFixLine   guibg=#11324d guifg=NONE
 hi qfFileName     guifg=#c77212
+
+" --- Diff ---
+hi DiffAdd        guibg=#00aa66 guifg=#dddddd
+hi DiffChange     guibg=#686868 guifg=#dddddd
+hi DiffDelete     guibg=NONE    guifg=#dd6666 gui=bold cterm=bold
+hi DiffText       guibg=#006666 guifg=#dddddd
+hi DiffTextAdd    guibg=#009999 guifg=#dddddd
 
 " --- netrw ---
 hi netrwDir       guifg=#0094ea gui=bold cterm=bold " Directories
@@ -75,7 +98,7 @@ hi netrwSymLink   guifg=#7fdbca                     " Symlinks
 hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters (|)
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
 
-" --- Tabs (Native & Taboo) ---
+" --- Tabs ---
 hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
 hi TabLineSel   guibg=#366656 guifg=#90ee90 gui=bold cterm=bold " The currently active tab
 hi TabLineFill  guibg=#252c3f guifg=#8c9f9f gui=NONE cterm=NONE " The empty space behind tabs
