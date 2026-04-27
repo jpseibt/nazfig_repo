@@ -97,6 +97,7 @@ hi netrwExe       guifg=#90ee90                     " Executable files
 hi netrwSymLink   guifg=#7fdbca                     " Symlinks
 hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters (|)
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
+hi netrwMarkFile  guibg=NONE " Hide netrw marking highlights (because it gliches when refreshing)
 
 " --- Tabs ---
 hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
