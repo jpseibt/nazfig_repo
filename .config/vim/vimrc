@@ -1,3 +1,5 @@
+" Zero dependencies vimrc
+
 let s:is_win = has('win32') || has('win64')
 
 syntax enable
@@ -21,7 +23,7 @@ set showtabline=2     " Always show tabline
 set laststatus=2      " Always show statusline
 set statusline=[%n]\ %F\ %m%r\ %=ch(%b)\ \|\ %l:%c-%L\ ↓%p%%
 
-set wildoptions=pum
+set wildoptions=pum   " Show wildmenu as a pop-up
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
 
@@ -212,7 +214,6 @@ function! s:SetMakeprg(name, cmd)
 endfunction
 
 " C debug build (default for .c)
-"[legacy] command! Make execute printf("let &makeprg = '%s -g -O0 %s \"%%:p\" -o \"%s\"'", s:c_compiler, s:c_flags, s:out_path)
 command! Make call s:SetMakeprg('Make', printf('%s -g -O0 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C final build
@@ -375,6 +376,10 @@ nnoremap <F5> :Build<CR>
 "============================================================
 let g:netrw_keepdir = 0
 
+if !exists('s:nazrw_mark_list')
+  let s:nazrw_mark_list = []
+endif
+
 function! s:NazrwCopyMove(move)
   if a:move
     let l:cmd = (s:is_win) ? 'move /Y' : 'mv -f'
@@ -385,12 +390,12 @@ function! s:NazrwCopyMove(move)
   " Choices: [1]'Yes', [2]'No', [3]'All' (:help confirm() -> [0] is for <Esc>, CTRL-C)
   let l:choice = 2
 
-  let l:mark_list = netrw#Expose("netrwmarkfilelist")
-  if empty(l:mark_list)
+  let s:nazrw_mark_list = netrw#Expose("netrwmarkfilelist")
+  if empty(s:nazrw_mark_list)
     echom '==> Mark list in empty <=='
     return
   endif
-  for l:curr_file in l:mark_list
+  for l:curr_file in s:nazrw_mark_list
     let l:src_path = fnamemodify(l:curr_file, ':p')
     let l:dest_path = fnamemodify(b:netrw_curdir . '/' . fnamemodify(l:src_path, ':t'), ':p')
 
@@ -416,17 +421,20 @@ function! s:NazrwCopyMove(move)
   endfor
 
   call netrw#Modify("netrwmarkfilelist", [])
+  let s:nazrw_mark_list = []
+
   execute "normal \<C-l>"
 endfunction
 
 function! s:NazrwShowMarkList(last)
-  let l:mark_list = netrw#Expose("netrwmarkfilelist")
+  let s:nazrw_mark_list = netrw#Expose("netrwmarkfilelist")
 
-  if type(l:mark_list) == type("") || empty(l:mark_list)
+  if type(s:nazrw_mark_list) == type("") || empty(s:nazrw_mark_list)
+    let s:nazrw_mark_list = []
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
   else
     " copy the mark list with relative paths
-    let l:rel_mark_list = map(copy(l:mark_list), "fnamemodify(v:val, ':.')")
+    let l:rel_mark_list = map(copy(s:nazrw_mark_list), "fnamemodify(v:val, ':.')")
     let l:len_mark_list = len(l:rel_mark_list)
 
     if a:last
@@ -436,6 +444,12 @@ function! s:NazrwShowMarkList(last)
       echo '* ' . join(l:rel_mark_list, "\n* ")
     endif
   endif
+
+  redrawtabline
+endfunction
+
+function! NazrwTabline()
+  return (empty(s:nazrw_mark_list)) ? 'M:_' : 'M:' . len(s:nazrw_mark_list)
 endfunction
 
 command! Nazrwcp call s:NazrwCopyMove(0)
@@ -452,8 +466,8 @@ augroup NazNetrw
   autocmd Filetype netrw nnoremap <buffer> Mv :Nazrwmv<CR>
   autocmd Filetype netrw nnoremap <buffer> mu :call netrw#Modify("netrwmarkfilelist", []) <bar> Marklast<CR>
   autocmd Filetype netrw nnoremap <buffer> L  :Marklist<CR>
-  autocmd Filetype netrw nmap     <buffer> ,  mf:Marklast<CR>j
-  autocmd Filetype netrw nmap     <buffer> ;  mf:Marklast<CR>k
+  autocmd Filetype netrw nmap     <buffer> ;  mf:Marklast<CR>j
+  autocmd Filetype netrw nmap     <buffer> ,  mf:Marklast<CR>k
 augroup END
 
 command! Cpath :let @+ = (&filetype == 'netrw' ? shellescape(b:netrw_curdir) : expand('%:p:S')) | echo "==> [" . @+ . "] copied to the clipboard <=="
@@ -463,12 +477,6 @@ nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <bar> redraw! <bar> redrawtabline <bar> redrawstatus <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
-
-if has('nvim') " Make arrow keys behave like Vim in wildmenu
-  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
-  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
-  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
-endif
 
 
 "============================================================
@@ -480,7 +488,7 @@ nnoremap <C-S-PageUp> :tabmove -1<CR>
 let s:superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹']
 
 " :help setting-tabline
-function! NazTabLine()
+function! NazTabline()
   let l:tabline_str = ''
 
   " Loop through each tab page
@@ -507,8 +515,12 @@ function! NazTabLine()
     let l:bufname = bufname(l:bufnr)
 
     " Set filename (`main.c` part)
+    let l:filename = ''
     if getbufvar(l:bufnr, '&filetype') == 'netrw'
-      let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
+      if !empty(s:nazrw_mark_list) && l:i + 1 == tabpagenr()
+        let l:filename = '>' . len(s:nazrw_mark_list) . '< '
+      endif
+      let l:filename .= '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
     elseif getbufvar(l:bufnr, '&filetype') == 'qf'
       let l:filename = '(QF)'
     else
@@ -541,7 +553,7 @@ function! NazTabLine()
   return l:tabline_str
 endfunction
 
-set tabline=%!NazTabLine()
+set tabline=%!NazTabline()
 
 
 "============================================================
@@ -601,6 +613,11 @@ if exists("g:neovide")
   nnoremap <C--> :let g:neovide_scale_factor -= 0.1<CR>
   nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
   nnoremap <A-Enter> :let g:neovide_fullscreen = (g:neovide_fullscreen) ? v:false : v:true<CR>
+
+  " Make arrow keys behave like Vim in wildmenu
+  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
+  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
+  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
 endif
 
 "------------------------------

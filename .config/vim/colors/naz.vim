@@ -1,4 +1,4 @@
-" Name: naz
+" Colorscheme name: naz
 
 highlight clear
 if exists('syntax_on')
@@ -6,17 +6,19 @@ if exists('syntax_on')
 endif
 let g:colors_name = 'naz'
 
-" ====================================================================
-" Color Palette Reference
-" ====================================================================
+" ===========================================
+" Color Palette Reference (loose)
+" ===========================================
 " Background: #101622  | Foreground:  #c3ccdc
 " Comments:   #7c8f8f  | Functions:   #0094ea
 " Strings:    #37b166  | Types:       #c77212
 " Statements: #db9e60  | Constants:   #90ee90
 " PreProc:    #ff5874  | Identifiers: #7fdbca
-" ====================================================================
+" ===========================================
 
-" --- Core UI Elements ---
+"------------------------------
+" Core UI Elements
+"
 hi Normal           guibg=#101622 guifg=#c3ccdc
 hi LineNr           guibg=NONE    guifg=#4b6479
 hi LineNrAbove      guibg=NONE    guifg=#4b6479
@@ -50,7 +52,9 @@ hi MoreMsg          guibg=NONE    guifg=#40ffbb
 hi Pmenu            guibg=#002244
 hi WildMenu         guibg=#dddddd guifg=#0094ea
 
-" --- Standard Syntax (C) ---
+"------------------------------
+" Standard Syntax (C)
+"
 hi Comment      guifg=#7c8f8f
 hi Constant     guifg=#90ee90            " Numbers
 hi String       guifg=#37b166            " String literals
@@ -64,7 +68,9 @@ hi StorageClass guifg=#db9e60            " static, const
 hi Operator     guifg=#ff5874            " sizeof, +, -, *
 hi Special      guifg=#ff5874            " \n, \t inside strings
 
-" --- C/C++ Specific Overrides ---
+"------------------------------
+" C/C++ Specific Overrides
+"
 hi cTypedef       guifg=#db9e60
 hi cppAccess      guifg=#db9e60
 hi cppCast        guifg=#7fdbca
@@ -74,7 +80,9 @@ hi cppOperator    guifg=#a1cd5e
 hi cppStatement   guifg=#7fdbca
 hi cppStructure   guifg=#db9e60
 
-" --- QuickFix / Diagnostic ---
+"------------------------------
+" QuickFix / Diagnostic
+"
 hi ErrorMsg       guibg=NONE guifg=#ff514e gui=bold cterm=bold
 hi WarningMsg     guibg=NONE guifg=#ffc64b gui=bold cterm=bold
 hi OkMsg          guibg=NONE guifg=#90ee90 gui=bold cterm=bold
@@ -83,30 +91,38 @@ hi StdoutMsg      guibg=NONE guifg=NONE
 hi QuickFixLine   guibg=#11324d guifg=NONE
 hi qfFileName     guifg=#c77212
 
-" --- Diff ---
+"------------------------------
+" Diff
+"
 hi DiffAdd        guibg=#00aa66 guifg=#dddddd
 hi DiffChange     guibg=#686868 guifg=#dddddd
 hi DiffDelete     guibg=NONE    guifg=#dd6666 gui=bold cterm=bold
 hi DiffText       guibg=#006666 guifg=#dddddd
 hi DiffTextAdd    guibg=#009999 guifg=#dddddd
 
-" --- netrw ---
+"------------------------------
+" Netrw
+"
 hi netrwDir       guifg=#0094ea gui=bold cterm=bold " Directories
 hi netrwClassify  guifg=#ff5874                     " Trailing symbols like / or *
 hi netrwExe       guifg=#90ee90                     " Executable files
 hi netrwSymLink   guifg=#7fdbca                     " Symlinks
 hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters (|)
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
-hi netrwMarkFile  guibg=NONE " Hide netrw marking highlights (because it gliches when refreshing)
+hi netrwMarkFile  guibg=NONE " Hide netrw marks highlight (because it gliches when refreshing)
 
-" --- Tabs ---
+"------------------------------
+" Tabs
+"
 hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
 hi TabLineSel   guibg=#366656 guifg=#90ee90 gui=bold cterm=bold " The currently active tab
 hi TabLineFill  guibg=#252c3f guifg=#8c9f9f gui=NONE cterm=NONE " The empty space behind tabs
 hi TabLineInfo  guibg=#252c3f guifg=#8c9f9f gui=italic cterm=italic
 " TabLineInfo needed to apply style without affecting the other tab highlights
 
-" --- Terminal Colors (ANSI Palette) ---
+"------------------------------
+" Terminal Colors (ANSI Palette)
+"
 let g:terminal_color_0  = '#000000' " Black
 let g:terminal_color_1  = '#e06c75' " Red
 let g:terminal_color_2  = '#98c379' " Green
