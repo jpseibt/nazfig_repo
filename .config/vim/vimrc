@@ -20,8 +20,6 @@ set backspace=indent,eol,start
 set showcmd
 set showcmdloc=last   " Show commands on the last line
 
-"[legacy] set statusline=[%n]\ %F\ %m%r\ %=ch(%b)\ \|\ %l:%c-%L\ ↓%p%%
-
 set wildoptions=pum   " Show wildmenu as a pop-up
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
@@ -242,18 +240,26 @@ command! Cpmakeprg :let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' 
 " Copy expanded makeprg to clipboard
 command! Cpmake :let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name . ' (expanded) [' . @+ . '] copied to the clipboard <=='
 
-augroup MakeprgCmds
-  autocmd!
-  autocmd Filetype c Makefsyntax
-  autocmd Filetype cpp Makecppfsyntax
-augroup END
-
-
 "------------------------------
 " Quickfix List
 "
-" Prepend to &errorformat regex to parse 'type' correctly in Clang/GCC
-set errorformat^=%f:%l:%c:\ %t%*[^:]:\ %m
+" Prepend regex to parse (%f, %l, %t, %m) compiler/linker output correctly for QFListCount()
+if !exists('s:prepend_regex_errorformat')
+  let s:prepend_regex_errorformat = 1
+  set errorformat& " Reset errorformat to default
+
+  " Clang/GCC
+  set errorformat^=%f:%l:%c:\ %t%*[^:]:\ %m
+
+  " MSVC Compiler (`file.cpp(#line): error C2065: ...`)
+  set errorformat^=%f(%l):\ %t%*[^:]:\ %m
+
+  " MSVC Linker (`file.obj : error LNK2019: ...`)
+  set errorformat^=%f\ :\ %t%*[^:]:\ %m
+
+  " MSVC Linker Fatal (`file.obj : fatal error LNK2019: ...`)
+  set errorformat^=%f\ :\ fatal\ %t%*[^:]:\ %m
+endif
 
 if !exists('s:qf_entries')
   let s:qf_entries = 0
@@ -524,7 +530,7 @@ function! NazTabline()
     if l:buf_filetype == 'netrw'
       let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
     elseif l:buf_filetype == 'qf'
-      let l:filename = '(QF)'
+      let l:filename = '(QF) %{QFTabline()}'
     else
       let l:filename = fnamemodify(l:bufname, ':t')
       if l:filename == ''
@@ -532,7 +538,7 @@ function! NazTabline()
       endif
     endif
 
-    " Append a '+' if the buffer has unsaved changes
+    " Append a '*' if the buffer has unsaved changes
     if getbufvar(l:bufnr, '&modified')
       let l:filename .= '*'
     endif
