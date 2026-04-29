@@ -19,9 +19,8 @@ set backspace=indent,eol,start
 
 set showcmd
 set showcmdloc=last   " Show commands on the last line
-set showtabline=2     " Always show tabline
-set laststatus=2      " Always show statusline
-set statusline=[%n]\ %F\ %m%r\ %=ch(%b)\ \|\ %l:%c-%L\ ↓%p%%
+
+"[legacy] set statusline=[%n]\ %F\ %m%r\ %=ch(%b)\ \|\ %l:%c-%L\ ↓%p%%
 
 set wildoptions=pum   " Show wildmenu as a pop-up
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
@@ -480,13 +479,19 @@ nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
 
 
 "============================================================
-" Tabline
+" Tabline & Statusline
 "============================================================
-nnoremap <C-S-PageDown> :tabmove +1<CR>
-nnoremap <C-S-PageUp> :tabmove -1<CR>
+set showtabline=2     " Always show tabline
+set laststatus=2      " Always show statusline
 
 let s:superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹']
 
+nnoremap <C-S-PageDown> :tabmove +1<CR>
+nnoremap <C-S-PageUp> :tabmove -1<CR>
+
+"------------------------------
+" Tabline
+"
 " :help setting-tabline
 function! NazTabline()
   let l:tabline_str = ''
@@ -513,15 +518,12 @@ function! NazTabline()
     let l:winnr = tabpagewinnr(l:i + 1)
     let l:bufnr = l:buflist[l:winnr - 1] 
     let l:bufname = bufname(l:bufnr)
+    let l:buf_filetype = getbufvar(l:bufnr, '&filetype')
 
     " Set filename (`main.c` part)
-    let l:filename = ''
-    if getbufvar(l:bufnr, '&filetype') == 'netrw'
-      if !empty(s:nazrw_mark_list) && l:i + 1 == tabpagenr()
-        let l:filename = '>' . len(s:nazrw_mark_list) . '< '
-      endif
-      let l:filename .= '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
-    elseif getbufvar(l:bufnr, '&filetype') == 'qf'
+    if l:buf_filetype == 'netrw'
+      let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
+    elseif l:buf_filetype == 'qf'
       let l:filename = '(QF)'
     else
       let l:filename = fnamemodify(l:bufname, ':t')
@@ -554,6 +556,31 @@ function! NazTabline()
 endfunction
 
 set tabline=%!NazTabline()
+
+"------------------------------
+" Statusline
+"
+function! NazStatusline()
+  let l:statusline_str = '[%n]' " buffer number
+
+  let l:bufnr = winbufnr(g:statusline_winid)
+  let l:buf_filetype = getbufvar(l:bufnr, '&filetype')
+
+  if l:buf_filetype == 'netrw'
+    let l:statusline_str .= ' %#Directory#' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':t') . '/%*'
+    let l:len_mark_list = len(s:nazrw_mark_list)
+    if l:len_mark_list > 0
+      let l:statusline_str .= ' %#WarningMsg#[M:' . l:len_mark_list . ']%*'
+    endif
+  else
+    let l:statusline_str .= ' %F %m%r'
+  endif
+
+  let l:statusline_str .= ' %=ch(%b) | %l:%c-%L ↓%p%%'
+  return l:statusline_str
+endfunction
+
+set statusline=%!NazStatusline()
 
 
 "============================================================

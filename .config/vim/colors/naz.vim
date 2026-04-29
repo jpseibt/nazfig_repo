@@ -38,7 +38,7 @@ hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
 hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 
-hi Directory        guibg=NONE    guifg=#ffaa00
+hi Directory        guibg=NONE    guifg=#8888ff
 hi EndOfBuffer      guibg=NONE    guifg=#444466
 hi NonText          guibg=NONE    guifg=#444466
 hi Folded           guibg=#336666 guifg=#000000
@@ -94,11 +94,11 @@ hi qfFileName     guifg=#c77212
 "------------------------------
 " Diff
 "
-hi DiffAdd        guibg=#00aa66 guifg=#dddddd
-hi DiffChange     guibg=#686868 guifg=#dddddd
-hi DiffDelete     guibg=NONE    guifg=#dd6666 gui=bold cterm=bold
-hi DiffText       guibg=#006666 guifg=#dddddd
-hi DiffTextAdd    guibg=#009999 guifg=#dddddd
+hi DiffAdd        guibg=#009966 guifg=#000000
+hi DiffChange     guibg=#88a899 guifg=#222222
+hi DiffDelete     guibg=#884444 guifg=#dd6666 gui=bold cterm=bold
+hi DiffText       guibg=#006666 guifg=#ffffff
+hi DiffTextAdd    guibg=#007766 guifg=#000000
 
 "------------------------------
 " Netrw
