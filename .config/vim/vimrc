@@ -453,10 +453,6 @@ function! s:NazrwShowMarkList(last)
   redrawtabline
 endfunction
 
-function! NazrwTabline()
-  return (empty(s:nazrw_mark_list)) ? 'M:_' : 'M:' . len(s:nazrw_mark_list)
-endfunction
-
 command! Nazrwcp call s:NazrwCopyMove(0)
 command! Nazrwmv call s:NazrwCopyMove(1)
 command! Marklist call s:NazrwShowMarkList(0)
