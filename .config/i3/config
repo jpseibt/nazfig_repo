@@ -171,7 +171,7 @@ bindcode $mod+Shift+90   move container to workspace  $ws10
 # keybindings for different actions: #
 ######################################
 # start a terminal
-bindsym $mod+Return exec --no-startup-id xfce4-terminal
+bindsym Ctrl+$alt+t exec --no-startup-id $term
 
 # kill focused window
 bindsym $mod+q kill
@@ -369,6 +369,7 @@ bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 ##########################################
 # App/Scripts shortcuts
 ##########################################
+bindsym $mod+Return exec --no-startup-id ~/nazcripts/app-toggle.sh neovide
 bindsym $mod+b exec --no-startup-id ~/nazcripts/app-toggle.sh chromium
 bindsym $mod+e exec --no-startup-id ~/nazcripts/app-toggle.sh thunar
 bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
