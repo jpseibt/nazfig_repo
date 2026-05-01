@@ -156,12 +156,9 @@ command! Verminal call GlobalTerminal(2)
 command! Terminal call GlobalTerminal(3)
 
 function! GerminalHere(mode)
-  let l:head_dir = expand('%:p:h:S')
-  if &filetype == 'netrw'
-    let l:head_dir = shellescape(b:netrw_curdir)
-  endif
+  let l:head_dir = (&filetype == 'netrw') ? b:netrw_curdir : expand('%:p:h')
   call GlobalTerminal(a:mode)
-  call feedkeys("i\<C-c> cd " . l:head_dir . "\<CR>\<Esc>", 't')
+  call feedkeys("i\<C-c> cd " . ShellEscape(l:head_dir) . "\<CR>\<Esc>", 't')
 endfunction
 
 command! Germhere call GerminalHere(0)
@@ -379,6 +376,14 @@ nnoremap <F5> :Build<CR>
 "============================================================
 " Misc & Netrw
 "============================================================
+function! ShellEscape(str)
+  if s:is_win
+    return '"' . tr(a:str, '/', '\') . '"'
+  else
+    return shellescape(a:str)
+  endif
+endfunction
+
 let g:netrw_keepdir = 0
 
 if !exists('s:nazrw_mark_list')
@@ -415,14 +420,11 @@ function! s:NazrwCopyMove(move)
       endif
     endif
 
-    if s:is_win
-      " Change forward slashes to backward slashes
-      let l:src_path = tr(l:src_path, '/', '\')
-      let l:dest_path = tr(l:dest_path, '/', '\')
-    endif
+    let l:src_path = ShellEscape(l:src_path)
+    let l:dest_path = ShellEscape(l:dest_path)
 
-    echom '$ ' . l:cmd . " \"" . l:src_path . "\" \"" . l:dest_path . "\""
-    call system(l:cmd . " \"" . l:src_path . "\" \"" . l:dest_path . "\"")
+    echom '$ ' . l:cmd . ' ' . l:src_path . ' ' . l:dest_path
+    call system(l:cmd . ' ' . l:src_path . ' ' . l:dest_path)
   endfor
 
   call netrw#Modify("netrwmarkfilelist", [])
@@ -461,7 +463,7 @@ command! Marklast call s:NazrwShowMarkList(1)
 augroup NazNetrw
   autocmd!
   " [Y]-> Copy file/dir path under the cursor on Netrw
-  autocmd Filetype netrw nnoremap <buffer> Y  :let @+ = fnamemodify(b:netrw_curdir . '/' . expand("<cfile>"), ':p:S')<CR> :echo "==> [" . @+ . "] copied to the clipboard <=="<CR>
+  autocmd Filetype netrw nnoremap <buffer> Y  :let @+ = ShellEscape(b:netrw_curdir . '/' . expand('<cfile>')) <bar> echo '==> [' . @+ . '] copied to the clipboard <=='<CR>
   autocmd Filetype netrw nnoremap <buffer> ~  :e ~/<CR>
   autocmd Filetype netrw nnoremap <buffer> cp :Nazrwcp<CR>
   autocmd Filetype netrw nnoremap <buffer> Mv :Nazrwmv<CR>
@@ -471,7 +473,7 @@ augroup NazNetrw
   autocmd Filetype netrw nmap     <buffer> ,  mf:Marklast<CR>k
 augroup END
 
-command! Cpath :let @+ = (&filetype == 'netrw' ? shellescape(b:netrw_curdir) : expand('%:p:S')) | echo "==> [" . @+ . "] copied to the clipboard <=="
+command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
 
 let mapleader = "\<Backspace>"
 nnoremap <leader>cop :copen<CR>
