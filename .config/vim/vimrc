@@ -494,16 +494,15 @@ function! s:NazrwCopyMove(is_move)
 
   call netrw#Modify("netrwmarkfilelist", [])
   let s:nazrw_mark_list = []
-
   execute "normal \<C-l>"
 endfunction
 
 "------------------------------
 " Archiving
 "
+let s:valid_archive_exts = ['zip', 'gz', 'tar', 'tgz', '7z', 'xz', 'bz2', 'tbz2']
 let s:default_archive_ext = 'zip'
 
-"NOTE: Implement archive path directory creation, if doesn't exist
 function! s:NazrwArchive()
   call s:NazrwUpdateMarkList()
   if empty(s:nazrw_mark_list)
@@ -526,6 +525,12 @@ function! s:NazrwArchive()
     let l:archive_path .= '.' . s:default_archive_ext
   endif
 
+  " Check if archive head directory exists
+  let l:archive_head = fnamemodify(l:archive_path, ':h')
+  if !isdirectory(l:archive_head)
+    call mkdir(l:archive_head, 'p')
+  endif
+
   let l:cmd .= ShellEscape(l:archive_path)
 
   " Loop through the files in the mark list and append ` -C file_head file_tail` to the tar command
@@ -540,14 +545,49 @@ function! s:NazrwArchive()
 
   call netrw#Modify("netrwmarkfilelist", [])
   let s:nazrw_mark_list = []
-
   execute "normal \<C-l>"
 endfunction
 
 function! s:NazrwExtract()
-  " Loop through marked files (do some checking ...) and prompt for the directory where
-  " the contents of the archives should be extracted. Behave like 7Zip `Extract To`
-  return
+  call s:NazrwUpdateMarkList()
+  if empty(s:nazrw_mark_list)
+    echohl Directory | echo '==> Mark list is empty <==' | echohl None
+    return
+  endif
+
+  " Prompt for extraction destination directory
+  let l:extract_dir = input('Extract to: ', b:netrw_curdir . '/nazrw_extracted', 'dir')
+  echo "\n"
+
+  if empty(l:extract_dir)
+    echom '[s:NazrwExtract()] Aborted.'
+    return
+  endif
+
+  " Check if destination directory exists
+  if !isdirectory(l:extract_dir)
+    call mkdir(l:extract_dir, "p")
+  endif
+
+  for l:curr_file in s:nazrw_mark_list
+    let l:src_path = fnamemodify(l:curr_file, ':p')
+    let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
+
+    " Check if extention of current file is a valid archive ext
+    if index(s:valid_archive_exts, tolower(fnamemodify(l:src_path, ':e'))) == -1
+      echom '[s:NazrwExtract()] Skipping non-archive file: ' . fnamemodify(l:src_path, ':t')
+      continue
+    endif
+
+    let l:cmd = 'tar -xf ' . ShellEscape(l:src_path) . ' -C ' . ShellEscape(l:extract_dir)
+
+    echom '[s:NazrwExtract()]$ ' . l:cmd
+    call system(l:cmd)
+  endfor
+
+  call netrw#Modify("netrwmarkfilelist", [])
+  let s:nazrw_mark_list = []
+  execute "normal \<C-l>"
 endfunction
 
 "------------------------------
