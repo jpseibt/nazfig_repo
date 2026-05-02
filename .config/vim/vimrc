@@ -423,6 +423,9 @@ endfunction
 "------------------------------
 " Copy / Move
 "
+" NOTE (OS file system behavior):
+" - Windows: copying/moving a folder into an existing folder will cause a MERGE
+" - Linux:   copying/moving a folder into an existing folder will cause a NEST (`dest/src_tail`)
 function! s:GetCopyMoveCmd(is_move, is_dir)
   if a:is_move
     if s:is_win
@@ -455,15 +458,25 @@ function! s:NazrwCopyMove(is_move)
     let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
     let l:dest_path = b:netrw_curdir . '/' . fnamemodify(l:src_path, ':t')
 
-    let l:cmd = s:GetCopyMoveCmd(a:is_move, isdirectory(l:src_path))
+    let l:src_is_dir = isdirectory(l:src_path)
+    let l:dest_is_dir = isdirectory(l:dest_path)
+
+    let l:cmd = s:GetCopyMoveCmd(a:is_move, l:src_is_dir)
+
+  "(NEST check) Collisions for copying/moving directories on Linux happen in `dest/src_tail`
+    let l:final_dest_path = l:dest_path
+    if !s:is_win && l:src_is_dir && l:dest_is_dir
+      let l:final_dest_path = l:dest_path . '/' . fnamemodify(l:src_path, ':t')
+    endif
 
 "[DEBUG]echom 'l:cmd: '. l:cmd
 "[DEBUG]echom 'l:src_path: '. l:src_path
 "[DEBUG]echom 'l:dest_path: ' . l:dest_path
+"[DEBUG]echom 'l:final_dest_path: ' . l:final_dest_path
 
     " Check for overwrite and escape ([0] <Esc>)
-    if (filereadable(l:dest_path) || isdirectory(l:dest_path)) && l:choice != 3
-      let l:choice = confirm("Confirm overwrite of file [" . l:dest_path . ']?', "&yes\n&no\n&all")
+    if (filereadable(l:final_dest_path) || isdirectory(l:final_dest_path)) && l:choice != 3
+      let l:choice = confirm("Confirm overwrite of file [" . l:final_dest_path . ']?', "&yes\n&no\n&all")
       if l:choice == 0
         echom '[s:NazrwCopyMove()] Aborted.'
         break
