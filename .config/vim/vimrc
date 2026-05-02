@@ -423,29 +423,46 @@ endfunction
 "------------------------------
 " Copy / Move
 "
-"NOTE: Implement copying/moving directories
-function! s:NazrwCopyMove(move)
+function! s:GetCopyMoveCmd(is_move, is_dir)
+  if a:is_move
+    if s:is_win
+      return 'move /Y'
+    else
+      return 'mv -f'
+    endif
+  else
+    if s:is_win
+      return (a:is_dir) ? 'xcopy /E /I /Q /H /Y' : 'copy /Y'
+    else
+      return 'cp -rf'
+    endif
+  endif
+endfunction
+
+function! s:NazrwCopyMove(is_move)
   call s:NazrwUpdateMarkList()
   if empty(s:nazrw_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
   endif
 
-  if a:move
-    let l:cmd = (s:is_win) ? 'move /Y' : 'mv -f'
-  else
-    let l:cmd = (s:is_win) ? 'copy /Y' : 'cp -f'
-  endif
-
   " Choices: [1]'Yes', [2]'No', [3]'All' (:help confirm() -> [0] is for <Esc>, CTRL-C)
   let l:choice = 2
 
   for l:curr_file in s:nazrw_mark_list
+    " Use regex to remove trailing slashes ('/' or '\'), so `:t` also return directories (for '~/dir//', tail is 'dir')
     let l:src_path = fnamemodify(l:curr_file, ':p')
-    let l:dest_path = fnamemodify(b:netrw_curdir . '/' . fnamemodify(l:src_path, ':t'), ':p')
+    let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
+    let l:dest_path = b:netrw_curdir . '/' . fnamemodify(l:src_path, ':t')
+
+    let l:cmd = s:GetCopyMoveCmd(a:is_move, isdirectory(l:src_path))
+
+"[DEBUG]echom 'l:cmd: '. l:cmd
+"[DEBUG]echom 'l:src_path: '. l:src_path
+"[DEBUG]echom 'l:dest_path: ' . l:dest_path
 
     " Check for overwrite and escape ([0] <Esc>)
-    if filereadable(l:dest_path) && l:choice != 3
+    if (filereadable(l:dest_path) || isdirectory(l:dest_path)) && l:choice != 3
       let l:choice = confirm("Confirm overwrite of file [" . l:dest_path . ']?', "&yes\n&no\n&all")
       if l:choice == 0
         echom '[s:NazrwCopyMove()] Aborted.'
@@ -534,16 +551,16 @@ augroup NazNetrw
   autocmd!
   " [Y]-> Copy file/dir path under the cursor on Netrw
   autocmd Filetype netrw nnoremap <buffer> Y  :let @+ = ShellEscape(b:netrw_curdir . '/' . expand('<cfile>')) <bar> echo '==> [' . @+ . '] copied to the clipboard <=='<CR>
-  autocmd Filetype netrw nnoremap <buffer> ~   :e ~/<CR>
-  autocmd Filetype netrw nnoremap <buffer> mcp :Nazrwcp<CR>
-  autocmd Filetype netrw nnoremap <buffer> mv  :Nazrwmv<CR>
-  autocmd Filetype netrw nnoremap <buffer> mz  :Nazrwzip<CR>
-  autocmd Filetype netrw nnoremap <buffer> mZ  :Nazrwunzip<CR>
-  autocmd Filetype netrw nnoremap <buffer> mu  :call netrw#Modify("netrwmarkfilelist", []) <bar> Marklast<CR>
-  autocmd Filetype netrw nnoremap <buffer> ml  :Marklist<CR>
-  autocmd Filetype netrw nnoremap <buffer> mL  :Marklast<CR>
-  autocmd Filetype netrw nmap     <buffer> ;   mf:Marklast<CR>j
-  autocmd Filetype netrw nmap     <buffer> ,   mf:Marklast<CR>k
+  autocmd Filetype netrw nnoremap <buffer> ~  :e ~/<CR>
+  autocmd Filetype netrw nnoremap <buffer> mp :Nazrwcp<CR>
+  autocmd Filetype netrw nnoremap <buffer> mv :Nazrwmv<CR>
+  autocmd Filetype netrw nnoremap <buffer> mz :Nazrwzip<CR>
+  autocmd Filetype netrw nnoremap <buffer> mZ :Nazrwunzip<CR>
+  autocmd Filetype netrw nnoremap <buffer> mu :call netrw#Modify("netrwmarkfilelist", []) <bar> Marklast<CR>
+  autocmd Filetype netrw nnoremap <buffer> ml :Marklist<CR>
+  autocmd Filetype netrw nnoremap <buffer> mL :Marklast<CR>
+  autocmd Filetype netrw nmap     <buffer> ;  mf:Marklast<CR>j
+  autocmd Filetype netrw nmap     <buffer> ,  mf:Marklast<CR>k
 augroup END
 
 command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
