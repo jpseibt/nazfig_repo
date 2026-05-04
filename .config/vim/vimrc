@@ -237,7 +237,8 @@ command! Cpmakeprg :let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' 
 command! Cpmake :let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name . ' (expanded) [' . @+ . '] copied to the clipboard <=='
 
 "------------------------------
-" Quickfix List
+" Quickfix List - only for :make
+" (for other commands like :vimgrep, use location list counterpart)
 "
 " Prepend regex to parse (%f, %l, %t, %m) compiler/linker output correctly for QFListCount()
 if !exists('s:prepend_regex_errorformat')
@@ -292,6 +293,25 @@ function! s:QFListCount()
   endif
 endfunction
 
+function! s:LocListCount()
+  let l:loc_list = getloclist(0)
+  let l:entries = 0
+
+  for l:item in l:loc_list
+    if l:item.valid
+      let l:entries += 1
+    endif
+  endfor
+
+  let w:loc_list_entries = l:entries
+
+  if w:loc_list_entries > 0
+    echom printf("[s:LocListCount] Matches: %d", w:loc_list_entries)
+  else
+    echom '[s:LocListCount] Location list is empty'
+  endif
+endfunction
+
 function! QFTabline()
   return (s:qf_entries > 0) ? printf("E:%d|W:%d", s:qf_errors, s:qf_warnings) : 'E:_|W:_'
 endfunction
@@ -299,9 +319,11 @@ endfunction
 augroup QFUpdate
   autocmd!
   autocmd QuickFixCmdPost [^l]* call s:QFListCount()
+  autocmd QuickFixCmdPost l* call s:LocListCount()
 augroup END
 
 command! Ccount call s:QFListCount()
+command! Lcount call s:LocListCount()
 
 "------------------------------
 " Build
@@ -649,24 +671,26 @@ function! NazTabline()
 
   " Loop through each tab page
   for l:i in range(tabpagenr('$'))
+    let l:tabnr = l:i + 1
+
     " Set the highlighting
-    if l:i + 1 == tabpagenr()
+    if l:tabnr == tabpagenr()
       let l:tabline_str .= '%#TabLineSel#'
     else
       let l:tabline_str .= '%#TabLine#'
     endif
 
     " Set the tab page number ('T' enables mouse support)
-    let l:tabline_str .= '%' . (l:i + 1) . 'T'
+    let l:tabline_str .= '%' . (l:tabnr) . 'T'
 
     " Generate tab label: " ³[2] main.c "
     " Convert window count to superscript (`³` part)
-    let l:win_count = tabpagewinnr(l:i + 1, '$')
+    let l:win_count = tabpagewinnr(l:tabnr, '$')
     let l:win_count_sup = l:win_count < 10 ? s:superscripts[l:win_count] : '^' . l:win_count
 
     " Get active buffer name in curr tab (buflist is 0-indexed, winnr is 1-indexed)
-    let l:buflist = tabpagebuflist(l:i + 1)
-    let l:winnr = tabpagewinnr(l:i + 1)
+    let l:buflist = tabpagebuflist(l:tabnr)
+    let l:winnr = tabpagewinnr(l:tabnr)
     let l:bufnr = l:buflist[l:winnr - 1] 
     let l:bufname = bufname(l:bufnr)
     let l:buf_filetype = getbufvar(l:bufnr, '&filetype')
@@ -675,7 +699,13 @@ function! NazTabline()
     if l:buf_filetype == 'netrw'
       let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
     elseif l:buf_filetype == 'qf'
-      let l:filename = '(QF) %{QFTabline()}'
+      " Check if window is a Location List (see :help getwininfo)
+      if getwininfo(win_getid(l:winnr, l:tabnr))[0].loclist
+        let l:loc_list_entries = gettabwinvar(l:tabnr, l:winnr, "loc_list_entries", 0)
+        let l:filename = '(Loc) M:' . (l:loc_list_entries > 0 ? l:loc_list_entries : '_')
+      else
+        let l:filename = '(QF) %{QFTabline()}'
+      endif
     else
       let l:filename = fnamemodify(l:bufname, ':t')
       if l:filename == ''
@@ -688,7 +718,7 @@ function! NazTabline()
       let l:filename .= '*'
     endif
 
-    let l:tabline_str .= ' ' . l:win_count_sup . '[' . (l:i + 1) . '] ' . l:filename . ' '
+    let l:tabline_str .= ' ' . l:win_count_sup . '[' . (l:tabnr) . '] ' . l:filename . ' '
   endfor
 
   " Add the label to close the current tab page
@@ -718,13 +748,20 @@ function! NazStatusline()
   let l:buf_filetype = getbufvar(l:bufnr, '&filetype')
 
   if l:buf_filetype == 'netrw'
+    " only current directory tail and number of marks
     let l:statusline_str .= ' %#Directory#' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':t') . '/%*'
     let l:len_mark_list = len(s:nazrw_mark_list)
     if l:len_mark_list > 0
       let l:statusline_str .= ' %#WarningMsg#[M:' . l:len_mark_list . ']%*'
     endif
   else
+    " full file path
     let l:statusline_str .= ' %F %m%r'
+  endif
+
+  let l:loc_list_entries = getwinvar(g:statusline_winid, 'loc_list_entries', 0)
+  if l:loc_list_entries > 0
+    let l:statusline_str .= ' %#MoreMsg#[Loc:' . l:loc_list_entries . ']%*'
   endif
 
   let l:statusline_str .= ' %=ch(%b) | %l:%c-%L ↓%p%%'
