@@ -190,7 +190,6 @@ let s:cpp_flags = s:common_flags . " -std=c++03"
 " Output program path
 let s:out_path = "%:p:h" . "/build/" . "%:t:r" . (s:is_win ? ".exe" : "")
 
-
 "------------------------------
 " Commands (makeprg)
 "
@@ -389,11 +388,17 @@ let g:netrw_keepdir = 0
 "------------------------------
 " Marked files list
 "
+" NOTE ($VIMRUNTIME/pack/dist/opt/netrw/autoload/netrw.vim):
+" - Found the cause of the bug with mark highlights and operations like delete acting on stale
+"   marked lists, see https://github.com/vim/vim/pull/20129 for fix in `s:NetrwUnMarkFile()`.
+" - Now functions and other commands bellow take advantage of the fix.
+" - REMOVE THIS COMMENT IF PR IS MERGED.
+
 if !exists('s:nazrw_mark_list')
   let s:nazrw_mark_list = []
 endif
 
-function! s:NazrwUpdateMarkList()
+function! s:NazrwFetchMarkList()
   let s:nazrw_mark_list = netrw#Expose("netrwmarkfilelist")
   if type(s:nazrw_mark_list) == type("") || empty(s:nazrw_mark_list)
     let s:nazrw_mark_list = []
@@ -401,8 +406,13 @@ function! s:NazrwUpdateMarkList()
   redrawstatus
 endfunction
 
+function! s:NazrwClearMarkList()
+  call netrw#Call('NetrwUnMarkFile', 0)
+  let s:nazrw_mark_list = []
+endfunction
+
 function! s:NazrwShowMarkList(last)
-  call s:NazrwUpdateMarkList()
+  call s:NazrwFetchMarkList()
   if empty(s:nazrw_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
@@ -443,7 +453,7 @@ function! s:GetCopyMoveCmd(is_move, is_dir)
 endfunction
 
 function! s:NazrwCopyMove(is_move)
-  call s:NazrwUpdateMarkList()
+  call s:NazrwFetchMarkList()
   if empty(s:nazrw_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
@@ -463,16 +473,11 @@ function! s:NazrwCopyMove(is_move)
 
     let l:cmd = s:GetCopyMoveCmd(a:is_move, l:src_is_dir)
 
-  "(NEST check) Collisions for copying/moving directories on Linux happen in `dest/src_tail`
+    "(NEST check) Collisions for copying/moving directories on Linux happen in `dest/src_tail`
     let l:final_dest_path = l:dest_path
     if !s:is_win && l:src_is_dir && l:dest_is_dir
       let l:final_dest_path = l:dest_path . '/' . fnamemodify(l:src_path, ':t')
     endif
-
-"[DEBUG]echom 'l:cmd: '. l:cmd
-"[DEBUG]echom 'l:src_path: '. l:src_path
-"[DEBUG]echom 'l:dest_path: ' . l:dest_path
-"[DEBUG]echom 'l:final_dest_path: ' . l:final_dest_path
 
     " Check for overwrite and escape ([0] <Esc>)
     if (filereadable(l:final_dest_path) || isdirectory(l:final_dest_path)) && l:choice != 3
@@ -492,8 +497,7 @@ function! s:NazrwCopyMove(is_move)
     call system(l:cmd . ' ' . l:src_path . ' ' . l:dest_path)
   endfor
 
-  call netrw#Modify("netrwmarkfilelist", [])
-  let s:nazrw_mark_list = []
+  call s:NazrwClearMarkList()
   execute "normal \<C-l>"
 endfunction
 
@@ -504,7 +508,7 @@ let s:valid_archive_exts = ['zip', 'gz', 'tar', 'tgz', '7z', 'xz', 'bz2', 'tbz2'
 let s:default_archive_ext = 'zip'
 
 function! s:NazrwArchive()
-  call s:NazrwUpdateMarkList()
+  call s:NazrwFetchMarkList()
   if empty(s:nazrw_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
@@ -543,13 +547,12 @@ function! s:NazrwArchive()
   echom '[s:NazrwArchive()]$ ' . l:cmd
   call system(l:cmd)
 
-  call netrw#Modify("netrwmarkfilelist", [])
-  let s:nazrw_mark_list = []
+  call s:NazrwClearMarkList()
   execute "normal \<C-l>"
 endfunction
 
 function! s:NazrwExtract()
-  call s:NazrwUpdateMarkList()
+  call s:NazrwFetchMarkList()
   if empty(s:nazrw_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
@@ -585,20 +588,21 @@ function! s:NazrwExtract()
     call system(l:cmd)
   endfor
 
-  call netrw#Modify("netrwmarkfilelist", [])
-  let s:nazrw_mark_list = []
+  call s:NazrwClearMarkList() 
   execute "normal \<C-l>"
 endfunction
 
 "------------------------------
 " Commands
 "
-command! Nazrwcp    call s:NazrwCopyMove(0)
-command! Nazrwmv    call s:NazrwCopyMove(1)
-command! Nazrwzip   call s:NazrwArchive()
-command! Nazrwunzip call s:NazrwExtract()
-command! Marklist   call s:NazrwShowMarkList(0)
-command! Marklast   call s:NazrwShowMarkList(1)
+" NOTE (see `:help command-bar`): Needs `-bar` to pipe custom commands like `:Markclear | Marklast`
+command! -bar Nazrwcp    call s:NazrwCopyMove(0)
+command! -bar Nazrwmv    call s:NazrwCopyMove(1)
+command! -bar Nazrwzip   call s:NazrwArchive()
+command! -bar Nazrwunzip call s:NazrwExtract()
+command! -bar Marklist   call s:NazrwShowMarkList(0)
+command! -bar Marklast   call s:NazrwShowMarkList(1)
+command! -bar Markclear  call s:NazrwClearMarkList()
 
 augroup NazNetrw
   autocmd!
@@ -609,7 +613,7 @@ augroup NazNetrw
   autocmd Filetype netrw nnoremap <buffer> mv :Nazrwmv<CR>
   autocmd Filetype netrw nnoremap <buffer> mz :Nazrwzip<CR>
   autocmd Filetype netrw nnoremap <buffer> mZ :Nazrwunzip<CR>
-  autocmd Filetype netrw nnoremap <buffer> mu :call netrw#Modify("netrwmarkfilelist", []) <bar> Marklast<CR>
+  autocmd Filetype netrw nnoremap <buffer> mu :Markclear <bar> Marklast<CR>
   autocmd Filetype netrw nnoremap <buffer> ml :Marklist<CR>
   autocmd Filetype netrw nnoremap <buffer> mL :Marklast<CR>
   autocmd Filetype netrw nmap     <buffer> ;  mf:Marklast<CR>j
