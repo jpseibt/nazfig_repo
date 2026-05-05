@@ -1,4 +1,4 @@
-" Zero dependencies vimrc
+" Zero dependencies vimrc - naz
 
 let s:is_win = has('win32') || has('win64')
 
@@ -416,31 +416,32 @@ let g:netrw_keepdir = 0
 " - Now functions and other commands bellow take advantage of the fix.
 " - REMOVE THIS COMMENT IF PR IS MERGED.
 
-if !exists('s:nazrw_mark_list')
-  let s:nazrw_mark_list = []
+if !exists('s:nazrw_global_mark_list')
+  let s:nazrw_global_mark_list = []
 endif
 
-function! s:NazrwFetchMarkList()
-  let s:nazrw_mark_list = netrw#Expose("netrwmarkfilelist")
-  if type(s:nazrw_mark_list) == type("") || empty(s:nazrw_mark_list)
-    let s:nazrw_mark_list = []
+function! s:NazrwFetchGlobalMarkList()
+  let s:nazrw_global_mark_list = netrw#Expose("netrwmarkfilelist")
+  if type(s:nazrw_global_mark_list) == type("") || empty(s:nazrw_global_mark_list)
+    let s:nazrw_global_mark_list = []
   endif
   redrawstatus
 endfunction
 
-function! s:NazrwClearMarkList()
+function! s:NazrwClearGlobalMarkList()
   call netrw#Call('NetrwUnMarkFile', 0)
-  let s:nazrw_mark_list = []
+  let s:nazrw_global_mark_list = []
+  redrawstatus
 endfunction
 
 function! s:NazrwShowMarkList(last)
-  call s:NazrwFetchMarkList()
-  if empty(s:nazrw_mark_list)
+  call s:NazrwFetchGlobalMarkList()
+  if empty(s:nazrw_global_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
   else
     " copy the mark list with relative paths
-    let l:rel_mark_list = map(copy(s:nazrw_mark_list), "fnamemodify(v:val, ':.')")
+    let l:rel_mark_list = map(copy(s:nazrw_global_mark_list), "fnamemodify(v:val, ':.')")
     let l:len_mark_list = len(l:rel_mark_list)
 
     if a:last
@@ -474,9 +475,10 @@ function! s:GetCopyMoveCmd(is_move, is_dir)
   endif
 endfunction
 
+" Copy all files from the global mark list and copy/move them to the current dir (b:netrw_curdir)
 function! s:NazrwCopyMove(is_move)
-  call s:NazrwFetchMarkList()
-  if empty(s:nazrw_mark_list)
+  call s:NazrwFetchGlobalMarkList()
+  if empty(s:nazrw_global_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
   endif
@@ -484,7 +486,7 @@ function! s:NazrwCopyMove(is_move)
   " Choices: [1]'Yes', [2]'No', [3]'All' (:help confirm() -> [0] is for <Esc>, CTRL-C)
   let l:choice = 2
 
-  for l:curr_file in s:nazrw_mark_list
+  for l:curr_file in s:nazrw_global_mark_list
     " Use regex to remove trailing slashes ('/' or '\'), so `:t` also return directories (for '~/dir//', tail is 'dir')
     let l:src_path = fnamemodify(l:curr_file, ':p')
     let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
@@ -519,7 +521,7 @@ function! s:NazrwCopyMove(is_move)
     call system(l:cmd . ' ' . l:src_path . ' ' . l:dest_path)
   endfor
 
-  call s:NazrwClearMarkList()
+  call s:NazrwClearGlobalMarkList()
   execute "normal \<C-l>"
 endfunction
 
@@ -529,9 +531,10 @@ endfunction
 let s:valid_archive_exts = ['zip', 'gz', 'tar', 'tgz', '7z', 'xz', 'bz2', 'tbz2']
 let s:default_archive_ext = 'zip'
 
+" Put all files from the global mark list into one archive, prompting for the archive file path
 function! s:NazrwArchive()
-  call s:NazrwFetchMarkList()
-  if empty(s:nazrw_mark_list)
+  call s:NazrwFetchGlobalMarkList()
+  if empty(s:nazrw_global_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
   endif
@@ -560,7 +563,7 @@ function! s:NazrwArchive()
   let l:cmd .= ShellEscape(l:archive_path)
 
   " Loop through the files in the mark list and append ` -C file_head file_tail` to the tar command
-  for l:curr_file in s:nazrw_mark_list
+  for l:curr_file in s:nazrw_global_mark_list
     " Use regex to remove trailing slashes ('/' or '\'), so `:t` also return directories (for '~/dir//', tail is 'dir')
     let l:curr_file = substitute(l:curr_file, '[/\\]\+$', '', '')
     let l:cmd .= ' -C ' . ShellEscape(fnamemodify(l:curr_file, ':h')) . ' ' . ShellEscape(fnamemodify(l:curr_file, ':t'))
@@ -569,13 +572,14 @@ function! s:NazrwArchive()
   echom '[s:NazrwArchive()]$ ' . l:cmd
   call system(l:cmd)
 
-  call s:NazrwClearMarkList()
+  call s:NazrwClearGlobalMarkList()
   execute "normal \<C-l>"
 endfunction
 
+" Extract all files from the global mark list to a directory, prompting for the directory path
 function! s:NazrwExtract()
-  call s:NazrwFetchMarkList()
-  if empty(s:nazrw_mark_list)
+  call s:NazrwFetchGlobalMarkList()
+  if empty(s:nazrw_global_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
   endif
@@ -594,7 +598,7 @@ function! s:NazrwExtract()
     call mkdir(l:extract_dir, "p")
   endif
 
-  for l:curr_file in s:nazrw_mark_list
+  for l:curr_file in s:nazrw_global_mark_list
     let l:src_path = fnamemodify(l:curr_file, ':p')
     let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
 
@@ -610,7 +614,7 @@ function! s:NazrwExtract()
     call system(l:cmd)
   endfor
 
-  call s:NazrwClearMarkList() 
+  call s:NazrwClearGlobalMarkList() 
   execute "normal \<C-l>"
 endfunction
 
@@ -622,9 +626,9 @@ command! -bar Nazrwcp    call s:NazrwCopyMove(0)
 command! -bar Nazrwmv    call s:NazrwCopyMove(1)
 command! -bar Nazrwzip   call s:NazrwArchive()
 command! -bar Nazrwunzip call s:NazrwExtract()
-command! -bar Marklist   call s:NazrwShowMarkList(0)
-command! -bar Marklast   call s:NazrwShowMarkList(1)
-command! -bar Markclear  call s:NazrwClearMarkList()
+command! -bar Smarklist  call s:NazrwShowMarkList(0)
+command! -bar Smarklast  call s:NazrwShowMarkList(1)
+command! -bar Markclear  call s:NazrwClearGlobalMarkList()
 
 augroup NazNetrw
   autocmd!
@@ -635,11 +639,11 @@ augroup NazNetrw
   autocmd Filetype netrw nnoremap <buffer> mv :Nazrwmv<CR>
   autocmd Filetype netrw nnoremap <buffer> mz :Nazrwzip<CR>
   autocmd Filetype netrw nnoremap <buffer> mZ :Nazrwunzip<CR>
-  autocmd Filetype netrw nnoremap <buffer> mu :Markclear <bar> Marklast<CR>
-  autocmd Filetype netrw nnoremap <buffer> ml :Marklist<CR>
-  autocmd Filetype netrw nnoremap <buffer> mL :Marklast<CR>
-  autocmd Filetype netrw nmap     <buffer> ;  mf:Marklast<CR>j
-  autocmd Filetype netrw nmap     <buffer> ,  mf:Marklast<CR>k
+  autocmd Filetype netrw nnoremap <buffer> mu :Markclear <bar> Smarklast<CR>
+  autocmd Filetype netrw nnoremap <buffer> ml :Smarklist<CR>
+  autocmd Filetype netrw nnoremap <buffer> mL :Smarklast<CR>
+  autocmd Filetype netrw nmap     <buffer> ;  mf:Smarklast<CR>j
+  autocmd Filetype netrw nmap     <buffer> ,  mf:Smarklast<CR>k
 augroup END
 
 command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
@@ -697,7 +701,7 @@ function! NazTabline()
 
     " Set filename (`main.c` part)
     if l:buf_filetype == 'netrw'
-      let l:filename = '(' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . ')'
+      let l:filename = '(NETRW) ' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':t') . '/'
     elseif l:buf_filetype == 'qf'
       " Check if window is a Location List (see :help getwininfo)
       if getwininfo(win_getid(l:winnr, l:tabnr))[0].loclist
@@ -748,9 +752,9 @@ function! NazStatusline()
   let l:buf_filetype = getbufvar(l:bufnr, '&filetype')
 
   if l:buf_filetype == 'netrw'
-    " only current directory tail and number of marks
-    let l:statusline_str .= ' %#Directory#' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':t') . '/%*'
-    let l:len_mark_list = len(s:nazrw_mark_list)
+    " current directory relative $HOME and number of marks
+    let l:statusline_str .= ' %#Directory#' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':~') . '%*'
+    let l:len_mark_list = len(s:nazrw_global_mark_list)
     if l:len_mark_list > 0
       let l:statusline_str .= ' %#WarningMsg#[M:' . l:len_mark_list . ']%*'
     endif

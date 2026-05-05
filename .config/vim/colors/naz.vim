@@ -109,7 +109,7 @@ hi netrwExe       guifg=#90ee90                     " Executable files
 hi netrwSymLink   guifg=#7fdbca                     " Symlinks
 hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters (|)
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
-"hi netrwMarkFile  guibg=NONE " Hide netrw marks highlight (because it gliches when refreshing)
+"hi netrwMarkFile  guibg=NONE " Hide netrw marks highlight (because it glitches when refreshing)
 "
 " NOTE ($VIMRUNTIME/pack/dist/opt/netrw/autoload/netrw.vim):
 " - Found the cause of the bug with mark highlights and operations like delete acting on stale
