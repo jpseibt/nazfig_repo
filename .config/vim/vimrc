@@ -410,12 +410,6 @@ let g:netrw_keepdir = 0
 "------------------------------
 " Marked files list
 "
-" NOTE ($VIMRUNTIME/pack/dist/opt/netrw/autoload/netrw.vim):
-" - Found the cause of the bug with mark highlights and operations like delete acting on stale
-"   marked lists, see https://github.com/vim/vim/pull/20129 for fix in `s:NetrwUnMarkFile()`.
-" - Now functions and other commands bellow take advantage of the fix.
-" - REMOVE THIS COMMENT IF PR IS MERGED.
-
 if !exists('s:nazrw_global_mark_list')
   let s:nazrw_global_mark_list = []
 endif
