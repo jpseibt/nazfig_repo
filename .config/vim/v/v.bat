@@ -132,7 +132,7 @@ if "%V_SERVER%" == "" (
 
 :: Launch the V_PRG with server (NeoVim server path is stored in %NVIM% or custom pipe)
 if "%V_DIFF%" == "1" (
-  %V_PRG% %V_SERVER_OP% %V_SERVER% --remote-tab %V_FILE_A%
+  %V_PRG% %V_SERVER_OP% %V_SERVER% --remote-send "<C-\><C-n> :execute 'tabnew ' . fnameescape('%V_FILE_A%')<CR>"
   %V_PRG% %V_SERVER_OP% %V_SERVER% --remote-send "<C-\><C-n> :execute 'vert split ' . fnameescape('%V_FILE_B%') | windo diffthis<CR>"
 ) else (
   %V_PRG% %V_SERVER_OP% %V_SERVER% %V_REMOTE_OP% %V_ARGS%

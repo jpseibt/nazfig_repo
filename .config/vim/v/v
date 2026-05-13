@@ -105,8 +105,8 @@ if [ -z "$V_SERVER" ]; then
 fi
 
 if [ "$V_DIFF" -eq 1 ]; then
-  "$V_PRG" "$V_SERVER_OP" "$V_SERVER" --remote-tab "$V_FILE_A"
-  "$V_PRG" "$V_SERVER_OP" "$V_SERVER" --remote-send "<C-\><C-n>:execute 'vert split ' . fnameescape('$V_FILE_B') | windo diffthis<CR>"
+  "$V_PRG" "$V_SERVER_OP" "$V_SERVER" --remote-send "<C-\><C-n> :execute 'tabnew ' . fnameescape('$V_FILE_A')<CR>"
+  "$V_PRG" "$V_SERVER_OP" "$V_SERVER" --remote-send "<C-\><C-n> :execute 'vert split ' . fnameescape('$V_FILE_B') | windo diffthis<CR>"
 else
   # [@] expand the elements of the array with spaces between them
   "$V_PRG" "$V_SERVER_OP" "$V_SERVER" "$V_REMOTE_OP" "${V_ARGS[@]}"

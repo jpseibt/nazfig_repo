@@ -14,7 +14,7 @@ set nowritebackup     " Don't make a backup before overwriting a file
 
 set number            " Show line numbers
 set norelativenumber  " !Show relative line numbers
-set scrolloff=5       " Keep lines of context around the cursor
+set scrolloff=0       " !Keep lines of context around the cursor
 set backspace=indent,eol,start
 
 set showcmd
