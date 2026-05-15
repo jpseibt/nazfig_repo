@@ -522,10 +522,14 @@ endfunction
 "------------------------------
 " Archiving
 "
-let s:valid_archive_exts = ['zip', 'gz', 'tar', 'tgz', '7z', 'xz', 'bz2', 'tbz2']
-let s:default_archive_ext = 'zip'
+if !exists('s:tarprg')
+  let s:tarprg = (s:is_win) ? 'tar' : 'bsdtar'
+  let s:valid_archive_exts = ['zip', 'gz', 'tar', 'tgz', '7z', 'xz', 'bz2', 'tbz2']
+  let s:default_archive_ext = (s:is_win) ? 'zip' : 'tar.gz'
+endif
 
 " Put all files from the global mark list into one archive, prompting for the archive file path
+" TODO: try implementation with bsdtar -T, --files-from option 
 function! s:NazrwArchive()
   call s:NazrwFetchGlobalMarkList()
   if empty(s:nazrw_global_mark_list)
@@ -533,10 +537,10 @@ function! s:NazrwArchive()
     return
   endif
 
-  let l:cmd = 'tar -acf '
+  let l:cmd = s:tarprg . ' -acf '
 
-  " Prompt for the archive file path. If no extention is given, a default one is assigned (input() doesn't add a '\n')
-  let l:archive_path = input('Archive path: ', b:netrw_curdir . '/nazrw_archive.' . s:default_archive_ext, 'file')
+  " Prompt for the archive file path. If no extension is given, a default one is assigned (input() doesn't add a '\n')
+  let l:archive_path = input('Archive marked files to: ', b:netrw_curdir . '/nazrw_archive.' . s:default_archive_ext, 'file')
   echo "\n"
 
   if empty(l:archive_path)
@@ -579,7 +583,7 @@ function! s:NazrwExtract()
   endif
 
   " Prompt for extraction destination directory
-  let l:extract_dir = input('Extract to: ', b:netrw_curdir . '/nazrw_extracted', 'dir')
+  let l:extract_dir = input('Extract marked files to: ', b:netrw_curdir . '/nazrw_extracted_' . strftime('%Y%m%d_%H%M%S'), 'dir')
   echo "\n"
 
   if empty(l:extract_dir)
@@ -589,20 +593,31 @@ function! s:NazrwExtract()
 
   " Check if destination directory exists
   if !isdirectory(l:extract_dir)
-    call mkdir(l:extract_dir, "p")
+    call mkdir(l:extract_dir, 'p')
   endif
 
   for l:curr_file in s:nazrw_global_mark_list
     let l:src_path = fnamemodify(l:curr_file, ':p')
     let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
+    let l:extension = tolower(fnamemodify(l:src_path, ':e'))
 
-    " Check if extention of current file is a valid archive ext
-    if index(s:valid_archive_exts, tolower(fnamemodify(l:src_path, ':e'))) == -1
+    let l:dest_path = l:extract_dir . '/' . fnamemodify(l:src_path, ':t:r')
+    " Strip .tar extension if it exists (e.g., tar.gz)
+    if l:dest_path =~? '\.tar$'
+      let l:dest_path = fnamemodify(l:dest_path, ':r')
+    endif
+
+    " Check if extension of current file is a valid archive ext
+    if index(s:valid_archive_exts, l:extension) == -1
       echom '[s:NazrwExtract()] Skipping non-archive file: ' . fnamemodify(l:src_path, ':t')
       continue
     endif
 
-    let l:cmd = 'tar -xf ' . ShellEscape(l:src_path) . ' -C ' . ShellEscape(l:extract_dir)
+    if !isdirectory(l:dest_path)
+      call mkdir(l:dest_path, 'p')
+    endif
+
+    let l:cmd = s:tarprg . ' -xf ' . ShellEscape(l:src_path) . ' -C ' . ShellEscape(l:dest_path)
 
     echom '[s:NazrwExtract()]$ ' . l:cmd
     call system(l:cmd)
