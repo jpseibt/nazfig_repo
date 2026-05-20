@@ -601,16 +601,16 @@ function! s:NazrwExtract()
     let l:src_path = substitute(l:src_path, '[/\\]\+$', '', '')
     let l:extension = tolower(fnamemodify(l:src_path, ':e'))
 
-    let l:dest_path = l:extract_dir . '/' . fnamemodify(l:src_path, ':t:r')
-    " Strip .tar extension if it exists (e.g., tar.gz)
-    if l:dest_path =~? '\.tar$'
-      let l:dest_path = fnamemodify(l:dest_path, ':r')
-    endif
-
     " Check if extension of current file is a valid archive ext
     if index(s:valid_archive_exts, l:extension) == -1
       echom '[s:NazrwExtract()] Skipping non-archive file: ' . fnamemodify(l:src_path, ':t')
       continue
+    endif
+
+    let l:dest_path = l:extract_dir . '/' . fnamemodify(l:src_path, ':t:r')
+    " Strip .tar extension if it exists (e.g., tar.gz)
+    if l:dest_path =~? '\.tar$'
+      let l:dest_path = fnamemodify(l:dest_path, ':r')
     endif
 
     if !isdirectory(l:dest_path)

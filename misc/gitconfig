@@ -1,0 +1,15 @@
+[user]
+  name = ___
+  email = ___
+[init]
+  defaultBranch = master
+[core]
+  editor = neovide --x11-wm-class neovide_floating
+[difftool "v"]
+  cmd = v -d \"$REMOTE\" \"$LOCAL\"
+[diff]
+  tool = v
+[pull]
+  ff = only
+[credential]
+  helper = ___
