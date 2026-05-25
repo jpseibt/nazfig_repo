@@ -65,8 +65,8 @@ let s:germinal_bufnr = bufnr(s:germinal_name)
 
 " The mode arg is used to change the way to invoke the germinal (should only be one instance/buffer).
 " A function call will have different behaviors based on the fact that: -> `X. (applies to modes) ...`
-"     A. (modes [0-3]) The germinal buf is `UNLISTED` (does not exist, buffer not created)
-"     B. (modes [0-3]) The germinal buf is `IN_VIEW`  (open on any window in the active tab);
+"     A. (modes [0-4]) The germinal buf is `UNLISTED` (does not exist, buffer not created)
+"     B. (modes [0-4]) The germinal buf is `IN_VIEW`  (open on any window in the active tab);
 "     C. (mode 3)      The germinal buf is `IN_A_TAB` (open on any tab).
 "
 " `a:modes`:
@@ -85,18 +85,26 @@ let s:germinal_bufnr = bufnr(s:germinal_name)
 "       B.`IN_VIEW` -> hide/close the germinal buf window, and (C)... ;
 "       C.`IN_A_TAB`-> activate the first tab that has a germinal buf open, else create a new tab, and
 "                      open the germinal buf.
-function! GlobalTerminal(mode)
+"     4:
+"       A.`UNLISTED`-> do a full-width top split (Quake-like), and create and open a germinal buf;
+"       B.`IN_VIEW` -> hide/close the germinal buf window, do a full-width top split,
+"                      and open a germinal buf;
+function! GlobalTerminal(mode, count)
   let s:germinal_bufnr = bufnr(s:germinal_name)
+
+  let l:split_count = (a:count > 0) ? a:count : ''
 
   if s:germinal_bufnr == -1
     echom '[GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
 
     if a:mode == 1
-      execute 'horizontal split'
+      execute 'horizontal ' . l:split_count . 'split'
     elseif a:mode == 2
-      execute 'vertical split'
+      execute 'vertical ' . l:split_count . 'split'
     elseif a:mode == 3
       execute 'tabnew'
+    elseif a:mode == 4
+      execute 'topleft ' . l:split_count . 'split'
     endif
 
     execute has('nvim') ? 'terminal' : 'terminal ++curwin'
@@ -114,6 +122,10 @@ function! GlobalTerminal(mode)
         return
       else
         execute l:winnr . 'hide'
+        if a:mode == 4
+          " Quake terminal toggle
+          return
+        endif
       endif
     endif
 
@@ -136,9 +148,11 @@ function! GlobalTerminal(mode)
       endif
     else
       if a:mode == 1
-        execute 'horizontal split'
+        execute 'horizontal ' . l:split_count . 'split'
       elseif a:mode == 2
-        execute 'vertical split'
+        execute 'vertical ' . l:split_count . 'split'
+      elseif a:mode == 4
+        execute 'topleft ' . l:split_count . 'split'
       endif
     endif
 
@@ -146,27 +160,31 @@ function! GlobalTerminal(mode)
   endif
 endfunction
 
-command! Germ call GlobalTerminal(0)
-command! Serm call GlobalTerminal(1)
-command! Verm call GlobalTerminal(2)
-command! Term call GlobalTerminal(3)
-command! Germinal call GlobalTerminal(0)
-command! Serminal call GlobalTerminal(1)
-command! Verminal call GlobalTerminal(2)
-command! Terminal call GlobalTerminal(3)
+command!        Germ call GlobalTerminal(0, 0)
+command! -count Serm call GlobalTerminal(1, <count>)
+command! -count Verm call GlobalTerminal(2, <count>)
+command!        Term call GlobalTerminal(3, 0)
+command!        Germinal call GlobalTerminal(0, 0)
+command! -count Serminal call GlobalTerminal(1, <count>)
+command! -count Verminal call GlobalTerminal(2, <count>)
+command!        Terminal call GlobalTerminal(3, 0)
 
-function! GerminalHere(mode)
+function! GerminalHere(mode, count)
   let l:head_dir = (&filetype == 'netrw') ? b:netrw_curdir : expand('%:p:h')
-  call GlobalTerminal(a:mode)
+  call GlobalTerminal(a:mode, a:count)
   call feedkeys("i\<C-c> cd " . ShellEscape(l:head_dir) . "\<CR>\<Esc>", 't')
 endfunction
 
-command! Germhere call GerminalHere(0)
-command! Sermhere call GerminalHere(1)
-command! Vermhere call GerminalHere(2)
-command! Termhere call GerminalHere(3)
-command! Herm call GerminalHere(3)
+command!        Germhere call GerminalHere(0, 0)
+command! -count Sermhere call GerminalHere(1, <count>)
+command! -count Vermhere call GerminalHere(2, <count>)
+command!        Termhere call GerminalHere(3, 0)
+command!        Herm     call GerminalHere(3, 0)
 
+command! -count=12 Quake     call GlobalTerminal(4, <count>)
+command! -count=12 Quakehere call GerminalHere(4, <count>)
+nnoremap <C-`> :Quake<CR>
+tnoremap <C-`> <C-\><C-n>:hide<CR>
 
 "============================================================
 " Compiling & Debugging
