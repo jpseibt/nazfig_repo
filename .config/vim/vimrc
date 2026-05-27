@@ -547,15 +547,12 @@ if !exists('s:tarprg')
 endif
 
 " Put all files from the global mark list into one archive, prompting for the archive file path
-" TODO: try implementation with bsdtar -T, --files-from option 
 function! s:NazrwArchive()
   call s:NazrwFetchGlobalMarkList()
   if empty(s:nazrw_global_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
   endif
-
-  let l:cmd = s:tarprg . ' -acf '
 
   " Prompt for the archive file path. If no extension is given, a default one is assigned (input() doesn't add a '\n')
   let l:archive_path = input('Archive marked files to: ', b:netrw_curdir . '/nazrw_archive.' . s:default_archive_ext, 'file')
@@ -576,18 +573,27 @@ function! s:NazrwArchive()
     call mkdir(l:archive_head, 'p')
   endif
 
-  let l:cmd .= ShellEscape(l:archive_path)
-
-  " Loop through the files in the mark list and append ` -C file_head file_tail` to the tar command
+  " Loop through the files in the mark list to generate an array of normalized absolute paths
+  let l:temp_paths_list = []
   for l:curr_file in s:nazrw_global_mark_list
-    " Use regex to remove trailing slashes ('/' or '\'), so `:t` also return directories (for '~/dir//', tail is 'dir')
+    " Normalize slashes and use regex to remove trailing slashes (for '~/dir//', tail is 'dir')
+    let l:curr_file = tr(l:curr_file, '\', '/')
     let l:curr_file = substitute(l:curr_file, '[/\\]\+$', '', '')
-    let l:cmd .= ' -C ' . ShellEscape(fnamemodify(l:curr_file, ':h')) . ' ' . ShellEscape(fnamemodify(l:curr_file, ':t'))
+    call add(l:temp_paths_list, l:curr_file)
   endfor
+
+  " Write normalized absolute paths to a temp file for the --files-from option
+  let l:temp_file = tempname()
+  call writefile(l:temp_paths_list, l:temp_file)
+
+  " -s flag regex makes archive member names be only the file tail (strip everything before the last '/'),
+  " equivalent to `-C file_head file_tail` for every file path in the temp file
+  let l:cmd = printf('%s -acf %s -s "|.*/||" --files-from %s', s:tarprg, ShellEscape(l:archive_path), ShellEscape(l:temp_file))
 
   echom '[s:NazrwArchive()]$ ' . l:cmd
   call system(l:cmd)
 
+  call delete(l:temp_file)
   call s:NazrwClearGlobalMarkList()
   execute "normal \<C-l>"
 endfunction
