@@ -685,7 +685,7 @@ let mapleader = "\<Backspace>"
 nnoremap <leader>cop :copen<CR>
 nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <bar> redraw! <bar> redrawtabline <bar> redrawstatus <CR> :echo "==> sourced vimrc <=="<CR>
-nnoremap <leader>erc :tab drop $MYVIMRC <bar> silent /makeprg<CR> zz
+nnoremap <leader>erc :tab drop $MYVIMRC<CR>
 
 
 "============================================================
@@ -768,7 +768,7 @@ function! NazTabline()
   let l:tabline_str .= '%#TabLineInfo#%T'
 
   let l:tabline_str .= '%=[%{QFTabline()}] ' . s:makeprg_cmd_name
-  let l:tabline_str .= " | %{strftime('%H:%M')}"
+  "let l:tabline_str .= " | %{strftime('%H:%M')}"
 
   return l:tabline_str
 endfunction
@@ -812,10 +812,15 @@ set statusline=%!NazStatusline()
 " Cursor & Background
 "============================================================
 if has("gui_running") || exists("g:neovide")
-  "set guifont=Liberation\ Mono:h12
-  set guifont=Cousine:h12
 
-  set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
+  if has('nvim')
+    set guifont=Cousine:h12
+    set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
+  else
+    set guifont=Liberation\ Mono\ 12
+    set guicursor=n-v-c:block-Cursor,i-ci-ve:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
+  endif
+
   highlight Cursor gui=NONE guifg=Red guibg=#00ff00
   highlight iCursor gui=NONE guifg=Black guibg=#ff0000
   highlight oCursor gui=NONE guifg=Black guibg=#00ffff
