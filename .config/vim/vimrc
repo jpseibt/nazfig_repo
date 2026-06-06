@@ -84,18 +84,17 @@ let s:germinal_bufnr = bufnr(s:germinal_name)
 "       A.`UNLISTED`-> create a new tab, and create and open a germinal buf;
 "       B.`IN_VIEW` -> hide/close the germinal buf window, and (C)... ;
 "       C.`IN_A_TAB`-> activate the first tab that has a germinal buf open, else create a new tab, and
-"                      open the germinal buf.
+"                      open the germinal buf;
 "     4:
 "       A.`UNLISTED`-> do a full-width top split (Quake-like), and create and open a germinal buf;
-"       B.`IN_VIEW` -> hide/close the germinal buf window, do a full-width top split,
-"                      and open a germinal buf;
+"       B.`IN_VIEW` -> hide/close the germinal buf window.
 function! GlobalTerminal(mode, count)
   let s:germinal_bufnr = bufnr(s:germinal_name)
 
   let l:split_count = (a:count > 0) ? a:count : ''
 
   if s:germinal_bufnr == -1
-    echom '[GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
+    echomsg '[GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
 
     if a:mode == 1
       execute 'horizontal ' . l:split_count . 'split'
@@ -111,7 +110,7 @@ function! GlobalTerminal(mode, count)
     execute 'file ' . s:germinal_name
     sleep 500m
   else
-    echom '[GlobalTerminal] Using ' . s:germinal_name
+    echomsg '[GlobalTerminal] Using ' . s:germinal_name
 
     " Check if the buf is visible and will split
     let l:winnr = bufwinnr(s:germinal_bufnr)
@@ -305,9 +304,9 @@ function! s:QFListCount()
   let s:qf_warnings = l:warnings
 
   if s:qf_entries > 0
-    echom printf("[s:QFListCount] Entries: %d | Errors: %d | Warnings: %d", s:qf_entries, s:qf_errors, s:qf_warnings)
+    echomsg printf("[s:QFListCount] Entries: %d | Errors: %d | Warnings: %d", s:qf_entries, s:qf_errors, s:qf_warnings)
   else
-    echom '[s:QFListCount] Quickfix list is empty'
+    echomsg '[s:QFListCount] Quickfix list is empty'
   endif
 endfunction
 
@@ -324,9 +323,9 @@ function! s:LocListCount()
   let w:loc_list_entries = l:entries
 
   if w:loc_list_entries > 0
-    echom printf("[s:LocListCount] Matches: %d", w:loc_list_entries)
+    echomsg printf("[s:LocListCount] Matches: %d", w:loc_list_entries)
   else
-    echom '[s:LocListCount] Location list is empty'
+    echomsg '[s:LocListCount] Location list is empty'
   endif
 endfunction
 
@@ -519,7 +518,7 @@ function! s:NazrwCopyMove(is_move)
     if (filereadable(l:final_dest_path) || isdirectory(l:final_dest_path)) && l:choice != 3
       let l:choice = confirm("Confirm overwrite of file [" . l:final_dest_path . ']?', "&yes\n&no\n&all")
       if l:choice == 0
-        echom '[s:NazrwCopyMove()] Aborted.'
+        echomsg '[s:NazrwCopyMove()] Aborted.'
         break
       elseif l:choice == 2
         continue
@@ -529,7 +528,7 @@ function! s:NazrwCopyMove(is_move)
     let l:src_path = ShellEscape(l:src_path)
     let l:dest_path = ShellEscape(l:dest_path)
 
-    echom '[s:NazrwCopyMove()]$ ' . l:cmd . ' ' . l:src_path . ' ' . l:dest_path
+    echomsg '[s:NazrwCopyMove()]$ ' . l:cmd . ' ' . l:src_path . ' ' . l:dest_path
     call system(l:cmd . ' ' . l:src_path . ' ' . l:dest_path)
   endfor
 
@@ -559,8 +558,8 @@ function! s:NazrwArchive()
   echo "\n"
 
   if empty(l:archive_path)
-    " input() return an empty string for <Esc>
-    echom '[s:NazrwArchive()] Aborted.'
+    " input() returns an empty string for <Esc>
+    echomsg '[s:NazrwArchive()] Aborted.'
     return
   elseif empty(fnamemodify(l:archive_path, ':e'))
     " No archive extension provided, set default archiving method
@@ -573,27 +572,50 @@ function! s:NazrwArchive()
     call mkdir(l:archive_head, 'p')
   endif
 
-  " Loop through the files in the mark list to generate an array of normalized absolute paths
-  let l:temp_paths_list = []
-  for l:curr_file in s:nazrw_global_mark_list
-    " Normalize slashes and use regex to remove trailing slashes (for '~/dir//', tail is 'dir')
-    let l:curr_file = tr(l:curr_file, '\', '/')
-    let l:curr_file = substitute(l:curr_file, '[/\\]\+$', '', '')
-    call add(l:temp_paths_list, l:curr_file)
-  endfor
+  if s:is_win
+    "==============================
+    " Windows
+    " -> bsdtar version does not support the `-s` flag
+    " -> big batch jobs can exceed the CMD 8,191 character limit
+    "==============================
+    let l:cmd = s:tarprg . ' -acf ' . ShellEscape(l:archive_path)
 
-  " Write normalized absolute paths to a temp file for the --files-from option
-  let l:temp_file = tempname()
-  call writefile(l:temp_paths_list, l:temp_file)
+    " Loop through the files in the mark list and append ` -C file_head file_tail` to the tar command
+    for l:curr_file in s:nazrw_global_mark_list
+      " Use regex to remove trailing slashes ('/' or '\'), so `:t` also returns directories (for '~/dir//', tail is 'dir')
+      let l:curr_file = substitute(l:curr_file, '[/\\]\+$', '', '')
+      let l:cmd .= ' -C ' . ShellEscape(fnamemodify(l:curr_file, ':h')) . ' ' . ShellEscape(fnamemodify(l:curr_file, ':t'))
+    endfor
 
-  " -s flag regex makes archive member names be only the file tail (strip everything before the last '/'),
-  " equivalent to `-C file_head file_tail` for every file path in the temp file
-  let l:cmd = printf('%s -acf %s -s "|.*/||" --files-from %s', s:tarprg, ShellEscape(l:archive_path), ShellEscape(l:temp_file))
+    echomsg '[s:NazrwArchive()]$ ' . l:cmd
+    call system(l:cmd)
+  else
+    "==============================
+    " Linux
+    " -> use `-s` regex with `--files-from` option to handle any number of files
+    "==============================
+    " Loop through the files in the mark list to generate an array of normalized absolute paths
+    let l:temp_paths_list = []
+    for l:curr_file in s:nazrw_global_mark_list
+      " Normalize slashes and use regex to remove trailing slashes (for '~/dir//', tail is 'dir')
+      let l:curr_file = tr(l:curr_file, '\', '/')
+      let l:curr_file = substitute(l:curr_file, '[/\\]\+$', '', '')
+      call add(l:temp_paths_list, l:curr_file)
+    endfor
 
-  echom '[s:NazrwArchive()]$ ' . l:cmd
-  call system(l:cmd)
+    " Write normalized absolute paths to a temp file for the --files-from option
+    let l:temp_file = tempname()
+    call writefile(l:temp_paths_list, l:temp_file)
 
-  call delete(l:temp_file)
+    " -s flag regex ensures archive member names include only the file tail (strip everything before the last '/'),
+    " equivalent to `-C file_head file_tail` for every file path in the temp file
+    let l:cmd = printf('%s -acf %s -s "|.*/||" --files-from %s', s:tarprg, ShellEscape(l:archive_path), ShellEscape(l:temp_file))
+
+    echomsg '[s:NazrwArchive()]$ ' . l:cmd
+    call system(l:cmd)
+    call delete(l:temp_file)
+  endif
+
   call s:NazrwClearGlobalMarkList()
   execute "normal \<C-l>"
 endfunction
@@ -611,7 +633,7 @@ function! s:NazrwExtract()
   echo "\n"
 
   if empty(l:extract_dir)
-    echom '[s:NazrwExtract()] Aborted.'
+    echomsg '[s:NazrwExtract()] Aborted.'
     return
   endif
 
@@ -627,7 +649,7 @@ function! s:NazrwExtract()
 
     " Check if extension of current file is a valid archive ext
     if index(s:valid_archive_exts, l:extension) == -1
-      echom '[s:NazrwExtract()] Skipping non-archive file: ' . fnamemodify(l:src_path, ':t')
+      echomsg '[s:NazrwExtract()] Skipping non-archive file: ' . fnamemodify(l:src_path, ':t')
       continue
     endif
 
@@ -643,7 +665,7 @@ function! s:NazrwExtract()
 
     let l:cmd = s:tarprg . ' -xf ' . ShellEscape(l:src_path) . ' -C ' . ShellEscape(l:dest_path)
 
-    echom '[s:NazrwExtract()]$ ' . l:cmd
+    echomsg '[s:NazrwExtract()]$ ' . l:cmd
     call system(l:cmd)
   endfor
 
