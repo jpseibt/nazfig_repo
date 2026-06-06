@@ -224,10 +224,10 @@ function! s:SetMakeprg(name, cmd)
 endfunction
 
 " C debug build (default for .c)
-command! Make call s:SetMakeprg('Make', printf('%s -g -O0 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
+command! Makec call s:SetMakeprg('Makec', printf('%s -g -O0 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C final build
-command! MakeRelease call s:SetMakeprg('MakeRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
+command! MakecRelease call s:SetMakeprg('MakecRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:out_path))
 
 " C++ debug build (default for .cpp)
 command! Makecpp call s:SetMakeprg('Makecpp', printf('%s -g -O0 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:out_path))
@@ -246,6 +246,22 @@ command! Makecl call s:SetMakeprg('Makecl', 'cd build && cl /Zi /Od /W4 "%:p"')
 
 " MSVC final build (need vcvars env)
 command! MakeclRelease call s:SetMakeprg('MakeclRelease', 'cd build && cl /O2 /W4 "%:p"')
+
+" Custom makeprg
+function! s:PromptCustomMakeprg()
+  let l:name = input('Name: ', 'Makecustom')
+  if !empty(l:name)
+    let l:cmd = input('Command: ', ShellEscape(expand('%:h') . '/build.bat'))
+    if !empty(l:cmd)
+      echo "\n"
+      call s:SetMakeprg(l:name, l:cmd)
+      return
+    endif
+  endif
+  echomsg 'Setting custom makeprg aborted'
+endfunction
+
+command! Makecustom call s:PromptCustomMakeprg()
 
 " Copy makeprg to clipboard
 command! Cpmakeprg :let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' . @+ . '] copied to the clipboard <=='
