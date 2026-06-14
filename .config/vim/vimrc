@@ -725,6 +725,13 @@ nnoremap <leader>ccl :cclose<CR>
 nnoremap <leader>src :source $MYVIMRC <bar> redraw! <bar> redrawtabline <bar> redrawstatus <CR> :echo "==> sourced vimrc <=="<CR>
 nnoremap <leader>erc :tab drop $MYVIMRC<CR>
 
+" Make arrow keys behave like Vim in Neovim's wildmenu
+if has('nvim')
+  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
+  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
+  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
+endif
+
 
 "============================================================
 " Tabline & Statusline
@@ -849,13 +856,11 @@ set statusline=%!NazStatusline()
 "============================================================
 " Cursor & Background
 "============================================================
-if has("gui_running") || exists("g:neovide")
+if has('gui_running') || exists('g:neovide')
 
   if has('nvim')
-    set guifont=Cousine:h12
     set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
   else
-    set guifont=Liberation\ Mono\ 12
     set guicursor=n-v-c:block-Cursor,i-ci-ve:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
   endif
 
@@ -894,25 +899,64 @@ nnoremap <leader>bgN :CycleBGPrev<CR>
 
 
 "============================================================
-"  Neovide
+"  Neovide & GVim
 "============================================================
-if exists("g:neovide")
-  " Initial scale
-  if !exists('g:neovide_scale_factor')
-    let g:neovide_scale_factor = 1.0
+if has('gui_running') || exists('g:neovide')
+  if has('nvim')
+    "------------------------------
+    " Neovide
+    "
+    set guifont=Cousine:h12
+
+    " Initial scale
+    if !exists('g:neovide_scale_factor')
+      let g:neovide_scale_factor = 1.0
+    endif
+
+    let g:neovide_scroll_animation_length = 0.2
+
+    command! Scalen :let g:neovide_scale_factor += 0.1
+    command! ScaleN :let g:neovide_scale_factor -= 0.1
+    command! Scale  :let g:neovide_scale_factor = 1.0
+
+    nnoremap <C-=> :Scalen<CR>
+    nnoremap <C--> :ScaleN<CR>
+    nnoremap <C-0> :Scale<CR>
+    nnoremap <A-Enter> :let g:neovide_fullscreen = (g:neovide_fullscreen) ? v:false : v:true<CR>
+  else
+    "------------------------------
+    " GVim
+    "
+    set guioptions+=c " Use console dialogs for simple choices
+    set guioptions-=m " Remove menu bar
+    set guioptions-=T " Remove toolbar
+    set guioptions-=e " Remove gui tag pages
+    set guioptions-=r " Remove right-hand scrollbar
+    set guioptions-=L " Remove left-hand scrollbar
+    set guifont=Liberation\ Mono\ 12
+
+    function! s:GVimFontScale(amount)
+      " Grab the trailing digits and add a:amount
+      let l:font_size = matchstr(&guifont, '\d\+$')
+      if l:font_size == ''
+        echomsg '[GVimFontScale] Something went wrong. guifont should be "Font Name N" (N is the size).'
+        echo &guifont
+        return
+      endif
+      let l:new_size = str2nr(l:font_size) + a:amount
+      " Swaps the old size for the new size
+      let &guifont = substitute(&guifont, '\d\+$', l:new_size, '')
+    endfunction
+
+    command! -count=1 Scalen call s:GVimFontScale(<count>)
+    command! -count=1 ScaleN call s:GVimFontScale(-<count>)
+    command!          Scale  set guifont=Liberation\ Mono\ 12
+
+    nnoremap <C-=> :Scalen<CR>
+    nnoremap <C--> :ScaleN<CR>
+    nnoremap <C-_> :ScaleN<CR>
+    nnoremap <C-0> :Scale<CR>
   endif
-
-  let g:neovide_scroll_animation_length = 0.2
-
-  nnoremap <C-=> :let g:neovide_scale_factor += 0.1<CR>
-  nnoremap <C--> :let g:neovide_scale_factor -= 0.1<CR>
-  nnoremap <C-0> :let g:neovide_scale_factor = 1.0<CR>
-  nnoremap <A-Enter> :let g:neovide_fullscreen = (g:neovide_fullscreen) ? v:false : v:true<CR>
-
-  " Make arrow keys behave like Vim in wildmenu
-  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
-  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
-  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
 endif
 
 "------------------------------

@@ -20,6 +20,7 @@ let g:colors_name = 'naz'
 " Core UI Elements
 "
 hi Normal           guibg=#101622 guifg=#c3ccdc
+hi Terminal         guibg=#101622 guifg=#c3ccdc
 hi LineNr           guibg=NONE    guifg=#4b6479
 hi LineNrAbove      guibg=NONE    guifg=#4b6479
 hi LineNrBelow      guibg=NONE    guifg=#4b6479
@@ -49,7 +50,6 @@ hi MsgArea          guibg=NONE    guifg=NONE
 hi MsgSeparator     guibg=#11324d guifg=#0094ea gui=bold cterm=bold
 hi MoreMsg          guibg=NONE    guifg=#40ffbb
 
-hi Pmenu            guibg=#002244
 hi WildMenu         guibg=#dddddd guifg=#0094ea
 
 "------------------------------
@@ -122,6 +122,7 @@ hi TabLineInfo  guibg=#252c3f guifg=#8c9f9f gui=italic cterm=italic
 "------------------------------
 " Terminal Colors (ANSI Palette)
 "
+" Neovim
 let g:terminal_color_0  = '#000000' " Black
 let g:terminal_color_1  = '#e06c75' " Red
 let g:terminal_color_2  = '#98c379' " Green
@@ -139,3 +140,13 @@ let g:terminal_color_12 = '#51afef' " Bright Blue
 let g:terminal_color_13 = '#d670d6' " Bright Magenta
 let g:terminal_color_14 = '#46ddff' " Bright Cyan
 let g:terminal_color_15 = '#eeeeee' " Bright White
+
+" Vim
+if !has('nvim')
+  let g:terminal_ansi_colors = [
+    \ '#000000', '#e06c75', '#98c379', '#c77212',
+    \ '#0094ea', '#c678dd', '#56b6c2', '#c3ccdc',
+    \ '#222222', '#ff5874', '#90ee90', '#ffcb8b',
+    \ '#51afef', '#d670d6', '#46ddff', '#eeeeee'
+    \ ]
+endif
