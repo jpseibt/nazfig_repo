@@ -13,7 +13,7 @@ set nobackup          " Don't keep a backup file after overwriting a file
 set nowritebackup     " Don't make a backup before overwriting a file
 
 set number            " Show line numbers
-set norelativenumber  " !Show relative line numbers
+set relativenumber    " Show relative line numbers
 set scrolloff=0       " !Keep lines of context around the cursor
 set backspace=indent,eol,start
 
