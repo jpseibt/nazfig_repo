@@ -28,16 +28,16 @@ ToggleApp(win_title, run_cmd)
   else
   {
     Run(run_cmd)
-    WinWait(win_title)
-    WinActivate(win_title)
+    ;WinWait(win_title)
+    ;WinActivate(win_title)
   }
 }
 
 ;==================================================
 ; App Toggle Hotkeys
 ;==================================================
-#Enter::ToggleApp("ahk_class Window Class ahk_exe neovide.exe", "neovide.exe --")
-^*t::ToggleApp("ahk_exe windowsterminal.exe", "windowsterminal.exe")
+#Enter::ToggleApp("ahk_class Window Class ahk_exe neovide.exe", "neovide.exe")
+^!t::ToggleApp("ahk_exe windowsterminal.exe", "wt.exe")
 #e::ToggleApp("ahk_exe FPilot.exe", "FPilot.exe")
 #m::ToggleApp("ahk_exe spotify.exe", "spotify.exe")
 #b::ToggleApp("Google Chrome ahk_exe chrome.exe", "chrome.exe")
@@ -69,6 +69,17 @@ ToggleApp(win_title, run_cmd)
 !$::Send("{End}")      ; Alt + $ = End
 !x::Send("{Delete}")   ; Alt + x = Delete
 !Space::Send("{Esc}")  ; Alt + Space = Escape
+
+
+;==================================================
+; Symbols
+;==================================================
+!;::SendText("=")
+!f::SendText("+")
+!d::SendText("-")
+!m::SendText("_")
+!.::SendText(">")
+!,::SendText("<")
 
 
 ;==================================================
