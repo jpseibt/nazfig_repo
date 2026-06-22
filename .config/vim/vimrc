@@ -902,12 +902,12 @@ nnoremap <leader>bgN :CycleBGPrev<CR>
 "  Neovide & GVim
 "============================================================
 if has('gui_running') || exists('g:neovide')
+  let &guifont = 'Cousine' . (s:is_win ? ':h12' : ' 12')
+
   if has('nvim')
     "------------------------------
     " Neovide
     "
-    set guifont=Cousine:h12
-
     " Initial scale
     if !exists('g:neovide_scale_factor')
       let g:neovide_scale_factor = 1.0
@@ -919,21 +919,18 @@ if has('gui_running') || exists('g:neovide')
     command! ScaleN :let g:neovide_scale_factor -= 0.1
     command! Scale  :let g:neovide_scale_factor = 1.0
 
-    nnoremap <C-=> :Scalen<CR>
-    nnoremap <C--> :ScaleN<CR>
-    nnoremap <C-0> :Scale<CR>
     nnoremap <A-Enter> :let g:neovide_fullscreen = (g:neovide_fullscreen) ? v:false : v:true<CR>
   else
     "------------------------------
     " GVim
     "
     set guioptions+=c " Use console dialogs for simple choices
+    set guioptions+=s " Enable fullscreen mode
     set guioptions-=m " Remove menu bar
     set guioptions-=T " Remove toolbar
     set guioptions-=e " Remove gui tag pages
     set guioptions-=r " Remove right-hand scrollbar
     set guioptions-=L " Remove left-hand scrollbar
-    set guifont=Liberation\ Mono\ 12
 
     function! s:GVimFontScale(amount)
       " Grab the trailing digits and add a:amount
@@ -950,13 +947,17 @@ if has('gui_running') || exists('g:neovide')
 
     command! -count=1 Scalen call s:GVimFontScale(<count>)
     command! -count=1 ScaleN call s:GVimFontScale(-<count>)
-    command!          Scale  set guifont=Liberation\ Mono\ 12
+    command!          Scale  let &guifont = 'Cousine' . (s:is_win ? ':h12' : ' 12')
 
-    nnoremap <C-=> :Scalen<CR>
-    nnoremap <C--> :ScaleN<CR>
     nnoremap <C-_> :ScaleN<CR>
-    nnoremap <C-0> :Scale<CR>
+    nnoremap <expr> <A-Enter> &guioptions =~# 's' ? ":set guioptions-=s<CR>" : ":set guioptions+=s<CR>"
   endif
+
+  nnoremap <C-=> :Scalen<CR>
+  nnoremap <C--> :ScaleN<CR>
+  nnoremap <C-0> :Scale<CR>
+  nnoremap <C-ScrollWheelUp>   :Scalen<CR>
+  nnoremap <C-ScrollWheelDown> :ScaleN<CR>
 endif
 
 "------------------------------
@@ -985,6 +986,3 @@ endif
 "-- Source my vimrc
 "vim.cmd('source ' .. vimrc_path)
 "
-"-- Override $MYVIMRC (for <leader> 'erc' and 'src')
-"vim.env.MYVIMRC = vimrc_path
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
