@@ -902,7 +902,7 @@ nnoremap <leader>bgN :CycleBGPrev<CR>
 "  Neovide & GVim
 "============================================================
 if has('gui_running') || exists('g:neovide')
-  let &guifont = 'Cousine' . (s:is_win ? ':h12' : ' 12')
+  let &guifont = 'Cousine' . ((s:is_win || has('nvim')) ? ':h12' : ' 12')
 
   if has('nvim')
     "------------------------------
