@@ -242,16 +242,16 @@ command! Makefsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %
 command! Makecppfsyntax call s:SetMakeprg('Makecppfsyntax', printf('%s -fsyntax-only %s "%%:p"', s:cpp_compiler, s:cpp_flags))
 
 " MSVC debug build (need vcvars env)
-command! Makecl call s:SetMakeprg('Makecl', 'cd build && cl /Zi /Od /W4 "%:p"')
+command! Makecl call s:SetMakeprg('Makecl', 'cd build && cl /FC /Zi /Od /W4 "%:p"')
 
 " MSVC final build (need vcvars env)
-command! MakeclRelease call s:SetMakeprg('MakeclRelease', 'cd build && cl /O2 /W4 "%:p"')
+command! MakeclRelease call s:SetMakeprg('MakeclRelease', 'cd build && cl /FC /O2 /W4 "%:p"')
 
 " Custom makeprg
 function! s:PromptCustomMakeprg()
   let l:name = input('Name: ', 'Makecustom')
   if !empty(l:name)
-    let l:cmd = input('Command: ', ShellEscape(expand('%:h') . '/build.bat'))
+    let l:cmd = input('Command: ', ShellEscape(expand('%:p:h') . '/build.bat'))
     if !empty(l:cmd)
       echo "\n"
       call s:SetMakeprg(l:name, l:cmd)
@@ -281,14 +281,15 @@ if !exists('s:prepend_regex_errorformat')
   " Clang/GCC
   set errorformat^=%f:%l:%c:\ %t%*[^:]:\ %m
 
-  " MSVC Compiler (`file.cpp(#line): error C2065: ...`)
-  set errorformat^=%f(%l):\ %t%*[^:]:\ %m
-
   " MSVC Linker (`file.obj : error LNK2019: ...`)
   set errorformat^=%f\ :\ %t%*[^:]:\ %m
 
   " MSVC Linker Fatal (`file.obj : fatal error LNK2019: ...`)
   set errorformat^=%f\ :\ fatal\ %t%*[^:]:\ %m
+
+  " MSVC Compiler (`file.cpp(#line): error C2065: ...` or `file.cpp(#line) : warning C4700: ...`)
+  set errorformat^=%f(%l):\ %t%*[^:]:\ %m
+  set errorformat^=%f(%l)\ :\ %t%*[^:]:\ %m
 endif
 
 if !exists('s:qf_entries')
@@ -378,7 +379,7 @@ function! s:BuildAndDebug()
     if s:is_win
       " Lauch RAD Debugger on Windows
       call system(printf("start raddbg.exe \"%s.exe\"", l:prg_path))
-      echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - RAD Debugger Launched <=='
+      echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - RAD Debugger Launched <==' | echohl None
       if s:qf_entries < 1
         execute 'cclose'
       endif
@@ -386,7 +387,7 @@ function! s:BuildAndDebug()
       " Launch GDB in a new terminal
       let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
       call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
-      echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - GDB Launched <=='
+      echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - GDB Launched <==' | echohl None
       execute 'redraw!'
     endif
   else
@@ -876,7 +877,7 @@ endif
 autocmd InsertEnter * set cursorline
 autocmd InsertLeave * set nocursorline
 
-let s:bg_colors = ['#101622', '#000d1a', '#171d2a', '#171a22']
+let s:bg_colors = ['#101622', '#000d1a', '#00080f', '#171d2a']
 let s:bg_index = 0
 
 function! s:CycleBackground(prev)
