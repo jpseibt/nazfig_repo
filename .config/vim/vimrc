@@ -238,7 +238,7 @@ command! Makecpp let s:create_build_dir = 1 | call s:SetMakeprg('Makecpp', print
 command! MakecppRelease let s:create_build_dir = 1 | call s:SetMakeprg('MakecppRelease', printf('%s -O3 %s "%%:p" -o "%s%s"', s:cpp_compiler, s:cpp_flags, s:out_dir, s:out_prg))
 
 " C fsyntax-only
-command! Makefsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %s "%%:p"', s:c_compiler, s:c_flags))
+command! Makecfsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %s "%%:p"', s:c_compiler, s:c_flags))
 
 " C++ fsyntax-only
 command! Makecppfsyntax call s:SetMakeprg('Makecppfsyntax', printf('%s -fsyntax-only %s "%%:p"', s:cpp_compiler, s:cpp_flags))
@@ -279,6 +279,9 @@ command! Cpmake let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name 
 if !exists('s:prepend_regex_errorformat')
   let s:prepend_regex_errorformat = 1
   set errorformat& " Reset errorformat to default
+
+  " Raw/Generic messages (wrong args or options passed to compiler)
+  set errorformat^=%t%*[^:]:\ %m
 
   " Clang/LLD (`lld-link: error: cannot open output file ...` or `clang: error: linker command failed ...`)
   set errorformat^=%o:\ %t%*[^:]:\ %m
@@ -381,6 +384,7 @@ endfunction
 
 " NOTE: `redraw!` seems to be needed on my current linux terminal emulator
 function! s:BuildAndDebug()
+  if empty(&makeprg) | echo 'makeprg is empty...' | return | endif
   call s:CheckBuildDir()
   execute 'w'
   execute 'silent make!'
@@ -409,6 +413,7 @@ function! s:BuildAndDebug()
 endfunction
 
 function! s:BuildAndCheck()
+  if empty(&makeprg) | echo 'makeprg is empty...' | return | endif
   call s:CheckBuildDir()
   execute 'w'
   execute 'silent make!'
