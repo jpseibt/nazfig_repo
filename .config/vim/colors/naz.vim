@@ -91,6 +91,8 @@ hi StdoutMsg      guibg=NONE guifg=NONE
 hi QuickFixLine   guibg=#11324d guifg=NONE
 hi qfFileName     guifg=#c77212
 
+hi Todo           guibg=NONE guifg=#dd0000 gui=bold,underline cterm=bold,underline
+
 "------------------------------
 " Diff
 "

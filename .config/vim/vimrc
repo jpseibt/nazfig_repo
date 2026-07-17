@@ -367,6 +367,8 @@ augroup END
 
 command! Ccount call s:QFListCount()
 command! Lcount call s:LocListCount()
+command! Cclear cexpr [] | cw
+command! Lclear lexpr [] | lw
 
 "------------------------------
 " Build
