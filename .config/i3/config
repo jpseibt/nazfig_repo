@@ -425,6 +425,7 @@ workspace $ws10 output HDMI-A-0
 bindsym $mod+z move workspace to output left
 
 # bind program to workspace and focus to them on startup:
+assign [title="^The RAD Debugger"] $ws4
 assign [instance="web.whatsapp.com"] $ws6
 assign [instance="Mail"] $ws6
 assign [instance="pinta"] $ws7
