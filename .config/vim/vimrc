@@ -216,7 +216,7 @@ if !exists('s:makeprg_cmd_name')
   let s:create_build_dir = 1
 endif
 
-command! Makeclear let &makeprg='' | let s:makeprg_cmd_name = '____' | redrawtabline
+command! Makeclear let &makeprg = '' | let s:makeprg_cmd_name = '____' | redrawtabline
 
 function! s:SetMakeprg(name, cmd)
   let s:makeprg_cmd_name = a:name
@@ -373,6 +373,12 @@ command! Lclear lexpr [] | lw
 "------------------------------
 " Build
 "
+if !exists('s:last_build_succeed')
+  let s:last_build_succeed = 0
+  let s:curr_target = ''
+endif
+command! Buildclear let s:last_build_succeed = 0 | let s:curr_target = ''
+
 " Create build directory based on s:create_build_dir
 function! s:CheckBuildDir()
   if s:create_build_dir
@@ -384,41 +390,30 @@ function! s:CheckBuildDir()
   endif
 endfunction
 
-" NOTE: `redraw!` seems to be needed on my current linux terminal emulator
-function! s:BuildAndDebug()
-  if empty(&makeprg) | echo 'makeprg is empty...' | return | endif
-  call s:CheckBuildDir()
-  execute 'w'
-  execute 'silent make!'
-
-  let l:prg_path = expandcmd(s:out_dir . s:out_prg)
-
-  if s:qf_errors < 1 && v:shell_error == 0
-    if s:is_win
-      " Lauch RAD Debugger on Windows
-      call system(printf("start raddbg.exe \"%s\"", l:prg_path))
-      echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - RAD Debugger Launched <==' | echohl None
-      if s:qf_entries < 1
-        execute 'cclose'
-      endif
-    else
-      " Launch GDB in a new terminal
-      let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
-      call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
-      echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') - GDB Launched <==' | echohl None
-      execute 'redraw!'
-    endif
-  else
-    echohl ErrorMsg | echo '==> Build Failed <==' | echohl None
-    execute 'cw'
-  endif
+function! s:IsRaddbgRunning()
+  " Regex to remove the CSV header of the `tasklist` output
+  return s:is_win && !empty(substitute(system('tasklist /FO CSV /FI "IMAGENAME eq raddbg.exe"'), '^.[^\n]*\n', '', ''))
 endfunction
 
 function! s:BuildAndCheck()
+  let s:last_build_succeed = 0
+
   if empty(&makeprg) | echo 'makeprg is empty...' | return | endif
   call s:CheckBuildDir()
   execute 'w'
   execute 'silent make!'
+
+  " If build fails, send a Kill command to raddbg and retry
+  if (s:qf_errors > 0 || v:shell_error != 0) && s:is_win
+    if s:IsRaddbgRunning()
+      let l:prg_path = expandcmd(s:out_dir . s:out_prg)
+      echohl ErrorMsg | echo '- Build failed (possible executable lock): Kill command sent to raddbg and retrying -' | echohl None
+      call system('raddbg --ipc kill ' . l:prg_path)
+      echo printf("\t> Kill [%s]", l:prg_path)
+      sleep 500m
+      execute 'silent make!'
+    endif
+  endif
 
   if !s:is_win
     execute 'redraw!'
@@ -428,17 +423,64 @@ function! s:BuildAndCheck()
     execute 'copen'
     echohl ErrorMsg | echo '==> Build Failed <==' | echohl None
   elseif s:qf_entries > 0
-    echohl WarningMsg | echo '==> Build finished with ' . s:qf_entries . ' issue(s) <==' | echohl None
+    echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') <==' | echohl None
+    let s:last_build_succeed = 1
   else
     echohl OkMsg | echo '==> Build Successful <==' | echohl None
+    let s:last_build_succeed = 1
     execute 'cclose'
   endif
 endfunction
 
-command! Raddbg call s:BuildAndDebug()
-command! Build call s:BuildAndCheck()
-nnoremap <F10> :Raddbg<CR>
-nnoremap <F5> :Build<CR>
+" NOTE: `redraw!` seems to be needed on my current linux terminal emulator
+function! s:BuildAndDebug(run_to_line)
+  call s:BuildAndCheck()
+  if !s:last_build_succeed | return | endif
+
+  let l:prg_path = expandcmd(s:out_dir . s:out_prg)
+  let l:new_target = s:curr_target != l:prg_path
+  let s:curr_target = l:prg_path
+
+  if s:is_win
+    if !s:IsRaddbgRunning()
+      call system('start raddbg.exe')
+      echohl OkMsg | echo '- RAD Debugger Launched -' | echohl None
+      let l:new_target = 1
+      sleep 500m
+    endif
+
+    " Send commands to primary RAD Debugger instance
+    echohl WarningMsg | echo "RAD Debugger Commands Sent:" | echohl None
+
+    if l:new_target
+      call system(printf("raddbg.exe --ipc add_target \"%s\"", l:prg_path))
+      echo printf("\t> Add Target [%s]", l:prg_path)
+    endif
+
+    if a:run_to_line > 0
+      call system(printf("raddbg.exe --ipc run_to_line %s:%d", expand('%:p'), a:run_to_line))
+      echo printf("\t> Run To Line [%s:%d]", expand('%:p'), a:run_to_line)
+    else
+      call system('raddbg.exe --ipc launch_and_step_into')
+      echo "\t> Launch and Step Into"
+    endif
+
+  else
+    " Launch GDB in a new terminal
+    let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
+    call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
+    echohl OkMsg | echo '- GDB Launched -' | echohl None
+    execute 'redraw!'
+  endif
+endfunction
+
+command! Build        call s:BuildAndCheck()
+command! Raddbg       call s:BuildAndDebug(0)
+command! RaddbgToLine call s:BuildAndDebug(line('.'))
+
+nnoremap <F5>    :Build<CR>
+nnoremap <F10>   :Raddbg<CR>
+nnoremap <C-F10> :RaddbgToLine<CR>
 
 
 "============================================================
