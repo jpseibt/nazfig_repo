@@ -903,7 +903,7 @@ set tabline=%!NazTabline()
 " Statusline
 "
 function! NazStatusline()
-  let l:statusline_str = '[%n]' " buffer number
+  let l:statusline_str = '[%n]%<' " buffer number
 
   let l:bufnr = winbufnr(g:statusline_winid)
   let l:buf_filetype = getbufvar(l:bufnr, '&filetype')
@@ -916,8 +916,8 @@ function! NazStatusline()
       let l:statusline_str .= ' %#WarningMsg#[M:' . l:len_mark_list . ']%*'
     endif
   else
-    " full file path
-    let l:statusline_str .= ' %F %m%r'
+    " full file path and flags
+    let l:statusline_str .= ' %F %m%r%h%w'
   endif
 
   let l:loc_list_entries = getwinvar(g:statusline_winid, 'loc_list_entries', 0)
@@ -925,7 +925,15 @@ function! NazStatusline()
     let l:statusline_str .= ' %#MoreMsg#[Loc:' . l:loc_list_entries . ']%*'
   endif
 
-  let l:statusline_str .= ' %=ch(%b) | %l:%c-%L ↓%p%%'
+  let l:winwidth = winwidth(g:statusline_winid)
+  if winwidth > 72
+    let l:statusline_str .= ' %=ch(%b) | %l:%c-%L ↓%p%%'
+  elseif winwidth > 62
+    let l:statusline_str .= ' %=%l:%c ↓%p%%'
+  else
+    let l:statusline_str .= ' %=↓%p%%'
+  endif
+
   return l:statusline_str
 endfunction
 
