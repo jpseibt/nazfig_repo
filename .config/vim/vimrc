@@ -185,92 +185,14 @@ command! -count=12 Quakehere call GerminalHere(4, <count>)
 nnoremap <C-`> :Quake<CR>
 tnoremap <C-`> <C-\><C-n>:hide<CR>
 
+" Fallback for Vim/gVim
+nnoremap <F12> :Quake<CR>
+tnoremap <F12> <C-\><C-n>:hide<CR>
+
+
 "============================================================
-" Compiling & Debugging
+" Quickfix and Location Lists
 "============================================================
-"------------------------------
-" Compiler
-"
-if s:is_win
-  let s:c_compiler = 'clang'
-  let s:cpp_compiler = 'clang++'
-else
-  let s:c_compiler = 'gcc'
-  let s:cpp_compiler = 'g++'
-endif
-
-" Base and warning flags
-let s:common_flags = '-Wall -Wextra -Wpedantic'
-let s:c_flags = s:common_flags . ' -std=c99'
-let s:cpp_flags = s:common_flags . ' -std=c++03'
-
-" Output program path patterns
-let s:out_dir = '%:p:h' . '/build/'
-let s:out_prg = '%:t:r' . (s:is_win ? '.exe' : '')
-
-"------------------------------
-" Commands (makeprg)
-"
-if !exists('s:makeprg_cmd_name')
-  let s:makeprg_cmd_name = '____'
-  let s:create_build_dir = 1
-endif
-
-command! Makeclear let &makeprg = '' | let s:makeprg_cmd_name = '____' | redrawtabline
-
-function! s:SetMakeprg(name, cmd)
-  let s:makeprg_cmd_name = a:name
-  let &makeprg = a:cmd
-  redrawtabline
-  echo '==> ' . a:name . ' [' . a:cmd . '] set as &makeprg <=='
-endfunction
-
-" C debug build (default for .c)
-command! Makec let s:create_build_dir = 1 | call s:SetMakeprg('Makec', printf('%s -g -O0 %s "%%:p" -o "%s%s"', s:c_compiler, s:c_flags, s:out_dir, s:out_prg))
-
-" C final build
-command! MakecRelease let s:create_build_dir = 1 | call s:SetMakeprg('MakecRelease', printf('%s -O3 %s "%%:p" -o "%s%s"', s:c_compiler, s:c_flags, s:out_dir, s:out_prg))
-
-" C++ debug build (default for .cpp)
-command! Makecpp let s:create_build_dir = 1 | call s:SetMakeprg('Makecpp', printf('%s -g -O0 %s "%%:p" -o "%s%s"', s:cpp_compiler, s:cpp_flags, s:out_dir, s:out_prg))
-
-" C++ final build
-command! MakecppRelease let s:create_build_dir = 1 | call s:SetMakeprg('MakecppRelease', printf('%s -O3 %s "%%:p" -o "%s%s"', s:cpp_compiler, s:cpp_flags, s:out_dir, s:out_prg))
-
-" C fsyntax-only
-command! Makecfsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %s "%%:p"', s:c_compiler, s:c_flags))
-
-" C++ fsyntax-only
-command! Makecppfsyntax call s:SetMakeprg('Makecppfsyntax', printf('%s -fsyntax-only %s "%%:p"', s:cpp_compiler, s:cpp_flags))
-
-" MSVC debug build (need vcvars env)
-command! Makecl let s:create_build_dir = 1 | call s:SetMakeprg('Makecl', 'cd "' . s:out_dir . '" && cl /FC /Zi /Od /W4 "%:p"')
-
-" MSVC final build (need vcvars env)
-command! MakeclRelease let s:create_build_dir = 1 | call s:SetMakeprg('MakeclRelease', 'cd "' . s:out_dir . '" && cl /FC /O2 /W4 "%:p"')
-
-" Custom makeprg
-function! s:PromptCustomMakeprg()
-  let l:name = input('Name: ', 'Makecustom')
-  if !empty(l:name)
-    let l:cmd = input('Command: ', ShellEscape(expand('%:p:h') . '/build.bat'))
-    if !empty(l:cmd)
-      echo "\n"
-      call s:SetMakeprg(l:name, l:cmd)
-      return
-    endif
-  endif
-  echomsg 'Setting custom makeprg aborted'
-endfunction
-
-command! Makecustom let s:create_build_dir = 0 | call s:PromptCustomMakeprg()
-
-" Copy makeprg to clipboard
-command! Cpmakeprg let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' . @+ . '] copied to the clipboard <=='
-
-" Copy expanded makeprg to clipboard
-command! Cpmake let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name . ' (expanded) [' . @+ . '] copied to the clipboard <=='
-
 "------------------------------
 " Quickfix List - only for :make
 " (for other commands like :vimgrep, use location list counterpart)
@@ -370,46 +292,139 @@ command! Lcount call s:LocListCount()
 command! Cclear cexpr [] | cw
 command! Lclear lexpr [] | lw
 
-"------------------------------
-" Build
-"
-if !exists('s:last_build_succeed')
-  let s:last_build_succeed = 0
-  let s:curr_target = ''
-endif
-command! Buildclear let s:last_build_succeed = 0 | let s:curr_target = ''
 
-" Create build directory based on s:create_build_dir
-function! s:CheckBuildDir()
-  if s:create_build_dir
-    let l:build_dir = expandcmd(s:out_dir)
-    if !isdirectory(l:build_dir)
-      call mkdir(l:build_dir, "p")
-      echohl Directory | echomsg 'Build directory ["' . l:build_dir . '"] created.' | echohl None
+"============================================================
+" Compiling & Debugging
+"============================================================
+"------------------------------
+" Defaults & Compiler
+"
+if s:is_win
+  let s:c_compiler = 'clang'
+  let s:cpp_compiler = 'clang++'
+else
+  let s:c_compiler = 'gcc'
+  let s:cpp_compiler = 'g++'
+endif
+
+" Base and warning flags
+let s:common_flags = '-Wall -Wextra -Wpedantic'
+let s:c_flags = s:common_flags . ' -std=c99'
+let s:cpp_flags = s:common_flags . ' -std=c++03'
+
+" Output program path patterns
+let s:dft_out_dir = '%:p:h' . '/build/'
+let s:out_prg = '%:t:r' . (s:is_win ? '.exe' : '')
+let s:dft_out_file = '%:p:h' . '/build/' . '%:t:r' . (s:is_win ? '.exe' : '')
+
+"------------------------------
+" Commands for makeprg
+"
+if !exists('s:makeprg_cmd_name')
+  let &makeprg           = ''
+  let s:makeprg_cmd_name = ''
+  let s:makeprg_out_file = s:dft_out_file
+endif
+command! Makeclear let &makeprg = '' | let s:makeprg_cmd_name = '' | let s:makeprg_out_file = s:dft_out_file | redrawtabline
+
+function! s:SetMakeprg(name, cmd, output)
+  let s:makeprg_cmd_name = a:name
+  let &makeprg           = a:cmd
+  let s:makeprg_out_file = a:output
+  redrawtabline
+  echo '==> ' . s:makeprg_cmd_name . ' [' . &makeprg . '] set as &makeprg <=='
+  echo "Output file:\n\t" | echohl WarningMsg | echo s:makeprg_out_file | echohl None
+endfunction
+
+" C debug build (default for .c)
+command! Makec call s:SetMakeprg('Makec', printf('%s -g -O0 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:dft_out_file), s:dft_out_file)
+
+" C final build
+command! MakecRelease call s:SetMakeprg('MakecRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:c_compiler, s:c_flags, s:dft_out_file), s:dft_out_file)
+
+" C++ debug build (default for .cpp)
+command! Makecpp call s:SetMakeprg('Makecpp', printf('%s -g -O0 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:dft_out_file), s:dft_out_file)
+
+" C++ final build
+command! MakecppRelease call s:SetMakeprg('MakecppRelease', printf('%s -O3 %s "%%:p" -o "%s"', s:cpp_compiler, s:cpp_flags, s:dft_out_file), s:dft_out_file)
+
+" C fsyntax-only
+command! Makecfsyntax call s:SetMakeprg('Makefsyntax', printf('%s -fsyntax-only %s "%%:p"', s:c_compiler, s:c_flags), '')
+
+" C++ fsyntax-only
+command! Makecppfsyntax call s:SetMakeprg('Makecppfsyntax', printf('%s -fsyntax-only %s "%%:p"', s:cpp_compiler, s:cpp_flags), '')
+
+" MSVC debug build (need vcvars env)
+command! Makecl call s:SetMakeprg('Makecl', 'cd "' . fnamemodify(s:dft_out_file, ':h') . '" && cl /FC /Zi /Od /W4 "%:p"', s:dft_out_file)
+
+" MSVC final build (need vcvars env)
+command! MakeclRelease call s:SetMakeprg('MakeclRelease', 'cd "' . fnamemodify(s:dft_out_file, ':h') . '" && cl /FC /O2 /W4 "%:p"', s:dft_out_file)
+
+" Custom makeprg
+function! s:PromptCustomMakeprg()
+  let l:name = input('Name: ', 'Makecustom')
+  if !empty(l:name)
+    let l:cmd = input('Command: ', expand('%:p:h') . '/build.bat')
+    if !empty(l:cmd)
+      echo "\n"
+      let l:output = input('Output: ', expandcmd(s:dft_out_file))
+      echo "\n"
+      call s:SetMakeprg(l:name, l:cmd, l:output)
+      return
     endif
   endif
+  echomsg 'Setting custom makeprg aborted'
 endfunction
+
+command! Makecustom call s:PromptCustomMakeprg()
+
+" Copy makeprg to clipboard
+command! Cpmakeprg let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' . @+ . '] copied to the clipboard <=='
+
+" Copy expanded makeprg to clipboard
+command! Cpmake let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name . ' (expanded) [' . @+ . '] copied to the clipboard <=='
+
+"------------------------------
+" Build & Debugging
+"
+if !exists('s:last_build_out_file')
+  let s:last_build_out_file = ''
+  let s:curr_debuggee = ''
+endif
+command! Buildclear let s:last_build_out_file = '' | let s:curr_debuggee = ''
 
 function! s:IsRaddbgRunning()
   " Regex to remove the CSV header of the `tasklist` output
   return s:is_win && !empty(substitute(system('tasklist /FO CSV /FI "IMAGENAME eq raddbg.exe"'), '^.[^\n]*\n', '', ''))
 endfunction
 
+" Create build directory based on s:out_file
+function! s:CheckBuildDir()
+  if empty(s:makeprg_out_file) | return | endif
+  let l:build_dir = fnamemodify(expandcmd(s:makeprg_out_file), ':p:h')
+  if !isdirectory(l:build_dir)
+    call mkdir(l:build_dir, "p")
+    echohl Directory | echomsg 'Build directory ["' . l:build_dir . '"] created.' | echohl None
+  endif
+endfunction
+
 function! s:BuildAndCheck()
-  let s:last_build_succeed = 0
+  let s:last_build_out_file = ''
 
   if empty(&makeprg) | echo 'makeprg is empty...' | return | endif
   call s:CheckBuildDir()
   execute 'w'
+  echo 'Build command: ' . expandcmd(&makeprg)
   execute 'silent make!'
 
-  " If build fails, send a Kill command to raddbg and retry
+  let l:target_out = expandcmd(s:makeprg_out_file)
+
+  " If build fails and raddbg is running, send a Kill command to the current debuggee and retry
   if (s:qf_errors > 0 || v:shell_error != 0) && s:is_win
-    if s:IsRaddbgRunning()
-      let l:prg_path = expandcmd(s:out_dir . s:out_prg)
+    if s:IsRaddbgRunning() && s:curr_debuggee == l:target_out
       echohl ErrorMsg | echo '- Build failed (possible executable lock): Kill command sent to raddbg and retrying -' | echohl None
-      call system('raddbg --ipc kill ' . l:prg_path)
-      echo printf("\t> Kill [%s]", l:prg_path)
+      call system('raddbg --ipc kill ' . s:curr_debuggee)
+      echo printf("\t> Kill [%s]", s:curr_debuggee)
       sleep 500m
       execute 'silent make!'
     endif
@@ -422,24 +437,32 @@ function! s:BuildAndCheck()
   if s:qf_errors > 0 || v:shell_error != 0
     execute 'copen'
     echohl ErrorMsg | echo '==> Build Failed <==' | echohl None
-  elseif s:qf_entries > 0
-    echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') <==' | echohl None
-    let s:last_build_succeed = 1
   else
-    echohl OkMsg | echo '==> Build Successful <==' | echohl None
-    let s:last_build_succeed = 1
-    execute 'cclose'
+    let s:last_build_out_file = l:target_out
+    if s:qf_entries > 0
+      echohl WarningMsg | echo '==> Build Successful (s:qf_entries:' . s:qf_entries . ') <==' | echohl None
+    else
+      echohl OkMsg | echo '==> Build Successful <==' | echohl None
+      execute 'cclose'
+    endif
   endif
 endfunction
 
 " NOTE: `redraw!` seems to be needed on my current linux terminal emulator
 function! s:BuildAndDebug(run_to_line)
   call s:BuildAndCheck()
-  if !s:last_build_succeed | return | endif
+  if empty(s:last_build_out_file)
+    if empty(s:makeprg_out_file)
+      echohl WarningMsg | echo "Debuggee: No output file defined for current makeprg" | echohl None
+    else
+      echohl ErrorMsg | echo "Debuggee: Last build failed, aborting debugger launch" | echohl None
+    endif
+    return
+  endif
 
-  let l:prg_path = expandcmd(s:out_dir . s:out_prg)
-  let l:new_target = s:curr_target != l:prg_path
-  let s:curr_target = l:prg_path
+  let l:new_target = s:curr_debuggee != s:last_build_out_file
+  let s:curr_debuggee = s:last_build_out_file
+  echomsg 'Debuggee: ' . s:curr_debuggee
 
   if s:is_win
     if !s:IsRaddbgRunning()
@@ -453,8 +476,8 @@ function! s:BuildAndDebug(run_to_line)
     echohl WarningMsg | echo "RAD Debugger Commands Sent:" | echohl None
 
     if l:new_target
-      call system(printf("raddbg.exe --ipc add_target \"%s\"", l:prg_path))
-      echo printf("\t> Add Target [%s]", l:prg_path)
+      call system(printf("raddbg.exe --ipc add_target \"%s\"", s:curr_debuggee))
+      echo printf("\t> Add Target [%s]", s:curr_debuggee)
     endif
 
     if a:run_to_line > 0
@@ -468,7 +491,7 @@ function! s:BuildAndDebug(run_to_line)
   else
     " Launch GDB in a new terminal
     let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
-    call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, l:prg_path))
+    call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, s:curr_debuggee))
     echohl OkMsg | echo '- GDB Launched -' | echohl None
     execute 'redraw!'
   endif
@@ -868,7 +891,7 @@ function! NazTabline()
   let l:tabline_str .= '%#TabLineFill#%T'
   let l:tabline_str .= '%#TabLineInfo#%T'
 
-  let l:tabline_str .= '%=[%{QFTabline()}] ' . s:makeprg_cmd_name
+  let l:tabline_str .= empty(s:makeprg_cmd_name) ? '' : '%=[%{QFTabline()}] ' . s:makeprg_cmd_name
   "let l:tabline_str .= " | %{strftime('%H:%M')}"
 
   return l:tabline_str
