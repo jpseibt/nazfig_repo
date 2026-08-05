@@ -30,6 +30,8 @@ hi VertSplit        guibg=NONE    guifg=#252c3f gui=NONE cterm=NONE
 hi Visual           guibg=#1d3b53 guifg=NONE
 hi Search           guibg=#38507a guifg=#d6deeb gui=NONE cterm=NONE
 hi IncSearch        guibg=#ffcb8b guifg=#171a22 gui=NONE cterm=NONE
+hi NormalFloat      guibg=#316394 guifg=#d6deeb
+hi FloatBorder      guibg=#09243a guifg=#c3ccdc
 hi Pmenu            guibg=#09243a guifg=#c3ccdc
 hi PmenuSel         guibg=#316394 guifg=#d6deeb
 hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold

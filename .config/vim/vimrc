@@ -1,4 +1,5 @@
 " Zero dependencies vimrc - naz
+" Built-in packages used: netrw, termdebug
 
 let s:is_win = has('win32') || has('win64')
 
@@ -69,7 +70,7 @@ let s:germinal_bufnr = bufnr(s:germinal_name)
 "     B. (modes [0-4]) The germinal buf is `IN_VIEW`  (open on any window in the active tab);
 "     C. (mode 3)      The germinal buf is `IN_A_TAB` (open on any tab).
 "
-" `a:modes`:
+" `a:mode`s:
 "     0:
 "       A.`UNLISTED`-> create and open a germinal buf on the active window;
 "       B.`IN_VIEW` -> jump the cursor to the germinal buf.
@@ -453,8 +454,10 @@ function! s:BuildAndCheck()
   endif
 endfunction
 
+" a:mode = 0 -> Raddbg
+" a:mode = 1 -> termdebug
 " a:run_to_line format is: /path/to/source/file.c:64 (stop at line 64 of file.c)
-function! s:BuildAndDebug(run_to_line)
+function! s:BuildAndDebug(mode, run_to_line)
   call s:BuildAndCheck()
   if empty(s:last_build_out_file)
     if empty(s:makeprg_out_file)
@@ -469,7 +472,8 @@ function! s:BuildAndDebug(run_to_line)
   let s:curr_debuggee = s:last_build_out_file
   echomsg 'Debuggee: ' . s:curr_debuggee
 
-  if s:is_win
+  if a:mode == 0 && s:is_win
+    " RAD Debugger
     if !s:IsRaddbgRunning()
       call system('start raddbg.exe')
       echohl OkMsg | echo '- RAD Debugger Launched -' | echohl None
@@ -487,18 +491,41 @@ function! s:BuildAndDebug(run_to_line)
       call s:SendRaddbgCommand('step_over')
     endif
 
-  else
-    " Launch GDB in a new terminal
-    let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
-    call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, s:curr_debuggee))
-    echohl OkMsg | echo '- GDB Launched -' | echohl None
-    execute 'redraw!'
+  elseif a:mode == 1 || !s:is_win
+    " termdebug
+    let l:expd_run_to_line = expandcmd(a:run_to_line) " need to expand before running termdebug
+
+    if !exists(':Termdebug') | packadd termdebug | endif
+    execute 'Termdebug ' . s:curr_debuggee
+
+    if !empty(a:run_to_line)
+      call TermDebugSendCommand('tbreak "' . l:expd_run_to_line . '"')
+      call TermDebugSendCommand('run')
+    else
+      call TermDebugSendCommand('start')
+    endif
+
+    " Open disassembly window, local and argument variables window, then jump to the gdb window
+    execute 'Var'
+    execute 'Asm'
+    execute 'Gdb'
+
+    "[LEGACY] Launch GDB in a new terminal
+    "let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
+    "call system(printf("xfce4-terminal --execute gdb %s \"%s\" &", l:gdb_args, s:curr_debuggee))
+    "echohl OkMsg | echo '- GDB Launched -' | echohl None
+    "execute 'redraw!'
   endif
 endfunction
 
-command!          Build     call s:BuildAndCheck()
-command!          Raddbg    call s:BuildAndDebug('')
-command! -nargs=1 Radtoline call s:BuildAndDebug('%:p:' . <args>)
+command! Build call s:BuildAndCheck()
+nnoremap <F5> :Build<CR>
+
+"------------------------------
+" RAD Debugger commands and maps
+"
+command!          Raddbg    call s:BuildAndDebug(0, '')
+command! -nargs=1 Radtoline call s:BuildAndDebug(0, '%:p:' . <args>)
 command! -nargs=+ Radcmd    call s:SendRaddbgCommand(<q-args>)
 command! -nargs=+ Radwatch  call s:SendRaddbgCommand('toggle_watch_expr "' . <q-args> . '"')
 command! -nargs=+ Radmem    call s:SendRaddbgCommand('go_to_memory "' . <q-args> . '"')
@@ -507,13 +534,43 @@ command! Radbreak     call s:SendRaddbgCommand('toggle_breakpoint "%:p:' . line(
 command! Radwatchthis call s:SendRaddbgCommand('toggle_watch_expr "<cword>"')
 command! Radmemthis   call s:SendRaddbgCommand('go_to_memory "<cword>"')
 
-nnoremap <F5>    :Build<CR>
 nnoremap <F10>   :Raddbg<CR>
 nnoremap <C-F10> :Radtoline line('.')<CR>
 nnoremap <F9>    :Radbreak<CR>
-nnoremap <M-w>   :Radwatchthis<CR>
-nnoremap <M-g>   :Radmemthis<CR>
+nnoremap <A-w>   :Radwatchthis<CR>
+nnoremap <A-g>   :Radmemthis<CR>
 
+"------------------------------
+" termdebug commands and maps
+"
+command!          Tdbg       call s:BuildAndDebug(1, '')
+command! -nargs=1 Tdbgtoline call s:BuildAndDebug(1, '%:p:' . <args>)
+command! -nargs=+ Tdbgcmd    call TermDebugSendCommand(<q-args>)
+
+nnoremap <S-F10>   :Tdbg<CR>
+nnoremap <S-C-F10> :Tdbgtoline line('.')<CR>
+
+function! TermdebugEnableMappings()
+  nnoremap <F11> :Step<CR>
+  nnoremap <F10> :Over<CR>
+  nnoremap <F9>  :Break<CR>
+  nnoremap <F5>  :Continue<CR>
+  echohl WarningMsg | echo '- termdebug mappings enabled -' | echohl None
+endfunction
+
+function! TermdebugDisableMappings()
+  silent! nunmap <F11>
+  nnoremap <F10> :Raddbg<CR>
+  nnoremap <F9>  :Radbreak<CR>
+  nnoremap <F5>  :Build<CR>
+  echohl WarningMsg | echo '- termdebug mappings disabled -' | echohl None
+endfunction
+
+augroup Termdebug
+  autocmd!
+  autocmd User TermdebugStartPost call TermdebugEnableMappings()
+  autocmd User TermdebugStopPost call TermdebugDisableMappings()
+augroup END
 
 "============================================================
 " Misc & Netrw
