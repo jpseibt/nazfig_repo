@@ -19,6 +19,10 @@ let g:colors_name = 'naz'
 "------------------------------
 " Core UI Elements
 "
+hi Cursor  gui=NONE guifg=Red     guibg=#00ff00
+hi iCursor gui=NONE guifg=Black   guibg=#ff0000
+hi oCursor gui=NONE guifg=Black   guibg=#00ffff
+
 hi Normal           guibg=#101622 guifg=#c3ccdc
 hi Terminal         guibg=#101622 guifg=#c3ccdc
 hi LineNr           guibg=NONE    guifg=#4b6479
@@ -30,10 +34,6 @@ hi VertSplit        guibg=NONE    guifg=#252c3f gui=NONE cterm=NONE
 hi Visual           guibg=#1d3b53 guifg=NONE
 hi Search           guibg=#38507a guifg=#d6deeb gui=NONE cterm=NONE
 hi IncSearch        guibg=#ffcb8b guifg=#171a22 gui=NONE cterm=NONE
-hi NormalFloat      guibg=#316394 guifg=#d6deeb
-hi FloatBorder      guibg=#09243a guifg=#c3ccdc
-hi Pmenu            guibg=#09243a guifg=#c3ccdc
-hi PmenuSel         guibg=#316394 guifg=#d6deeb
 hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold
 hi StatusLineNC     guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
 hi StatusLineTerm   guibg=#588c58 guifg=#90ee90 gui=bold cterm=bold
@@ -52,7 +52,17 @@ hi MsgArea          guibg=NONE    guifg=NONE
 hi MsgSeparator     guibg=#11324d guifg=#0094ea gui=bold cterm=bold
 hi MoreMsg          guibg=NONE    guifg=#40ffbb
 
+"------------------------------
+" Pop-ups and termdebug
+"
 hi WildMenu         guibg=#dddddd guifg=#0094ea
+hi Pmenu            guibg=#09243a guifg=#c3ccdc
+hi PmenuSel         guibg=#316394 guifg=#d6deeb
+
+hi NormalFloat      guibg=#316394 guifg=#d6deeb
+hi FloatBorder      guibg=#09243a guifg=#c3ccdc
+hi debugPC          guibg=#000255 guifg=NONE    gui=NONE cterm=NONE
+hi debugBreakpoint  guibg=#bb0000 guifg=#dddddd gui=bold cterm=bold
 
 "------------------------------
 " Standard Syntax (C)

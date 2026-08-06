@@ -1,8 +1,9 @@
 " Zero dependencies vimrc - naz
 " Built-in packages used: netrw, termdebug
 
-let s:is_win = has('win32') || has('win64')
-
+"============================================================
+" Common Settings & Misc
+"============================================================
 syntax enable
 set nocompatible
 set termguicolors
@@ -24,10 +25,9 @@ set showcmdloc=last   " Show commands on the last line
 set wildoptions=pum   " Show wildmenu as a pop-up
 set formatoptions-=c fo-=r fo-=o fo-=t " Disable comment leader insertion and automatic line breaks
 
-
-"============================================================
+"------------------------------
 " Searching
-"============================================================
+"
 set incsearch         " Incremental search
 set hlsearch          " Highlight search results
 set ignorecase        " Ignore case when searching
@@ -36,10 +36,9 @@ set showmatch         " Highlight matching parenthesis.
 set tags+=tags;
 command! Ctags silent execute '!ctags -R --c-kinds=+p .' | redraw!
 
-
-"============================================================
+"------------------------------
 " Indentation
-"============================================================
+"
 set expandtab         " Use spaces instead of tabs
 set tabstop=2         " Number of spaces a <Tab> counts for
 set shiftwidth=2      " Number of spaces to use for auto-indentation
@@ -51,6 +50,52 @@ set smartindent
 " Make trailing whitespace chars visible
 set list
 set listchars=tab:▸\ ,trail:·
+
+"------------------------------
+" Misc
+"
+let s:is_win = has('win32') || has('win64')
+
+function! ShellEscape(str)
+  if s:is_win
+    return '"' . tr(a:str, '/', '\') . '"'
+  else
+    return shellescape(a:str)
+  endif
+endfunction
+
+" Return a string with the last visual selection or the under-the-cursor area.
+" Example command using <range> to dynamically pass an expression to a function:
+"   > command! -range=0 ThisExpr call FuncExpectingExpr(GetVisualOrCursorArea(<range>))
+"   > :ThisExpr        | under the cursor
+"   > :'<,'>ThisExpr   | last visual selection
+"   > :64ThisExpr      | also last visual selection (the default -range=0 is used like a flag)
+" NOTE: see `:help gv` - the unnamed register (@") is used to store the visual selection area.
+function! s:GetVisualOrCursorArea(range)
+  let l:area = ''
+  if a:range == 0
+    let l:area = expand('<cword>')
+  else
+    silent normal! gv""y
+    let l:area = trim(@")
+  endif
+  return tr(l:area, "\n", ' ')
+endfunction
+
+command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
+
+let mapleader = "\<Backspace>"
+nnoremap <leader>cop :copen<CR>
+nnoremap <leader>ccl :cclose<CR>
+nnoremap <leader>src :source $MYVIMRC <bar> redraw! <bar> redrawtabline <bar> redrawstatus <CR> :echo "==> sourced vimrc <=="<CR>
+nnoremap <leader>erc :tab drop $MYVIMRC<CR>
+
+" Make arrow keys behave like Vim in Neovim's wildmenu
+if has('nvim')
+  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
+  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
+  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
+endif
 
 
 "============================================================
@@ -89,7 +134,7 @@ let s:germinal_bufnr = bufnr(s:germinal_name)
 "     4:
 "       A.`UNLISTED`-> do a full-width top split (Quake-like), and create and open a germinal buf;
 "       B.`IN_VIEW` -> hide/close the germinal buf window.
-function! GlobalTerminal(mode, count)
+function! s:GlobalTerminal(mode, count)
   let s:germinal_bufnr = bufnr(s:germinal_name)
 
   let l:split_count = (a:count > 0) ? a:count : ''
@@ -160,29 +205,29 @@ function! GlobalTerminal(mode, count)
   endif
 endfunction
 
-command!        Germ call GlobalTerminal(0, 0)
-command! -count Serm call GlobalTerminal(1, <count>)
-command! -count Verm call GlobalTerminal(2, <count>)
-command!        Term call GlobalTerminal(3, 0)
-command!        Germinal call GlobalTerminal(0, 0)
-command! -count Serminal call GlobalTerminal(1, <count>)
-command! -count Verminal call GlobalTerminal(2, <count>)
-command!        Terminal call GlobalTerminal(3, 0)
+command!        Germ call s:GlobalTerminal(0, 0)
+command! -count Serm call s:GlobalTerminal(1, <count>)
+command! -count Verm call s:GlobalTerminal(2, <count>)
+command!        Term call s:GlobalTerminal(3, 0)
+command!        Germinal call s:GlobalTerminal(0, 0)
+command! -count Serminal call s:GlobalTerminal(1, <count>)
+command! -count Verminal call s:GlobalTerminal(2, <count>)
+command!        Terminal call s:GlobalTerminal(3, 0)
 
-function! GerminalHere(mode, count)
+function! s:GerminalHere(mode, count)
   let l:head_dir = (&filetype == 'netrw') ? b:netrw_curdir : expand('%:p:h')
-  call GlobalTerminal(a:mode, a:count)
+  call s:GlobalTerminal(a:mode, a:count)
   call feedkeys("i\<C-c> cd " . ShellEscape(l:head_dir) . "\<CR>\<Esc>", 't')
 endfunction
 
-command!        Germhere call GerminalHere(0, 0)
-command! -count Sermhere call GerminalHere(1, <count>)
-command! -count Vermhere call GerminalHere(2, <count>)
-command!        Termhere call GerminalHere(3, 0)
-command!        Herm     call GerminalHere(3, 0)
+command!        Germhere call s:GerminalHere(0, 0)
+command! -count Sermhere call s:GerminalHere(1, <count>)
+command! -count Vermhere call s:GerminalHere(2, <count>)
+command!        Termhere call s:GerminalHere(3, 0)
+command!        Herm     call s:GerminalHere(3, 0)
 
-command! -count=12 Quake     call GlobalTerminal(4, <count>)
-command! -count=12 Quakehere call GerminalHere(4, <count>)
+command! -count=12 Quake     call s:GlobalTerminal(4, <count>)
+command! -count=12 Quakehere call s:GerminalHere(4, <count>)
 nnoremap <C-`> :Quake<CR>
 tnoremap <C-`> <C-\><C-n>:hide<CR>
 
@@ -332,7 +377,7 @@ function! s:SetMakeprg(name, cmd, output)
   let s:makeprg_out_file = a:output
   redrawtabline
   echo '==> ' . s:makeprg_cmd_name . ' [' . &makeprg . '] set as &makeprg <=='
-  echo "Output file:\n\t" | echohl WarningMsg | echo s:makeprg_out_file | echohl None
+  echo 'Output file:' | echohl WarningMsg | echo "\t" . s:makeprg_out_file | echohl None
 endfunction
 
 " C debug build (default for .c)
@@ -404,12 +449,26 @@ function! s:SendRaddbgCommand(command)
   echohl WarningMsg | echo '> raddbg.exe --ipc ' . l:expd_command | echohl None
 endfunction
 
+" Configuration dict for termdebug
+function! s:TdbgConfig()
+  let g:termdebug_config = {}
+  let g:termdebug_config['map_K']                = v:true
+  let g:termdebug_config['timeout']              = 200 " 200 * 10ms = 2 secs
+  let g:termdebug_config['variables_window']     = v:true
+  let g:termdebug_config['disasm_window']        = v:true
+  let g:termdebug_config['disasm_window_height'] = 10
+  let g:termdebug_config['wide']                 = 1
+  let g:termdebug_config['evaluate_in_popup']    = v:true
+  let g:termdebug_config['winbar']               = 0
+endfunction
+command! TdbgConfigReset call s:TdbgConfig()
+
 " Create build directory based on s:makeprg_out_file
 function! s:CheckBuildDir()
   if empty(s:makeprg_out_file) | return | endif
   let l:build_dir = fnamemodify(expandcmd(s:makeprg_out_file), ':p:h')
   if !isdirectory(l:build_dir)
-    call mkdir(l:build_dir, "p")
+    call mkdir(l:build_dir, 'p')
     echohl Directory | echomsg 'Build directory ["' . l:build_dir . '"] created.' | echohl None
   endif
 endfunction
@@ -495,7 +554,7 @@ function! s:BuildAndDebug(mode, run_to_line)
     " termdebug
     let l:expd_run_to_line = expandcmd(a:run_to_line) " need to expand before running termdebug
 
-    if !exists(':Termdebug') | packadd termdebug | endif
+    if !exists(':Termdebug') | call s:TdbgConfig() | packadd termdebug | endif
     execute 'Termdebug ' . s:curr_debuggee
 
     if !empty(a:run_to_line)
@@ -505,9 +564,10 @@ function! s:BuildAndDebug(mode, run_to_line)
       call TermDebugSendCommand('start')
     endif
 
-    " Open disassembly window, local and argument variables window, then jump to the gdb window
-    execute 'Var'
-    execute 'Asm'
+    " Resize source/variables/disassembly window, then jump to gdb window
+    execute 'Source'
+    execute 'resize 24'
+    execute 'vert resize 108'
     execute 'Gdb'
 
     "[LEGACY] Launch GDB in a new terminal
@@ -530,15 +590,17 @@ command! -nargs=+ Radcmd    call s:SendRaddbgCommand(<q-args>)
 command! -nargs=+ Radwatch  call s:SendRaddbgCommand('toggle_watch_expr "' . <q-args> . '"')
 command! -nargs=+ Radmem    call s:SendRaddbgCommand('go_to_memory "' . <q-args> . '"')
 
-command! Radbreak     call s:SendRaddbgCommand('toggle_breakpoint "%:p:' . line('.') . '"')
-command! Radwatchthis call s:SendRaddbgCommand('toggle_watch_expr "<cword>"')
-command! Radmemthis   call s:SendRaddbgCommand('go_to_memory "<cword>"')
+command!          Radbreak     call s:SendRaddbgCommand('toggle_breakpoint "%:p:' . line('.') . '"')
+command! -range=0 Radwatchthis call s:SendRaddbgCommand('toggle_watch_expr "' . s:GetVisualOrCursorArea(<range>) . '"')
+command! -range=0 Radmemthis   call s:SendRaddbgCommand('go_to_memory "' . s:GetVisualOrCursorArea(<range>) . '"')
 
 nnoremap <F10>   :Raddbg<CR>
 nnoremap <C-F10> :Radtoline line('.')<CR>
 nnoremap <F9>    :Radbreak<CR>
 nnoremap <A-w>   :Radwatchthis<CR>
+vnoremap <A-w>   :Radwatchthis<CR>
 nnoremap <A-g>   :Radmemthis<CR>
+vnoremap <A-g>   :Radmemthis<CR>
 
 "------------------------------
 " termdebug commands and maps
@@ -546,43 +608,45 @@ nnoremap <A-g>   :Radmemthis<CR>
 command!          Tdbg       call s:BuildAndDebug(1, '')
 command! -nargs=1 Tdbgtoline call s:BuildAndDebug(1, '%:p:' . <args>)
 command! -nargs=+ Tdbgcmd    call TermDebugSendCommand(<q-args>)
+command! -nargs=+ Tdbgwatch  execute 'Evaluate ' . <q-args>
+
+command! -range=0 Tdbgwatchthis execute 'Evaluate ' . s:GetVisualOrCursorArea(<range>)
 
 nnoremap <S-F10>   :Tdbg<CR>
 nnoremap <S-C-F10> :Tdbgtoline line('.')<CR>
 
-function! TermdebugEnableMappings()
-  nnoremap <F11> :Step<CR>
-  nnoremap <F10> :Over<CR>
-  nnoremap <F9>  :Break<CR>
-  nnoremap <F5>  :Continue<CR>
+function! s:TdbgEnableMappings()
+  nnoremap <S-F5> :Gdb<CR>i<CR>quit<CR>y<CR>
+  nnoremap <F11>  :Tdbgcmd step<CR>
+  nnoremap <F10>  :Tdbgcmd next<CR>
+  nnoremap <F9>   :Break<CR>
+  nnoremap <F5>   :Tdbgcmd continue<CR>
+  nnoremap <A-w>  :Tdbgwatchthis<CR>
+  vnoremap <A-w>  :Tdbgwatchthis<CR>
   echohl WarningMsg | echo '- termdebug mappings enabled -' | echohl None
 endfunction
 
-function! TermdebugDisableMappings()
+function! s:TdbgDisableMappings()
+  silent! nunmap <S-F5>
   silent! nunmap <F11>
   nnoremap <F10> :Raddbg<CR>
   nnoremap <F9>  :Radbreak<CR>
   nnoremap <F5>  :Build<CR>
+  nnoremap <A-w> :Radwatchthis<CR>
+  vnoremap <A-w> :Radwatchthis<CR>
   echohl WarningMsg | echo '- termdebug mappings disabled -' | echohl None
 endfunction
 
 augroup Termdebug
   autocmd!
-  autocmd User TermdebugStartPost call TermdebugEnableMappings()
-  autocmd User TermdebugStopPost call TermdebugDisableMappings()
+  autocmd User TermdebugStartPost call s:TdbgEnableMappings()
+  autocmd User TermdebugStopPost call s:TdbgDisableMappings()
 augroup END
 
-"============================================================
-" Misc & Netrw
-"============================================================
-function! ShellEscape(str)
-  if s:is_win
-    return '"' . tr(a:str, '/', '\') . '"'
-  else
-    return shellescape(a:str)
-  endif
-endfunction
 
+"============================================================
+" Netrw
+"============================================================
 let g:netrw_keepdir = 0
 
 "------------------------------
@@ -835,7 +899,7 @@ function! s:NazrwExtract()
 endfunction
 
 "------------------------------
-" Commands
+" Commands and maps
 "
 " NOTE (see `:help command-bar`): Needs `-bar` to pipe custom commands like `:Markclear | Marklast`
 command! -bar Nazrwcp    call s:NazrwCopyMove(0)
@@ -861,21 +925,6 @@ augroup NazNetrw
   autocmd Filetype netrw nmap     <buffer> ;  mf:Smarklast<CR>j
   autocmd Filetype netrw nmap     <buffer> ,  mf:Smarklast<CR>k
 augroup END
-
-command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
-
-let mapleader = "\<Backspace>"
-nnoremap <leader>cop :copen<CR>
-nnoremap <leader>ccl :cclose<CR>
-nnoremap <leader>src :source $MYVIMRC <bar> redraw! <bar> redrawtabline <bar> redrawstatus <CR> :echo "==> sourced vimrc <=="<CR>
-nnoremap <leader>erc :tab drop $MYVIMRC<CR>
-
-" Make arrow keys behave like Vim in Neovim's wildmenu
-if has('nvim')
-  cnoremap <expr> <down>    wildmenumode() ? '<right>' : '<down>'
-  cnoremap <expr> <up>      wildmenumode() ? '<left>'  : '<up>'
-  cnoremap <expr> <right>   wildmenumode() ? '<down>'  : '<right>'
-endif
 
 
 "============================================================
@@ -1010,16 +1059,11 @@ set statusline=%!NazStatusline()
 " Cursor & Background
 "============================================================
 if has('gui_running') || exists('g:neovide')
-
   if has('nvim')
     set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
   else
     set guicursor=n-v-c:block-Cursor,i-ci-ve:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
   endif
-
-  highlight Cursor gui=NONE guifg=Red guibg=#00ff00
-  highlight iCursor gui=NONE guifg=Black guibg=#ff0000
-  highlight oCursor gui=NONE guifg=Black guibg=#00ffff
 else
   let &t_SI = "\e[5 q" " Blinking bar for Insert mode
   let &t_SR = "\e[3 q" " Blinking underline for Replace mode
@@ -1077,6 +1121,8 @@ if has('gui_running') || exists('g:neovide')
     "------------------------------
     " GVim
     "
+    set winaltkeys=no
+
     set guioptions+=c " Use console dialogs for simple choices
     "set guioptions+=s " Enable fullscreen mode
     set guioptions-=m " Remove menu bar
