@@ -82,6 +82,47 @@ function! s:GetVisualOrCursorArea(range)
   return tr(l:area, "\n", ' ')
 endfunction
 
+" Base 1024 sizes
+let s:KB = 1024
+let s:MB = 1048576
+let s:GB = 1073741824
+
+" Return human-readable size (base 1024), and last modified (Y-M-D H:M:S) string from file.
+function! s:GetFileInfoFormatStr(file_path)
+  let l:file_size = getfsize(a:file_path)
+  let l:file_time = getftime(a:file_path)
+  let l:result = ''
+
+  " Size
+  if l:file_size <= 0
+    if l:file_size == 0
+      let l:result = isdirectory(a:file_path) ? 'DIR' : '0B'
+    elseif l:file_size == -1
+      let l:result = 'ENOENT'
+    elseif l:file_size == -2
+      let l:result = 'EOVERFLOW'
+    endif
+  else
+    if l:file_size < s:KB
+      let l:result = l:file_size . 'B'
+    elseif l:file_size < s:MB
+      let l:result = printf("%.1fK", l:file_size / (s:KB * 1.0))
+    elseif l:file_size < s:GB
+      let l:result = printf("%.1fM", l:file_size / (s:MB * 1.0))
+    else
+      let l:result = printf("%.1fG", l:file_size / (s:GB * 1.0))
+    endif
+  endif
+  let l:result = printf("%6s", l:result)
+
+  " Last modified
+  if l:file_time != -1
+    let l:result = printf("%s %s", l:result, strftime("%Y-%m-%d %H:%M:%S", l:file_time))
+  endif
+
+  return l:result
+endfunction
+
 command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
 
 let mapleader = "\<Backspace>"
@@ -647,7 +688,12 @@ augroup END
 "============================================================
 " Netrw
 "============================================================
-let g:netrw_keepdir = 0
+" See: `help netrw-variables` -> configuring netrw
+let g:netrw_dirhistmax   = 32
+let g:netrw_home         = fnamemodify($MYVIMRC, ':h') . '/netrw'
+let g:netrw_keepdir      = 0
+let g:netrw_sizestyle    = 'H'
+let g:netrw_silent       = 0
 
 "------------------------------
 " Marked files list
@@ -675,17 +721,29 @@ function! s:NazrwShowMarkList(last)
   if empty(s:nazrw_global_mark_list)
     echohl Directory | echo '==> Mark list is empty <==' | echohl None
     return
-  else
-    " copy the mark list with relative paths
-    let l:rel_mark_list = map(copy(s:nazrw_global_mark_list), "fnamemodify(v:val, ':.')")
-    let l:len_mark_list = len(l:rel_mark_list)
+  endif
 
-    if a:last
-      echohl Directory | echo '* ' . l:rel_mark_list[l:len_mark_list - 1] . ' ('. (l:len_mark_list - 1) . ' more...)' | echohl None
-    else
-      echohl Directory | echo '[' . len(l:rel_mark_list) . '] marks:' | echohl None
-      echo '* ' . join(l:rel_mark_list, "\n* ")
-    endif
+  " copy the mark list with relative paths
+  let l:rel_mark_list = map(copy(s:nazrw_global_mark_list), "fnamemodify(v:val, ':.')")
+  let l:len_mark_list = len(l:rel_mark_list)
+
+  if a:last
+    let l:last_mark     = s:nazrw_global_mark_list[l:len_mark_list - 1]
+    let l:rel_last_mark = l:rel_mark_list[l:len_mark_list - 1]
+    echohl Directory | echo printf("* %s | %s (%d more...)", l:rel_last_mark, s:GetFileInfoFormatStr(l:last_mark), l:len_mark_list - 1) | echohl None
+  else
+    echohl Directory | echo '[' . len(l:rel_mark_list) . '] marks:' | echohl None
+    for i in range(l:len_mark_list)
+      let l:abs_path = s:nazrw_global_mark_list[i]
+      let l:rel_path = l:rel_mark_list[i]
+      let l:info_str = printf("* %-82s | %s", l:rel_path, s:GetFileInfoFormatStr(l:abs_path))
+      if i % 2 == 0
+        " Change background color to separate entries
+        echohl ColorColumn | echo l:info_str | echohl None
+      else
+        echo l:info_str
+      endif
+    endfor
   endif
 endfunction
 
@@ -924,6 +982,7 @@ augroup NazNetrw
   autocmd Filetype netrw nnoremap <buffer> mL :Smarklast<CR>
   autocmd Filetype netrw nmap     <buffer> ;  mf:Smarklast<CR>j
   autocmd Filetype netrw nmap     <buffer> ,  mf:Smarklast<CR>k
+  autocmd Filetype netrw set      relativenumber
 augroup END
 
 
@@ -1182,6 +1241,8 @@ endif
 "vim.opt.runtimepath:append(vimfiles_dir .. '/after')
 "vim.opt.packpath = vim.opt.runtimepath:get()
 "
+"-- Override $MYVIMRC (for <leader> 'erc' and 'src')
+"vim.env.MYVIMRC = vimrc_path
+"
 "-- Source my vimrc
 "vim.cmd('source ' .. vimrc_path)
-"
