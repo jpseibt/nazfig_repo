@@ -1,5 +1,6 @@
-" Zero dependencies vimrc - naz
-" Built-in packages used: netrw, termdebug
+" => "Handmade" Development Environment <=
+" Zero dependencies vimrc: naz
+" Built-in packages used:  netrw, termdebug
 
 "============================================================
 " Common Settings & Misc
@@ -470,7 +471,7 @@ command! Cpmakeprg let @+ = &makeprg | echo '==> ' . s:makeprg_cmd_name . ' [' .
 command! Cpmake let @+ = expandcmd(&makeprg) | echo '==> ' . s:makeprg_cmd_name . ' (expanded) [' . @+ . '] copied to the clipboard <=='
 
 "------------------------------
-" Build & Debugging
+" Build & Debug
 "
 if !exists('s:last_build_out_file')
   let s:last_build_out_file = ''
@@ -495,6 +496,8 @@ function! s:TdbgConfig()
   let g:termdebug_config = {}
   let g:termdebug_config['map_K']                = v:true
   let g:termdebug_config['timeout']              = 200 " 200 * 10ms = 2 secs
+  let g:termdebug_config['map_minus']            = 1
+  let g:termdebug_config['map_plus']             = 1
   let g:termdebug_config['variables_window']     = v:true
   let g:termdebug_config['disasm_window']        = v:true
   let g:termdebug_config['disasm_window_height'] = 10
@@ -598,18 +601,14 @@ function! s:BuildAndDebug(mode, run_to_line)
     if !exists(':Termdebug') | call s:TdbgConfig() | packadd termdebug | endif
     execute 'Termdebug ' . s:curr_debuggee
 
+    " See: s:TdbgSetup() and s:TdbgTearDown()
+
     if !empty(a:run_to_line)
       call TermDebugSendCommand('tbreak "' . l:expd_run_to_line . '"')
       call TermDebugSendCommand('run')
     else
       call TermDebugSendCommand('start')
     endif
-
-    " Resize source/variables/disassembly window, then jump to gdb window
-    execute 'Source'
-    execute 'resize 24'
-    execute 'vert resize 108'
-    execute 'Gdb'
 
     "[LEGACY] Launch GDB in a new terminal
     "let l:gdb_args = '-tui -ex "layout split" -ex "set print pretty" -ex "set logging file gdb_out.log" -ex "set logging enable on"'
@@ -619,69 +618,118 @@ function! s:BuildAndDebug(mode, run_to_line)
   endif
 endfunction
 
-command! Build call s:BuildAndCheck()
-nnoremap <F5> :Build<CR>
-
 "------------------------------
-" RAD Debugger commands and maps
+" Commands and maps
 "
-command!          Raddbg    call s:BuildAndDebug(0, '')
-command! -nargs=1 Radtoline call s:BuildAndDebug(0, '%:p:' . <args>)
-command! -nargs=+ Radcmd    call s:SendRaddbgCommand(<q-args>)
-command! -nargs=+ Radwatch  call s:SendRaddbgCommand('toggle_watch_expr "' . <q-args> . '"')
-command! -nargs=+ Radmem    call s:SendRaddbgCommand('go_to_memory "' . <q-args> . '"')
+command! Build call s:BuildAndCheck()
 
+"RAD Debugger
+command!          Raddbg       call s:BuildAndDebug(0, '')
+command! -nargs=1 Radtoline    call s:BuildAndDebug(0, '%:p:' . <args>)
+command! -nargs=+ Radcmd       call s:SendRaddbgCommand(<q-args>)
+command! -nargs=+ Radwatch     call s:SendRaddbgCommand('toggle_watch_expr "' . <q-args> . '"')
+command! -nargs=+ Radmem       call s:SendRaddbgCommand('go_to_memory "' . <q-args> . '"')
 command!          Radbreak     call s:SendRaddbgCommand('toggle_breakpoint "%:p:' . line('.') . '"')
 command! -range=0 Radwatchthis call s:SendRaddbgCommand('toggle_watch_expr "' . s:GetVisualOrCursorArea(<range>) . '"')
 command! -range=0 Radmemthis   call s:SendRaddbgCommand('go_to_memory "' . s:GetVisualOrCursorArea(<range>) . '"')
 
-nnoremap <F10>   :Raddbg<CR>
-nnoremap <C-F10> :Radtoline line('.')<CR>
-nnoremap <F9>    :Radbreak<CR>
-nnoremap <A-w>   :Radwatchthis<CR>
-vnoremap <A-w>   :Radwatchthis<CR>
-nnoremap <A-g>   :Radmemthis<CR>
-vnoremap <A-g>   :Radmemthis<CR>
+" termdebug
+command!          Tdbg          call s:BuildAndDebug(1, '')
+command! -nargs=1 Tdbgtoline    call s:BuildAndDebug(1, '%:p:' . <args>)
+command! -nargs=+ Tdbgcmd       call TermDebugSendCommand(<q-args>)
+command! -nargs=+ Tdbgwatch     execute 'Evaluate ' . <q-args>
+command! -nargs=+ Tdbgmem       call TermDebugSendCommand('x/1xb ' . <q-args>)
+command! -nargs=+ Tdbgmem32     call TermDebugSendCommand('x/32xb ' . <q-args>)
+command! -nargs=+ Tdbgmem64     call TermDebugSendCommand('x/64xb ' . <q-args>)
+command! -range=0 Tdbgbreak     execute 'Break ' . s:GetVisualOrCursorArea(<range>)
+command! -range=0 Tdbgwatchthis execute 'Evaluate ' . s:GetVisualOrCursorArea(<range>)
+command! -range=0 Tdbgmemthis32 call TermDebugSendCommand('x/32xb ' . s:GetVisualOrCursorArea(<range>))
+command! -range=0 Tdbgmemthis64 call TermDebugSendCommand('x/64xb ' . s:GetVisualOrCursorArea(<range>))
+
+function! s:BuildAndDebugDefaultMaps()
+  nnoremap <F5>    :Build<CR>
+  "raddbg:
+  nnoremap <F10>   :Raddbg<CR>
+  nnoremap <C-F10> :Radtoline line('.')<CR>
+  nnoremap <F9>    :Radbreak<CR>
+  nnoremap <A-w>   :Radwatchthis<CR>
+  vnoremap <A-w>   :Radwatchthis<CR>
+  nnoremap <A-g>   :Radmemthis<CR>
+  vnoremap <A-g>   :Radmemthis<CR>
+  "termdebug:
+  nnoremap <S-F10>   :Tdbg<CR>
+  nnoremap <S-C-F10> :Tdbgtoline line('.')<CR>
+  echohl WarningMsg | echo '- Build & Debug mappings reset -' | echohl None
+endfunction
+call s:BuildAndDebugDefaultMaps()
 
 "------------------------------
-" termdebug commands and maps
+" termdebug setup and tear down
 "
-command!          Tdbg       call s:BuildAndDebug(1, '')
-command! -nargs=1 Tdbgtoline call s:BuildAndDebug(1, '%:p:' . <args>)
-command! -nargs=+ Tdbgcmd    call TermDebugSendCommand(<q-args>)
-command! -nargs=+ Tdbgwatch  execute 'Evaluate ' . <q-args>
-
-command! -range=0 Tdbgwatchthis execute 'Evaluate ' . s:GetVisualOrCursorArea(<range>)
-
-nnoremap <S-F10>   :Tdbg<CR>
-nnoremap <S-C-F10> :Tdbgtoline line('.')<CR>
-
-function! s:TdbgEnableMappings()
-  nnoremap <S-F5> :Gdb<CR>i<CR>quit<CR>y<CR>
-  nnoremap <F11>  :Tdbgcmd step<CR>
-  nnoremap <F10>  :Tdbgcmd next<CR>
-  nnoremap <F9>   :Break<CR>
-  nnoremap <F5>   :Tdbgcmd continue<CR>
-  nnoremap <A-w>  :Tdbgwatchthis<CR>
-  vnoremap <A-w>  :Tdbgwatchthis<CR>
+function! s:TdbgSetup()
+  nnoremap <S-F5>  :Gdb<CR>i<CR>quit<CR>y<CR>
+  tnoremap <S-F5>  <C-\><C-n>:Gdb<CR>i<CR>quit<CR>y<CR>
+  nnoremap <S-F9>  :Tdbgbreak<CR>
+  nnoremap <S-F11> :Tdbgcmd finish<CR>
+  tnoremap <S-F11> <C-\><C-n>:Tdbgcmd finish<CR>i
+  nnoremap <F11>   :Tdbgcmd step<CR>
+  tnoremap <F11>   <C-\><C-n>:Tdbgcmd step<CR>i
+  nnoremap <F10>   :Tdbgcmd next<CR>
+  tnoremap <F10>   <C-\><C-n>:Tdbgcmd next<CR>i
+  nnoremap <F9>    :Break<CR>
+  nnoremap <F5>    :Tdbgcmd continue<CR>
+  tnoremap <F5>    <C-\><C-n>:Tdbgcmd continue<CR>i
+  nnoremap <A-w>   :Tdbgwatchthis<CR>
+  vnoremap <A-w>   :Tdbgwatchthis<CR>
+  nnoremap <A-g>   :Tdbgmemthis32<CR>
+  vnoremap <A-g>   :Tdbgmemthis32<CR>
+  nnoremap <A-G>   :Tdbgmemthis64<CR>
+  vnoremap <A-G>   :Tdbgmemthis64<CR>
   echohl WarningMsg | echo '- termdebug mappings enabled -' | echohl None
+
+  " Resize source/variables/disassembly window, set local scrolloff, then jump to gdb window
+  execute 'Asm'
+  execute 'setlocal scrolloff=999'
+  execute 'Source'
+  execute 'setlocal scrolloff=999'
+  execute 'resize 24'
+  execute 'vert resize 108'
+  execute 'Gdb'
 endfunction
 
-function! s:TdbgDisableMappings()
+function! s:TdbgTearDown()
   silent! nunmap <S-F5>
+  silent! tunmap <S-F5>
+  silent! nunmap <S-F9>
+  silent! nunmap <S-F11>
+  silent! tunmap <S-F11>
   silent! nunmap <F11>
-  nnoremap <F10> :Raddbg<CR>
-  nnoremap <F9>  :Radbreak<CR>
-  nnoremap <F5>  :Build<CR>
-  nnoremap <A-w> :Radwatchthis<CR>
-  vnoremap <A-w> :Radwatchthis<CR>
+  silent! tunmap <F11>
+  silent! nunmap <F10>
+  silent! tunmap <F10>
+  silent! nunmap <F9>
+  silent! nunmap <F5>
+  silent! tunmap <F5>
+  silent! nunmap <A-w>
+  silent! vunmap <A-w>
+  silent! nunmap <A-g>
+  silent! vunmap <A-g>
+  silent! nunmap <A-G>
+  silent! vunmap <A-G>
   echohl WarningMsg | echo '- termdebug mappings disabled -' | echohl None
+
+  " Reset scrolloff to global value, then jump to gdb window
+  silent! execute 'Asm'
+  silent! execute 'setlocal scrolloff<'
+  silent! execute 'Source'
+  silent! execute 'setlocal scrolloff<'
+  silent! execute 'Gdb'
 endfunction
 
 augroup Termdebug
   autocmd!
-  autocmd User TermdebugStartPost call s:TdbgEnableMappings()
-  autocmd User TermdebugStopPost call s:TdbgDisableMappings()
+  autocmd User TermdebugStartPost call s:TdbgSetup()
+  autocmd User TermdebugStopPre   call s:TdbgTearDown() | call s:BuildAndDebugDefaultMaps()
 augroup END
 
 
