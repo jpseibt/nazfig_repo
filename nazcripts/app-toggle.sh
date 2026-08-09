@@ -2,48 +2,62 @@
 
 APP=$1
 
-# Pattern matches the window WM_CLASS and i3 instance
+# Pattern matches the i3 criteria type and value
 case "$APP" in
   ""|-h|--help)
     echo "Usage: app-toggle.sh <application_nickname>"
-    echo "nicknames: chromium, gemini, monkeytype, pinta, spotify, vial, whatsapp"
+    printf "nicknames: \n\tbtop \n\tchromium \n\tgemini \n\tmonkeytype \n\tneovide \n\tpinta \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
     exit 0
     ;;
-  neovide)
-    PATTERN="neovide"
-    LAUNCH_CMD="neovide"
+  btop)
+    CRITERIA_TYPE="window_role"
+    CRITERIA_VALUE="btop"
+    LAUNCH_CMD="$TERMINAL --role=btop --disable-server -T btop -x btop"
     ;;
   chromium)
-    PATTERN="chromium"
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="chromium"
     LAUNCH_CMD="chromium"
     ;;
-  monkeytype)
-    PATTERN="monkeytype.com"
-    LAUNCH_CMD="chromium --app=https://monkeytype.com"
-    ;;
   gemini)
-    PATTERN="gemini.google.com__app"
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="gemini.google.com__app"
     LAUNCH_CMD="chromium --app=https://gemini.google.com/app"
     ;;
-  whatsapp)
-    PATTERN="web.whatsapp.com"
-    LAUNCH_CMD="chromium --app=https://web.whatsapp.com"
+  monkeytype)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="monkeytype.com"
+    LAUNCH_CMD="chromium --app=https://monkeytype.com"
     ;;
-  vial)
-    PATTERN="Vial"
-    LAUNCH_CMD="/home/naz/.local/bin/vial"
+  neovide)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="neovide"
+    LAUNCH_CMD="neovide"
     ;;
   pinta)
-    PATTERN="pinta"
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="pinta"
     LAUNCH_CMD="pinta"
     ;;
   spotify)
-    PATTERN="spotify"
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="spotify"
     LAUNCH_CMD="spotify"
     ;;
   thunar)
-    PATTERN="thunar"
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="thunar"
     LAUNCH_CMD="thunar"
+    ;;
+  vial)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="Vial"
+    LAUNCH_CMD="/home/naz/.local/bin/vial"
+    ;;
+  whatsapp)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="web.whatsapp.com"
+    LAUNCH_CMD="chromium --app=https://web.whatsapp.com"
     ;;
   *)
     echo "Error: Invalid application nickname: $APP"
@@ -51,6 +65,6 @@ case "$APP" in
 esac
 
 # Toggle logic
-if i3-msg "[instance=\"$PATTERN\"] focus" | grep -q '"success":false'; then
+if i3-msg "[$CRITERIA_TYPE=\"$CRITERIA_VALUE\"] focus" | grep -q '"success":false'; then
   $LAUNCH_CMD &
 fi

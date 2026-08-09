@@ -369,6 +369,7 @@ bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 ##########################################
 # App/Scripts shortcuts
 ##########################################
+bindsym Ctrl+Shift+Escape exec --no-startup-id ~/nazcripts/app-toggle.sh btop
 bindsym $mod+Return exec --no-startup-id ~/nazcripts/app-toggle.sh neovide
 bindsym $mod+b exec --no-startup-id ~/nazcripts/app-toggle.sh chromium
 bindsym $mod+e exec --no-startup-id ~/nazcripts/app-toggle.sh thunar
@@ -395,11 +396,10 @@ bindsym $mod+Shift+p exec --no-startup-id ~/.config/i3/scripts/power-profiles
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
 set $ws1 "1:¹"
-#set $ws2 "2:"
 set $ws2 "2:²"
 set $ws3 "3:³"
-set $ws4 "4"
-set $ws5 "5"
+set $ws4 "4:⁴"
+set $ws5 "5:⁵"
 set $ws6 "6:⁶"
 set $ws7 "7:⁷"
 set $ws8 "8:⁸"
@@ -414,7 +414,7 @@ workspace $ws1 output HDMI-A-0
 #workspace $ws2 output VGA-0
 #workspace $ws3 output HDMI-0
 #workspace $ws4 output HDMI-0
-#workspace $ws5 output HDMI-0
+workspace $ws5 output eDP
 workspace $ws6 output eDP
 workspace $ws7 output HDMI-A-0
 workspace $ws8 output eDP
@@ -426,6 +426,7 @@ bindsym $mod+z move workspace to output left
 
 # bind program to workspace and focus to them on startup:
 assign [title="^The RAD Debugger"] $ws4
+assign [window_role="btop"] $ws5
 assign [instance="web.whatsapp.com"] $ws6
 assign [instance="Mail"] $ws6
 assign [instance="pinta"] $ws7
