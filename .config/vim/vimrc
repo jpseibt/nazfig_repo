@@ -182,7 +182,7 @@ function! s:GlobalTerminal(mode, count)
   let l:split_count = (a:count > 0) ? a:count : ''
 
   if s:germinal_bufnr == -1
-    echomsg '[GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
+    echomsg '[s:GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
 
     if a:mode == 1
       execute 'horizontal ' . l:split_count . 'split'
@@ -198,7 +198,7 @@ function! s:GlobalTerminal(mode, count)
     execute 'file ' . s:germinal_name
     sleep 500m
   else
-    echomsg '[GlobalTerminal] Using ' . s:germinal_name
+    echomsg '[s:GlobalTerminal] Using ' . s:germinal_name
 
     " Check if the buf is visible and will split
     let l:winnr = bufwinnr(s:germinal_bufnr)
@@ -276,6 +276,100 @@ tnoremap <C-`> <C-\><C-n>:hide<CR>
 " Fallback for Vim/gVim
 nnoremap <F12> :Quake<CR>
 tnoremap <F12> <C-\><C-n>:hide<CR>
+
+
+"============================================================
+" Memory Viewer
+"============================================================
+let s:memvwr_name  = '(MEMVWR)'
+let s:memvwr_bufnr = bufnr(s:memvwr_name)
+let s:memvwr_last_blob          = 0z
+let s:memvwr_last_start_addr    = 0x0
+let s:memvwr_last_bytes_per_row = 8
+let s:memvwr_last_fmt           = 'hex'
+
+function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
+  let s:memvwr_bufnr = bufnr(s:memvwr_name)
+  if s:memvwr_bufnr == -1
+    echomsg '[MemvwrFromBlob] New buffer assigned to ' . s:memvwr_name
+    let s:memvwr_bufnr = bufadd(s:memvwr_name)
+    call bufload(s:memvwr_bufnr)
+    call setbufvar(s:memvwr_bufnr, '&buftype', 'nofile')
+    call setbufvar(s:memvwr_bufnr, '&buflisted', 1)
+    call setbufvar(s:memvwr_bufnr, '&swapfile', 0)
+  endif
+
+  " Save arguments
+  let s:memvwr_last_blob          = a:blob
+  let s:memvwr_last_start_addr    = a:start_addr
+  let s:memvwr_last_bytes_per_row = a:bytes_per_row
+  let s:memvwr_last_fmt           = a:fmt
+
+  " Setup
+  let l:blob_len = len(a:blob)
+  let l:mem_lines = []
+  let l:format_str = ''
+  let l:field_width = 0
+
+  if a:fmt == 'x' || a:fmt == 'hex'
+    let l:format_str = '0x%02x'
+    let l:field_width = 4
+  elseif a:fmt == 'b' || a:fmt == 'bin'
+    let l:format_str = '0b%08b'
+    let l:field_width = 10
+  elseif a:fmt == 'd' || a:fmt == 'dec'
+    let l:format_str = '%3d'
+    let l:field_width = 3
+  else
+    echomsg '[MemvwrFromBlob] Invalid FMT "' . a:fmt .  '". Using fallback.'
+    let l:format_str = '%02x'
+    let l:field_width = 2
+  endif
+
+  " Generate rows
+  let i = 0
+  while i < l:blob_len
+    let l:values_str  = ''
+    let l:ascii_str = ''
+
+    let j = 0
+    while j < a:bytes_per_row
+      if j + i < l:blob_len
+        let l:byte_val    = a:blob[i+j]
+        let l:values_str  .= printf(l:format_str . ' ', l:byte_val)
+
+        if l:byte_val >= 32 && l:byte_val <= 126
+          let l:ascii_str .= nr2char(a:blob[i+j])
+        else
+          let l:ascii_str .= '.'
+        endif
+      else
+        " Pad with spaces
+        let l:values_str .= printf('%*s', l:field_width, ' ') . ' '
+        let l:ascii_str .= ' '
+      endif
+
+      let j += 1
+    endwhile
+    " Append row to lines list: [address]: [values] [[ASCII]]
+    call add(l:mem_lines, printf("0x%08x: %s [%s]", a:start_addr+i, l:values_str, l:ascii_str))
+
+    let i += j
+  endwhile
+
+  " Clear entire buffer and write l:mem_lines to it
+  call deletebufline(s:memvwr_bufnr, 1, '$')
+  call setbufline(s:memvwr_bufnr, 1, printf("%s | BPR: %d | FMT: %s | BYTES: %d", strftime('%Y-%m-%d %H:%M:%S'), a:bytes_per_row, a:fmt, l:blob_len))
+  call setbufline(s:memvwr_bufnr, 2, l:mem_lines)
+endfunction
+
+"------------------------------
+" Commands
+"
+command!          Memvwr      execute 'rightbelow split | buffer ' . s:memvwr_bufnr
+command!          MemvwrRegen call MemvwrFromBlob(s:memvwr_last_blob, s:memvwr_last_start_addr, s:memvwr_last_bytes_per_row, s:memvwr_last_fmt)
+command! -nargs=1 MemvwrRefmt call MemvwrFromBlob(s:memvwr_last_blob, s:memvwr_last_start_addr, s:memvwr_last_bytes_per_row, <q-args>)
+command! -nargs=1 MemvwrRebpr call MemvwrFromBlob(s:memvwr_last_blob, s:memvwr_last_start_addr, <args>, s:memvwr_last_fmt)
 
 
 "============================================================
@@ -375,6 +469,9 @@ augroup QFUpdate
   autocmd QuickFixCmdPost l* call s:LocListCount()
 augroup END
 
+"------------------------------
+" Commands
+"
 command! Ccount call s:QFListCount()
 command! Lcount call s:LocListCount()
 command! Cclear cexpr [] | cw
@@ -504,6 +601,7 @@ function! s:TdbgConfig()
   let g:termdebug_config['wide']                 = 1
   let g:termdebug_config['evaluate_in_popup']    = v:true
   let g:termdebug_config['winbar']               = 0
+  let g:termdebug_config['debug']                = 1
 endfunction
 command! TdbgConfigReset call s:TdbgConfig()
 
