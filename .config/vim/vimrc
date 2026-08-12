@@ -247,14 +247,14 @@ function! s:GlobalTerminal(mode, count)
   endif
 endfunction
 
-command!        Germ call s:GlobalTerminal(0, 0)
+command! -bar   Germ call s:GlobalTerminal(0, 0)
 command! -count Serm call s:GlobalTerminal(1, <count>)
 command! -count Verm call s:GlobalTerminal(2, <count>)
-command!        Term call s:GlobalTerminal(3, 0)
-command!        Germinal call s:GlobalTerminal(0, 0)
+command! -bar   Term call s:GlobalTerminal(3, 0)
+command! -bar   Germinal call s:GlobalTerminal(0, 0)
 command! -count Serminal call s:GlobalTerminal(1, <count>)
 command! -count Verminal call s:GlobalTerminal(2, <count>)
-command!        Terminal call s:GlobalTerminal(3, 0)
+command! -bar   Terminal call s:GlobalTerminal(3, 0)
 
 function! s:GerminalHere(mode, count)
   let l:head_dir = (&filetype == 'netrw') ? b:netrw_curdir : expand('%:p:h')
@@ -262,11 +262,11 @@ function! s:GerminalHere(mode, count)
   call feedkeys("i\<C-c> cd " . ShellEscape(l:head_dir) . "\<CR>\<Esc>", 't')
 endfunction
 
-command!        Germhere call s:GerminalHere(0, 0)
+command! -bar   Germhere call s:GerminalHere(0, 0)
 command! -count Sermhere call s:GerminalHere(1, <count>)
 command! -count Vermhere call s:GerminalHere(2, <count>)
-command!        Termhere call s:GerminalHere(3, 0)
-command!        Herm     call s:GerminalHere(3, 0)
+command! -bar   Termhere call s:GerminalHere(3, 0)
+command! -bar   Herm     call s:GerminalHere(3, 0)
 
 command! -count=12 Quake     call s:GlobalTerminal(4, <count>)
 command! -count=12 Quakehere call s:GerminalHere(4, <count>)
@@ -283,27 +283,31 @@ tnoremap <F12> <C-\><C-n>:hide<CR>
 "============================================================
 let s:memvwr_name  = '(MEMVWR)'
 let s:memvwr_bufnr = bufnr(s:memvwr_name)
-let s:memvwr_last_blob          = 0z
-let s:memvwr_last_start_addr    = 0x0
-let s:memvwr_last_bytes_per_row = 8
-let s:memvwr_last_fmt           = 'hex'
+let s:memvwr_curr_blob          = 0z
+let s:memvwr_curr_start_addr    = 0x0
+let s:memvwr_curr_bytes_per_row = 8
+let s:memvwr_curr_fmt           = 'hex'
 
-function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
+function! s:MemvwrCheckBuffer()
   let s:memvwr_bufnr = bufnr(s:memvwr_name)
   if s:memvwr_bufnr == -1
-    echomsg '[MemvwrFromBlob] New buffer assigned to ' . s:memvwr_name
     let s:memvwr_bufnr = bufadd(s:memvwr_name)
     call bufload(s:memvwr_bufnr)
     call setbufvar(s:memvwr_bufnr, '&buftype', 'nofile')
     call setbufvar(s:memvwr_bufnr, '&buflisted', 1)
     call setbufvar(s:memvwr_bufnr, '&swapfile', 0)
+    echomsg '[s:MemvwrCheckBuffer] New buffer [' . s:memvwr_bufnr . '] assigned to ' . s:memvwr_name
   endif
+endfunction
+
+function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
+  call s:MemvwrCheckBuffer()
 
   " Save arguments
-  let s:memvwr_last_blob          = a:blob
-  let s:memvwr_last_start_addr    = a:start_addr
-  let s:memvwr_last_bytes_per_row = a:bytes_per_row
-  let s:memvwr_last_fmt           = a:fmt
+  let s:memvwr_curr_blob          = a:blob
+  let s:memvwr_curr_start_addr    = a:start_addr
+  let s:memvwr_curr_bytes_per_row = a:bytes_per_row
+  let s:memvwr_curr_fmt           = a:fmt
 
   " Setup
   let l:blob_len = len(a:blob)
@@ -312,21 +316,21 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
   let l:field_width = 0
 
   if a:fmt == 'x' || a:fmt == 'hex'
-    let l:format_str = '0x%02x'
-    let l:field_width = 4
+    let l:format_str = '%02x'
+    let l:field_width = 2
   elseif a:fmt == 'b' || a:fmt == 'bin'
-    let l:format_str = '0b%08b'
-    let l:field_width = 10
+    let l:format_str = '%08b'
+    let l:field_width = 8
   elseif a:fmt == 'd' || a:fmt == 'dec'
     let l:format_str = '%3d'
     let l:field_width = 3
   else
     echomsg '[MemvwrFromBlob] Invalid FMT "' . a:fmt .  '". Using fallback.'
-    let l:format_str = '%02x'
-    let l:field_width = 2
+    let l:format_str = '%0x02x'
+    let l:field_width = 4
   endif
 
-  " Generate rows
+  " Generate rows iterating over blob (byte index = i + j)
   let i = 0
   while i < l:blob_len
     let l:values_str  = ''
@@ -336,10 +340,10 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
     while j < a:bytes_per_row
       if j + i < l:blob_len
         let l:byte_val    = a:blob[i+j]
-        let l:values_str  .= printf(l:format_str . ' ', l:byte_val)
+        let l:values_str .= printf(l:format_str . ' ', l:byte_val)
 
         if l:byte_val >= 32 && l:byte_val <= 126
-          let l:ascii_str .= nr2char(a:blob[i+j])
+          let l:ascii_str .= nr2char(l:byte_val)
         else
           let l:ascii_str .= '.'
         endif
@@ -351,9 +355,9 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
 
       let j += 1
     endwhile
+
     " Append row to lines list: [address]: [values] [[ASCII]]
     call add(l:mem_lines, printf("0x%08x: %s [%s]", a:start_addr+i, l:values_str, l:ascii_str))
-
     let i += j
   endwhile
 
@@ -366,10 +370,10 @@ endfunction
 "------------------------------
 " Commands
 "
-command!          Memvwr      execute 'rightbelow split | buffer ' . s:memvwr_bufnr
-command!          MemvwrRegen call MemvwrFromBlob(s:memvwr_last_blob, s:memvwr_last_start_addr, s:memvwr_last_bytes_per_row, s:memvwr_last_fmt)
-command! -nargs=1 MemvwrRefmt call MemvwrFromBlob(s:memvwr_last_blob, s:memvwr_last_start_addr, s:memvwr_last_bytes_per_row, <q-args>)
-command! -nargs=1 MemvwrRebpr call MemvwrFromBlob(s:memvwr_last_blob, s:memvwr_last_start_addr, <args>, s:memvwr_last_fmt)
+command!          Memvwr      call s:MemvwrCheckBuffer() | execute 'rightbelow split | buffer ' . s:memvwr_bufnr
+command!          MemvwrRegen call MemvwrFromBlob(s:memvwr_curr_blob, s:memvwr_curr_start_addr, s:memvwr_curr_bytes_per_row, s:memvwr_curr_fmt)
+command! -nargs=1 MemvwrRefmt call MemvwrFromBlob(s:memvwr_curr_blob, s:memvwr_curr_start_addr, s:memvwr_curr_bytes_per_row, <q-args>)
+command! -nargs=1 MemvwrRebpr call MemvwrFromBlob(s:memvwr_curr_blob, s:memvwr_curr_start_addr, <args>, s:memvwr_curr_fmt)
 
 
 "============================================================
@@ -732,11 +736,24 @@ command! -range=0 Radwatchthis call s:SendRaddbgCommand('toggle_watch_expr "' . 
 command! -range=0 Radmemthis   call s:SendRaddbgCommand('go_to_memory "' . s:GetVisualOrCursorArea(<range>) . '"')
 
 " termdebug
+function! TermDebugSetMemvwr(start_addr, stop_addr, bytes_per_row, fmt)
+  let l:temp_file = tempname()
+  let l:gdb_cmd = printf("dump binary memory %s %s %s", l:temp_file, a:start_addr, a:stop_addr)
+  echomsg 'l:gdb_cmd:' . l:gdb_cmd
+  call TermDebugSendCommand(l:gdb_cmd)
+  sleep 100m
+
+  " Make sure the args are numbers (will be strings when passed via <f-args>)
+  let l:start_addr_nr = str2nr(a:start_addr, 16)
+  let l:bytes_per_row_nr = str2nr(a:bytes_per_row, 10)
+  call MemvwrFromBlob(readblob(l:temp_file), l:start_addr_nr, l:bytes_per_row_nr, a:fmt)
+endfunction
+
 command!          Tdbg          call s:BuildAndDebug(1, '')
 command! -nargs=1 Tdbgtoline    call s:BuildAndDebug(1, '%:p:' . <args>)
 command! -nargs=+ Tdbgcmd       call TermDebugSendCommand(<q-args>)
 command! -nargs=+ Tdbgwatch     execute 'Evaluate ' . <q-args>
-command! -nargs=+ Tdbgmem       call TermDebugSendCommand('x/1xb ' . <q-args>)
+command! -nargs=+ Tdbgmem       call TermDebugSetMemvwr(<f-args>)
 command! -nargs=+ Tdbgmem32     call TermDebugSendCommand('x/32xb ' . <q-args>)
 command! -nargs=+ Tdbgmem64     call TermDebugSendCommand('x/64xb ' . <q-args>)
 command! -range=0 Tdbgbreak     execute 'Break ' . s:GetVisualOrCursorArea(<range>)
@@ -882,7 +899,7 @@ function! s:NazrwShowMarkList(last)
     for i in range(l:len_mark_list)
       let l:abs_path = s:nazrw_global_mark_list[i]
       let l:rel_path = l:rel_mark_list[i]
-      let l:info_str = printf("* %-82s | %s", l:rel_path, s:GetFileInfoFormatStr(l:abs_path))
+      let l:info_str = printf("* %-90s | %s", l:rel_path, s:GetFileInfoFormatStr(l:abs_path))
       if i % 2 == 0
         " Change background color to separate entries
         echohl ColorColumn | echo l:info_str | echohl None
