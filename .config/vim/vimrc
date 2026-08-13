@@ -281,12 +281,14 @@ tnoremap <F12> <C-\><C-n>:hide<CR>
 "============================================================
 " Memory Viewer
 "============================================================
-let s:memvwr_name  = '(MEMVWR)'
-let s:memvwr_bufnr = bufnr(s:memvwr_name)
-let s:memvwr_curr_blob          = 0z
-let s:memvwr_curr_start_addr    = 0x0
-let s:memvwr_curr_bytes_per_row = 8
-let s:memvwr_curr_fmt           = 'hex'
+if !exists('s:memvwr_name')
+  let s:memvwr_name  = '(MEMVWR)'
+  let s:memvwr_bufnr = bufnr(s:memvwr_name)
+  let s:memvwr_blob          = 0z
+  let s:memvwr_start_addr    = 0x0
+  let s:memvwr_bytes_per_row = 8
+  let s:memvwr_fmt           = 'hex'
+endif
 
 function! s:MemvwrCheckBuffer()
   let s:memvwr_bufnr = bufnr(s:memvwr_name)
@@ -303,32 +305,45 @@ endfunction
 function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
   call s:MemvwrCheckBuffer()
 
-  " Save arguments
-  let s:memvwr_curr_blob          = a:blob
-  let s:memvwr_curr_start_addr    = a:start_addr
-  let s:memvwr_curr_bytes_per_row = a:bytes_per_row
-  let s:memvwr_curr_fmt           = a:fmt
+  " Save (and normalize) arguments
+  let s:memvwr_blob          = a:blob
+  let s:memvwr_start_addr    = a:start_addr
+  let s:memvwr_bytes_per_row = (a:bytes_per_row > 0) ? a:bytes_per_row : 1
+  let s:memvwr_fmt           = a:fmt
 
   " Setup
-  let l:blob_len = len(a:blob)
-  let l:mem_lines = []
-  let l:format_str = ''
+  let l:blob_len    = len(s:memvwr_blob)
+  let l:mem_lines   = []
+  let l:format_str  = ''
   let l:field_width = 0
 
-  if a:fmt == 'x' || a:fmt == 'hex'
+  if s:memvwr_fmt == 'x' || s:memvwr_fmt == 'hex'
     let l:format_str = '%02x'
     let l:field_width = 2
-  elseif a:fmt == 'b' || a:fmt == 'bin'
+  elseif s:memvwr_fmt == 'b' || s:memvwr_fmt == 'bin'
     let l:format_str = '%08b'
     let l:field_width = 8
-  elseif a:fmt == 'd' || a:fmt == 'dec'
+  elseif s:memvwr_fmt == 'd' || s:memvwr_fmt == 'dec'
     let l:format_str = '%3d'
     let l:field_width = 3
   else
-    echomsg '[MemvwrFromBlob] Invalid FMT "' . a:fmt .  '". Using fallback.'
-    let l:format_str = '%0x02x'
+    echomsg '[MemvwrFromBlob] Invalid FMT "' . s:memvwr_fmt . '". Using fallback.'
+    let s:memvwr_fmt = 'fallback'
+    let l:format_str = '0x%02x'
     let l:field_width = 4
   endif
+
+  " Generate the header row
+  " TODO: look `:help winbar`
+  let l:header_row = printf("%-19s", 'Address')
+  for l:byte_field in range(s:memvwr_bytes_per_row)
+    let l:header_row .= printf(" %*X", l:field_width, l:byte_field)
+  endfor
+  let l:header_row .= '  '
+  for l:byte_field in range(s:memvwr_bytes_per_row)
+    " Use modulo 0x10 to wrap over 0xf
+    let l:header_row .= printf("%x", l:byte_field % 0x10)
+  endfor
 
   " Generate rows iterating over blob (byte index = i + j)
   let i = 0
@@ -337,10 +352,10 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
     let l:ascii_str = ''
 
     let j = 0
-    while j < a:bytes_per_row
+    while j < s:memvwr_bytes_per_row
       if j + i < l:blob_len
-        let l:byte_val    = a:blob[i+j]
-        let l:values_str .= printf(l:format_str . ' ', l:byte_val)
+        let l:byte_val    = s:memvwr_blob[i+j]
+        let l:values_str .= printf(' ' . l:format_str, l:byte_val)
 
         if l:byte_val >= 32 && l:byte_val <= 126
           let l:ascii_str .= nr2char(l:byte_val)
@@ -349,7 +364,7 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
         endif
       else
         " Pad with spaces
-        let l:values_str .= printf('%*s', l:field_width, ' ') . ' '
+        let l:values_str .= printf(" %*s", l:field_width, ' ')
         let l:ascii_str .= ' '
       endif
 
@@ -357,23 +372,24 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
     endwhile
 
     " Append row to lines list: [address]: [values] [[ASCII]]
-    call add(l:mem_lines, printf("0x%08x: %s [%s]", a:start_addr+i, l:values_str, l:ascii_str))
+    call add(l:mem_lines, printf("0x%016x:%s [%s]", s:memvwr_start_addr+i, l:values_str, l:ascii_str))
     let i += j
   endwhile
 
   " Clear entire buffer and write l:mem_lines to it
   call deletebufline(s:memvwr_bufnr, 1, '$')
-  call setbufline(s:memvwr_bufnr, 1, printf("%s | BPR: %d | FMT: %s | BYTES: %d", strftime('%Y-%m-%d %H:%M:%S'), a:bytes_per_row, a:fmt, l:blob_len))
-  call setbufline(s:memvwr_bufnr, 2, l:mem_lines)
+  call setbufline(s:memvwr_bufnr, 1, printf("%s | BPR: %d | FMT: %s | BYTES: %d", strftime('%Y-%m-%d %H:%M:%S'), s:memvwr_bytes_per_row, s:memvwr_fmt, l:blob_len))
+  call setbufline(s:memvwr_bufnr, 2, l:header_row)
+  call setbufline(s:memvwr_bufnr, 3, l:mem_lines)
 endfunction
 
 "------------------------------
 " Commands
 "
 command!          Memvwr      call s:MemvwrCheckBuffer() | execute 'rightbelow split | buffer ' . s:memvwr_bufnr
-command!          MemvwrRegen call MemvwrFromBlob(s:memvwr_curr_blob, s:memvwr_curr_start_addr, s:memvwr_curr_bytes_per_row, s:memvwr_curr_fmt)
-command! -nargs=1 MemvwrRefmt call MemvwrFromBlob(s:memvwr_curr_blob, s:memvwr_curr_start_addr, s:memvwr_curr_bytes_per_row, <q-args>)
-command! -nargs=1 MemvwrRebpr call MemvwrFromBlob(s:memvwr_curr_blob, s:memvwr_curr_start_addr, <args>, s:memvwr_curr_fmt)
+command!          MemvwrRegen call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, s:memvwr_fmt)
+command! -nargs=1 MemvwrRefmt call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, <q-args>)
+command! -nargs=1 MemvwrRebpr call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, <args>, s:memvwr_fmt)
 
 
 "============================================================
@@ -609,6 +625,20 @@ function! s:TdbgConfig()
 endfunction
 command! TdbgConfigReset call s:TdbgConfig()
 
+function! TermDebugSetMemvwr(start_addr, stop_addr, bytes_per_row, fmt)
+  let l:temp_file = tempname()
+  let l:gdb_cmd = printf("dump binary memory %s %s %s", l:temp_file, a:start_addr, a:stop_addr)
+  echomsg 'l:gdb_cmd:' . l:gdb_cmd
+  call TermDebugSendCommand(l:gdb_cmd)
+  sleep 100m
+
+  " Make sure the args are numbers (will be strings when passed via <f-args>)
+  " TODO: should see about eval()
+  let l:start_addr_nr = str2nr(a:start_addr, 16)
+  let l:bytes_per_row_nr = str2nr(a:bytes_per_row, 10)
+  call MemvwrFromBlob(readblob(l:temp_file), l:start_addr_nr, l:bytes_per_row_nr, a:fmt)
+endfunction
+
 " Create build directory based on s:makeprg_out_file
 function! s:CheckBuildDir()
   if empty(s:makeprg_out_file) | return | endif
@@ -736,19 +766,6 @@ command! -range=0 Radwatchthis call s:SendRaddbgCommand('toggle_watch_expr "' . 
 command! -range=0 Radmemthis   call s:SendRaddbgCommand('go_to_memory "' . s:GetVisualOrCursorArea(<range>) . '"')
 
 " termdebug
-function! TermDebugSetMemvwr(start_addr, stop_addr, bytes_per_row, fmt)
-  let l:temp_file = tempname()
-  let l:gdb_cmd = printf("dump binary memory %s %s %s", l:temp_file, a:start_addr, a:stop_addr)
-  echomsg 'l:gdb_cmd:' . l:gdb_cmd
-  call TermDebugSendCommand(l:gdb_cmd)
-  sleep 100m
-
-  " Make sure the args are numbers (will be strings when passed via <f-args>)
-  let l:start_addr_nr = str2nr(a:start_addr, 16)
-  let l:bytes_per_row_nr = str2nr(a:bytes_per_row, 10)
-  call MemvwrFromBlob(readblob(l:temp_file), l:start_addr_nr, l:bytes_per_row_nr, a:fmt)
-endfunction
-
 command!          Tdbg          call s:BuildAndDebug(1, '')
 command! -nargs=1 Tdbgtoline    call s:BuildAndDebug(1, '%:p:' . <args>)
 command! -nargs=+ Tdbgcmd       call TermDebugSendCommand(<q-args>)
@@ -851,7 +868,7 @@ augroup END
 "============================================================
 " Netrw
 "============================================================
-" See: `help netrw-variables` -> configuring netrw
+" NOTE: see `:help netrw-variables` -> configuring netrw
 let g:netrw_dirhistmax   = 32
 let g:netrw_home         = fnamemodify($MYVIMRC, ':h') . '/netrw'
 let g:netrw_keepdir      = 0
@@ -940,7 +957,7 @@ function! s:NazrwCopyMove(is_move)
     return
   endif
 
-  " Choices: [1]'Yes', [2]'No', [3]'All' (:help confirm() -> [0] is for <Esc>, CTRL-C)
+  " Choices: [1]'Yes', [2]'No', [3]'All' (see `:help confirm()` -> [0] is for <Esc>, CTRL-C)
   let l:choice = 2
 
   for l:curr_file in s:nazrw_global_mark_list
@@ -1122,7 +1139,7 @@ endfunction
 "------------------------------
 " Commands and maps
 "
-" NOTE (see `:help command-bar`): Needs `-bar` to pipe custom commands like `:Markclear | Marklast`
+" NOTE: see `:help command-bar`. Needs `-bar` to pipe custom commands like `:Markclear | Marklast`
 command! -bar Nazrwcp    call s:NazrwCopyMove(0)
 command! -bar Nazrwmv    call s:NazrwCopyMove(1)
 command! -bar Nazrwzip   call s:NazrwArchive()
@@ -1163,7 +1180,7 @@ nnoremap <C-S-PageUp> :tabmove -1<CR>
 "------------------------------
 " Tabline
 "
-" :help setting-tabline
+" NOTE: see `:help setting-tabline`
 function! NazTabline()
   let l:tabline_str = ''
 
@@ -1197,7 +1214,7 @@ function! NazTabline()
     if l:buf_filetype == 'netrw'
       let l:filename = '(NETRW) ' . fnamemodify(getbufvar(l:bufnr, 'netrw_curdir'), ':t') . '/'
     elseif l:buf_filetype == 'qf'
-      " Check if window is a Location List (see :help getwininfo)
+      " Check if window is a Location List (see `:help getwininfo`)
       if getwininfo(win_getid(l:winnr, l:tabnr))[0].loclist
         let l:loc_list_entries = gettabwinvar(l:tabnr, l:winnr, "loc_list_entries", 0)
         let l:filename = '(Loc) M:' . (l:loc_list_entries > 0 ? l:loc_list_entries : '_')
