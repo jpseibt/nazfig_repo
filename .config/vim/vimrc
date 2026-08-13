@@ -626,17 +626,33 @@ endfunction
 command! TdbgConfigReset call s:TdbgConfig()
 
 function! TermDebugSetMemvwr(start_addr, stop_addr, bytes_per_row, fmt)
-  let l:temp_file = tempname()
-  let l:gdb_cmd = printf("dump binary memory %s %s %s", l:temp_file, a:start_addr, a:stop_addr)
-  echomsg 'l:gdb_cmd:' . l:gdb_cmd
+  " Create blob from memory dump
+  let l:temp_file_mem_dump = tempname()
+  let l:gdb_cmd = printf("dump binary memory %s %s %s", l:temp_file_mem_dump, a:start_addr, a:stop_addr)
   call TermDebugSendCommand(l:gdb_cmd)
   sleep 100m
+  let l:mem_blob = readblob(l:temp_file_mem_dump)
+
+  " Evaluate start address expression from GDB value dump
+  let l:temp_file_start_addr_dump = tempname()
+  let l:gdb_cmd = printf("dump binary value %s (unsigned long long)%s", l:temp_file_start_addr_dump, a:start_addr)
+  call TermDebugSendCommand(l:gdb_cmd)
+  sleep 100m
+  let l:start_addr_blob = readblob(l:temp_file_start_addr_dump)
+
+  " Get value of the start address (64-bits little-endian)
+  " NOTE: can't use bit shifts on Neovim. Using 256 multiplier instead.
+  let l:start_addr_value = 0x0
+  let l:multiplier = 1
+  for i in range(len(l:start_addr_blob))
+    if i > 7 | break | endif
+    let l:start_addr_value += start_addr_blob[i] * l:multiplier
+    let l:multiplier *= 256
+  endfor
 
   " Make sure the args are numbers (will be strings when passed via <f-args>)
-  " TODO: should see about eval()
-  let l:start_addr_nr = str2nr(a:start_addr, 16)
   let l:bytes_per_row_nr = str2nr(a:bytes_per_row, 10)
-  call MemvwrFromBlob(readblob(l:temp_file), l:start_addr_nr, l:bytes_per_row_nr, a:fmt)
+  call MemvwrFromBlob(l:mem_blob, l:start_addr_value, l:bytes_per_row_nr, a:fmt)
 endfunction
 
 " Create build directory based on s:makeprg_out_file
@@ -770,13 +786,16 @@ command!          Tdbg          call s:BuildAndDebug(1, '')
 command! -nargs=1 Tdbgtoline    call s:BuildAndDebug(1, '%:p:' . <args>)
 command! -nargs=+ Tdbgcmd       call TermDebugSendCommand(<q-args>)
 command! -nargs=+ Tdbgwatch     execute 'Evaluate ' . <q-args>
-command! -nargs=+ Tdbgmem       call TermDebugSetMemvwr(<f-args>)
+command! -nargs=+ Tdbgmem       let argc = len([<f-args>]) | if     argc == 2 | call TermDebugSetMemvwr(<f-args>, s:memvwr_bytes_per_row, s:memvwr_fmt) 
+                                                          \| elseif argc == 3 | call TermDebugSetMemvwr(<f-args>, s:memvwr_fmt)
+                                                          \| else             | call TermDebugSetMemvwr(<f-args>)
+                                                          \| endif
 command! -nargs=+ Tdbgmem32     call TermDebugSendCommand('x/32xb ' . <q-args>)
 command! -nargs=+ Tdbgmem64     call TermDebugSendCommand('x/64xb ' . <q-args>)
 command! -range=0 Tdbgbreak     execute 'Break ' . s:GetVisualOrCursorArea(<range>)
 command! -range=0 Tdbgwatchthis execute 'Evaluate ' . s:GetVisualOrCursorArea(<range>)
-command! -range=0 Tdbgmemthis32 call TermDebugSendCommand('x/32xb ' . s:GetVisualOrCursorArea(<range>))
-command! -range=0 Tdbgmemthis64 call TermDebugSendCommand('x/64xb ' . s:GetVisualOrCursorArea(<range>))
+command! -range=0 Tdbgmemthis   call TermDebugSetMemvwr(s:GetVisualOrCursorArea(<range>), s:GetVisualOrCursorArea(<range>) . '+1024', s:memvwr_bytes_per_row, s:memvwr_fmt)
+command! -range=0 Tdbgmemaround call TermDebugSetMemvwr(s:GetVisualOrCursorArea(<range>) . '-512', s:GetVisualOrCursorArea(<range>) . '+512', s:memvwr_bytes_per_row, s:memvwr_fmt)
 
 function! s:BuildAndDebugDefaultMaps()
   nnoremap <F5>    :Build<CR>
@@ -813,10 +832,10 @@ function! s:TdbgSetup()
   tnoremap <F5>    <C-\><C-n>:Tdbgcmd continue<CR>i
   nnoremap <A-w>   :Tdbgwatchthis<CR>
   vnoremap <A-w>   :Tdbgwatchthis<CR>
-  nnoremap <A-g>   :Tdbgmemthis32<CR>
-  vnoremap <A-g>   :Tdbgmemthis32<CR>
-  nnoremap <A-G>   :Tdbgmemthis64<CR>
-  vnoremap <A-G>   :Tdbgmemthis64<CR>
+  nnoremap <A-g>   :Tdbgmemthis<CR>
+  vnoremap <A-g>   :Tdbgmemthis<CR>
+  nnoremap <A-G>   :Tdbgmemaround<CR>
+  vnoremap <A-G>   :Tdbgmemaround<CR>
   echohl WarningMsg | echo '- termdebug mappings enabled -' | echohl None
 
   " Resize source/variables/disassembly window, set local scrolloff, then jump to gdb window
