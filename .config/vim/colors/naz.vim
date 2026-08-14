@@ -34,10 +34,6 @@ hi VertSplit        guibg=NONE    guifg=#252c3f gui=NONE cterm=NONE
 hi Visual           guibg=#1d3b53 guifg=NONE
 hi Search           guibg=#38507a guifg=#d6deeb gui=NONE cterm=NONE
 hi IncSearch        guibg=#ffcb8b guifg=#171a22 gui=NONE cterm=NONE
-hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold
-hi StatusLineNC     guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
-hi StatusLineTerm   guibg=#588c58 guifg=#90ee90 gui=bold cterm=bold
-hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
 hi MatchParen       guibg=#002700 guifg=#00ff00 gui=underline cterm=underline
 hi ColorColumn      guibg=#2c3043 guifg=NONE
 
@@ -58,6 +54,8 @@ hi MoreMsg          guibg=NONE    guifg=#40ffbb
 hi WildMenu         guibg=#dddddd guifg=#0094ea
 hi Pmenu            guibg=#09243a guifg=#c3ccdc
 hi PmenuSel         guibg=#316394 guifg=#d6deeb
+hi Winbar           guibg=NONE    guifg=#ffc64b gui=bold,underline,italic cterm=bold,underline,italic
+hi WinbarNC         guibg=NONE    guifg=#ffc64b gui=NONE,underline,italic cterm=NONE,underline,italic
 
 hi NormalFloat      guibg=#316394 guifg=#d6deeb
 hi FloatBorder      guibg=#09243a guifg=#c3ccdc
@@ -125,11 +123,16 @@ hi netrwTreeBar   guifg=#4b6479                     " Tree formatting characters
 hi netrwPlain     guifg=#c3ccdc                     " Regular files (Foreground)
 
 "------------------------------
-" Tabs
+" Statusline & Tabline
 "
-hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE cterm=NONE " Inactive tabs
-hi TabLineSel   guibg=#366656 guifg=#90ee90 gui=bold cterm=bold " The currently active tab
-hi TabLineFill  guibg=#252c3f guifg=#8c9f9f gui=NONE cterm=NONE " The empty space behind tabs
+hi StatusLine       guibg=#11324d guifg=#0094ea gui=bold cterm=bold
+hi StatusLineNC     guibg=#252c3f guifg=#a1aab8 gui=NONE cterm=NONE
+hi StatusLineTerm   guibg=#588c58 guifg=#90ee90 gui=bold cterm=bold
+hi StatusLineTermNC guibg=#366656 guifg=#a1aab8 gui=NONE cterm=NONE
+
+hi TabLine      guibg=#11324d guifg=#0094ea gui=NONE   cterm=NONE " Inactive tabs
+hi TabLineSel   guibg=#366656 guifg=#90ee90 gui=bold   cterm=bold " The currently active tab
+hi TabLineFill  guibg=#252c3f guifg=#8c9f9f gui=NONE   cterm=NONE " The empty space behind tabs
 hi TabLineInfo  guibg=#252c3f guifg=#8c9f9f gui=italic cterm=italic
 " TabLineInfo needed to apply style without affecting the other tab highlights
 
