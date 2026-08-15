@@ -354,9 +354,10 @@ endfunction
 " Evaluate padding required for line numbers, folds, etc., and slice viewport horizontal scroll offset
 function! MemvwrHeaderSlice()
   if win_id2win(s:memvwr_winid) <= 0 | return '' | endif
-  let l:textoff = getwininfo(s:memvwr_winid)[0].textoff
+  let l:wininfo = getwininfo(s:memvwr_winid)
+  let l:leftcol = l:wininfo[0].leftcol
+  let l:textoff = l:wininfo[0].textoff
   let l:padding = repeat(' ', l:textoff)
-  let l:leftcol = winsaveview().leftcol
   let l:header_slice_normal = l:padding . slice(s:memvwr_header_str, l:leftcol)
   " Append `%<` to truncate the line at the end if too long
   return l:header_slice_normal . '%<'
