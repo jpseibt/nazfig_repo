@@ -283,32 +283,54 @@ tnoremap <F12> <C-\><C-n>:hide<CR>
 "============================================================
 if !exists('s:memvwr_name')
   let s:memvwr_name  = '(MEMVWR)'
-  let s:memvwr_bufnr = bufnr(s:memvwr_name)
+  let s:memvwr_bufnr = 0
+  let s:memvwr_winid = 0
   let s:memvwr_blob          = 0z
   let s:memvwr_start_addr    = 0x0
-  let s:memvwr_bytes_per_row = 8
+  let s:memvwr_bytes_per_row = 16
   let s:memvwr_fmt           = 'hex'
   let s:memvwr_field_width   = 2
-  let s:memvwr_header_str    = ''
+  let s:memvwr_header_str    = '(MEMVWR)   Address   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789abcdef'
+                               "0x0000555555556004  62 72 65 61 6b 00 63 61 73 65 00 63 68 61 72 00  break.case.char.
+  " winbar is used to display the header on Neovim, but the statusline is used on Vim (so it's a footer -_-)
+                                         "0x00007fffffffe488
+  let s:memvwr_header_const_addr_field = '(MEMVWR)   Address'
 endif
 
-function! s:MemvwrCheckBuffer()
-  let s:memvwr_bufnr = bufnr(s:memvwr_name)
-  if s:memvwr_bufnr == -1
-    let s:memvwr_bufnr = bufadd(s:memvwr_name)
-    call bufload(s:memvwr_bufnr)
-    call setbufvar(s:memvwr_bufnr, '&buftype', 'nofile')
-    call setbufvar(s:memvwr_bufnr, '&buflisted', 1)
-    call setbufvar(s:memvwr_bufnr, '&swapfile', 0)
-    echomsg '[s:MemvwrCheckBuffer] New buffer [' . s:memvwr_bufnr . '] assigned to ' . s:memvwr_name
+" Create and setup buffer/window variables, or goto Memvwr window
+function! s:MemvwrOpen()
+  if !win_gotoid(s:memvwr_winid)
+    execute 'rightbelow new'
+    let s:memvwr_winid = win_getid()
+
+    setlocal nowrap
+    setlocal number
+    setlocal norelativenumber
+    setlocal noswapfile
+    setlocal buftype=nofile
+    setlocal signcolumn=no
+    setlocal modifiable
+    if has('nvim')
+      setlocal winbar=%!MemvwrHeaderSlice()
+    else
+      setlocal statusline=%!MemvwrHeaderSlice()
+    endif
+
+    if s:memvwr_bufnr > 0 && bufexists(s:memvwr_bufnr)
+      execute 'buffer ' . s:memvwr_bufnr
+    else
+      execute 'silent file ' . s:memvwr_name
+      let s:memvwr_bufnr = bufnr(s:memvwr_name)
+      echomsg '[s:MemvwrCheckBuffer] New buffer [' . s:memvwr_bufnr . '] assigned to ' . s:memvwr_name
+    endif
   endif
 endfunction
 
-" Generate field column headers. Example of 16 bytes per row in 'hex' format:
+" Format field column headers. Example of 16 bytes per row in 'hex' format:
 "           Address   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789abcdef
 "0x0000555555556004  62 72 65 61 6b 00 63 61 73 65 00 63 68 61 72 00  break.case.char.
-function! s:MemvwrHeaderGen()
-  let l:header_str = printf("%19s ", 'Address')
+function! s:MemvwrUpdateHeaderString()
+  let l:header_str = s:memvwr_header_const_addr_field . ' '
   for l:byte_field in range(s:memvwr_bytes_per_row)
     let l:header_str .= printf(" %*X", s:memvwr_field_width, l:byte_field)
   endfor
@@ -320,24 +342,22 @@ function! s:MemvwrHeaderGen()
 
   " Save header string and set winbar evaluation function
   let s:memvwr_header_str = l:header_str
-
-  let l:winid = bufwinid(s:memvwr_bufnr) | if l:winid <= 0 | return | endif
-  call setwinvar(l:winid, '&winbar', '%{MemvwrWinbarSlice()}%<') " NOTE: see `:help statusline` (< trucate line)
 endfunction
 
+" NOTE: look `:help statusline`, `:help winbar`, `:help winsaveview()`, `:help winwidth()`, and `:help getwininfo()`
 " Evaluate padding required for line numbers, folds, etc., and slice viewport horizontal scroll offset
-" NOTE: look `:help winbar`, `:help winsaveview()`, `:help winwidth()`, and `:help getwininfo()`
-function! MemvwrWinbarSlice()
-  let l:winid = win_getid() | if l:winid <= 0 | return '' | endif
+function! MemvwrHeaderSlice()
+  let l:winid = bufwinid(s:memvwr_bufnr) | if l:winid <= 0 | return '' | endif
   let l:textoff = getwininfo(l:winid)[0].textoff
   let l:padding = repeat(' ', l:textoff)
   let l:leftcol = winsaveview().leftcol
-  let l:winbar_header = l:padding . slice(s:memvwr_header_str, l:leftcol)
-  return l:winbar_header
+  let l:header_slice_normal = l:padding . slice(s:memvwr_header_str, l:leftcol)
+  " Append `%<` to truncate the line at the end if too long
+  return l:header_slice_normal . '%<'
 endfunction
 
 function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
-  call s:MemvwrCheckBuffer()
+  call s:MemvwrOpen()
 
   " Save (and normalize) arguments
   let s:memvwr_blob          = a:blob
@@ -366,8 +386,7 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
     let s:memvwr_field_width = 4
   endif
 
-  " Generate a header row and set it as the winbar for a Memvwr window (if there's one)
-  call s:MemvwrHeaderGen()
+  call s:MemvwrUpdateHeaderString()
 
   " Generate rows iterating over blob (byte index = i + j)
   let i = 0
@@ -401,7 +420,8 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
   endwhile
 
   " Add info line at the end
-  call add(l:mem_lines, printf("End of memory dump. START: 0x%x | BYTES: %d | BPR: %d | FMT: %s", a:start_addr, l:blob_len, s:memvwr_bytes_per_row, s:memvwr_fmt))
+  call add(l:mem_lines, printf("End of memory dump. START: 0x%x | BYTES: %d | BPR: %d | FMT: %s",
+                             \ a:start_addr, l:blob_len, s:memvwr_bytes_per_row, s:memvwr_fmt))
 
   " Clear entire buffer and write l:mem_lines to it
   call deletebufline(s:memvwr_bufnr, 1, '$')
@@ -411,7 +431,7 @@ endfunction
 "------------------------------
 " Commands
 "
-command!          Memvwr      call s:MemvwrCheckBuffer() | execute 'rightbelow split | buffer ' . s:memvwr_bufnr
+command!          Memvwr      call s:MemvwrOpen()
 command!          MemvwrRegen call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, s:memvwr_fmt)
 command! -nargs=1 MemvwrRefmt call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, <q-args>)
 command! -nargs=1 MemvwrRebpr call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, <args>, s:memvwr_fmt)
@@ -653,7 +673,13 @@ command! TdbgConfigReset call s:TdbgConfig()
 function! TermDebugSetMemvwr(start_addr, stop_addr, bytes_per_row, fmt)
   " Create blob from memory dump
   let l:temp_file_mem_dump = tempname()
-  let l:gdb_cmd = printf("dump binary memory %s %s %s", l:temp_file_mem_dump, a:start_addr, a:stop_addr)
+
+  let l:stop_addr_normal = a:stop_addr
+  if a:stop_addr[0] == '+'
+    let l:stop_addr_normal = a:start_addr . a:stop_addr
+  endif
+
+  let l:gdb_cmd = printf("dump binary memory %s %s (char*)%s", l:temp_file_mem_dump, a:start_addr, l:stop_addr_normal)
   call TermDebugSendCommand(l:gdb_cmd)
   sleep 100m
   let l:mem_blob = readblob(l:temp_file_mem_dump)
