@@ -182,8 +182,6 @@ function! s:GlobalTerminal(mode, count)
   let l:split_count = (a:count > 0) ? a:count : ''
 
   if s:germinal_bufnr == -1
-    echomsg '[s:GlobalTerminal] New terminal buffer assigned to ' . s:germinal_name
-
     if a:mode == 1
       execute 'horizontal ' . l:split_count . 'split'
     elseif a:mode == 2
@@ -195,56 +193,62 @@ function! s:GlobalTerminal(mode, count)
     endif
 
     execute has('nvim') ? 'terminal' : 'terminal ++curwin'
-    execute 'file ' . s:germinal_name
+    setlocal bufhidden=hide
+    execute 'silent file ' . s:germinal_name
+
+    let s:germinal_bufnr = bufnr(s:germinal_name)
+    echomsg '[s:GlobalTerminal] New terminal buffer [' . s:germinal_bufnr . '] assigned to ' . s:germinal_name
+
     sleep 500m
-  else
-    echomsg '[s:GlobalTerminal] Using ' . s:germinal_name
-
-    " Check if the buf is visible and will split
-    let l:winnr = bufwinnr(s:germinal_bufnr)
-    if l:winnr != -1
-      " Is in view
-      if a:mode == 0
-        execute l:winnr . 'wincmd w'
-        return
-      else
-        execute l:winnr . 'hide'
-        if a:mode == 4
-          " Quake terminal toggle
-          return
-        endif
-      endif
-    endif
-
-    if a:mode == 3
-      " Loop through the tabs checking if there's one germinal buf open
-      let l:first_tabpagenr_with_germinal = -1
-      for i in range(tabpagenr('$'))
-        if index(tabpagebuflist(i + 1), s:germinal_bufnr) != -1
-          let l:first_tabpagenr_with_germinal = i + 1
-          break
-        endif
-      endfor
-
-      if l:first_tabpagenr_with_germinal > 0
-        execute 'tabnext ' . l:first_tabpagenr_with_germinal
-        execute bufwinnr(s:germinal_bufnr) . 'wincmd w'
-        return
-      else
-        execute '$tabnew'
-      endif
-    else
-      if a:mode == 1
-        execute 'horizontal ' . l:split_count . 'split'
-      elseif a:mode == 2
-        execute 'vertical ' . l:split_count . 'split'
-      elseif a:mode == 4
-        execute 'topleft ' . l:split_count . 'split'
-      endif
-    endif
-
-    execute 'buf ' . s:germinal_bufnr
+    return
   endif
+
+  " Check if the buf is visible and will split
+  let l:winnr = bufwinnr(s:germinal_bufnr)
+
+  if l:winnr != -1
+    " Is in view
+    if a:mode == 0
+      execute l:winnr . 'wincmd w'
+      return
+    else
+      execute l:winnr . 'hide'
+      if a:mode == 4
+        " Quake terminal toggle
+        return
+      endif
+    endif
+  endif
+
+  if a:mode == 3
+    " Loop through the tabs checking if there's one germinal buf open
+    let l:first_tabpagenr_with_germinal = -1
+    for i in range(tabpagenr('$'))
+      if index(tabpagebuflist(i + 1), s:germinal_bufnr) != -1
+        let l:first_tabpagenr_with_germinal = i + 1
+        break
+      endif
+    endfor
+
+    if l:first_tabpagenr_with_germinal > 0
+      execute 'tabnext ' . l:first_tabpagenr_with_germinal
+      execute l:winnr . 'wincmd w'
+      return
+    else
+      execute '$tabnew'
+    endif
+  else
+    if a:mode == 1
+      execute 'horizontal ' . l:split_count . 'split'
+    elseif a:mode == 2
+      execute 'vertical ' . l:split_count . 'split'
+    elseif a:mode == 4
+      execute 'topleft ' . l:split_count . 'split'
+    endif
+  endif
+
+  execute 'buffer ' . s:germinal_bufnr
+  echomsg '[s:GlobalTerminal] Using ' . s:germinal_name
 endfunction
 
 command! -bar   Germ call s:GlobalTerminal(0, 0)
@@ -321,7 +325,7 @@ function! s:MemvwrOpen()
     else
       execute 'silent file ' . s:memvwr_name
       let s:memvwr_bufnr = bufnr(s:memvwr_name)
-      echomsg '[s:MemvwrCheckBuffer] New buffer [' . s:memvwr_bufnr . '] assigned to ' . s:memvwr_name
+      echomsg '[s:MemvwrOpen] New buffer [' . s:memvwr_bufnr . '] assigned to ' . s:memvwr_name
     endif
   endif
 endfunction
@@ -347,8 +351,8 @@ endfunction
 " NOTE: look `:help statusline`, `:help winbar`, `:help winsaveview()`, `:help winwidth()`, and `:help getwininfo()`
 " Evaluate padding required for line numbers, folds, etc., and slice viewport horizontal scroll offset
 function! MemvwrHeaderSlice()
-  let l:winid = bufwinid(s:memvwr_bufnr) | if l:winid <= 0 | return '' | endif
-  let l:textoff = getwininfo(l:winid)[0].textoff
+  if win_id2win(s:memvwr_winid) <= 0 | return '' | endif
+  let l:textoff = getwininfo(s:memvwr_winid)[0].textoff
   let l:padding = repeat(' ', l:textoff)
   let l:leftcol = winsaveview().leftcol
   let l:header_slice_normal = l:padding . slice(s:memvwr_header_str, l:leftcol)
