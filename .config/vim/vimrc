@@ -285,20 +285,52 @@ tnoremap <F12> <C-\><C-n>:hide<CR>
 "============================================================
 " Memory Viewer
 "============================================================
+" TODO: octal fmt
+" TODO: width change (grouping bytes)
+" TODO: edit values, both from bytes field or ascii preview
+" TODO: save to file
+" TODO: poke memory of debuggee (termdebug)
+
+func! DebugMemvwr()
+  echomsg '----------------'
+  echomsg printf("%-*s", 34, 's:memvwr_name:')                    . s:memvwr_name
+  echomsg printf("%-*s", 34, 's:memvwr_bufnr:')                   . s:memvwr_bufnr
+  echomsg printf("%-*s", 34, 's:memvwr_winid:')                   . s:memvwr_winid
+  echomsg printf("%-*s", 34, 's:memvwr_blob')                     . string(s:memvwr_blob)
+  echomsg printf("%-*s", 34, 's:memvwr_start_addr:')              . s:memvwr_start_addr
+  echomsg printf("%-*s", 34, 's:memvwr_bytes_per_row:')           . s:memvwr_bytes_per_row
+  echomsg printf("%-*s", 34, 's:memvwr_fmt:')                     . s:memvwr_fmt
+  echomsg printf("%-*s", 34, 's:memvwr_fmt_width:')               . s:memvwr_fmt_width
+  echomsg printf("%-*s", 34, 's:memvwr_header_str:')              . s:memvwr_header_str
+  echomsg printf("%-*s", 34, 's:memvwr_header_const_addr_label:') . s:memvwr_header_const_addr_label
+  echomsg printf("%-*s", 34, 's:memvwr_column_bytes:')            . s:memvwr_column_bytes
+  echomsg printf("%-*s", 34, 's:memvwr_column_ascii:')            . s:memvwr_column_ascii
+  echomsg printf("%-*s", 34, 's:memvwr_cursor_match:')            . string(s:memvwr_cursor_match)
+  echomsg '----------------'
+endfunc
+
 if !exists('s:memvwr_name')
-  let s:memvwr_name  = '(MEMVWR)'
-  let s:memvwr_bufnr = 0
-  let s:memvwr_winid = 0
+  let s:memvwr_name          = '(MEMVWR)'
+  let s:memvwr_bufnr         = 0
+  let s:memvwr_winid         = 0
   let s:memvwr_blob          = 0z
   let s:memvwr_start_addr    = 0x0
   let s:memvwr_bytes_per_row = 16
   let s:memvwr_fmt           = 'hex'
-  let s:memvwr_field_width   = 2
-  let s:memvwr_header_str    = '(MEMVWR)   Address   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789abcdef'
-                               "0x0000555555556004: 62 72 65 61 6b 00 63 61 73 65 00 63 68 61 72 00  break.case.char.
+  let s:memvwr_fmt_width     = 2    "ff a8 8b (without separator)
+
+  "------------------------------
+  " UI related
+  "
   " winbar is used to display the header on Neovim, but the statusline is used on Vim (so it's a footer -_-)
-                                         "0x00007fffffffe488: ...
-  let s:memvwr_header_const_addr_field = '(MEMVWR)   Address'
+  let s:memvwr_header_const_addr_label = 'MEMVWR     Address'
+  let s:memvwr_header_str              = 'MEMVWR     Address   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F            ASCII'
+                                         "0x0000555555556004: 62 72 65 61 6b 00 63 61 73 65 00 63 68 61 72 00  break.case.char.
+                                         "BPR:16              |                                                |
+                                         "FMT:hex        col:21                                           col:70
+  let s:memvwr_column_bytes = 21
+  let s:memvwr_column_ascii = 70
+  let s:memvwr_cursor_match = [] " [line, column, highlight len]
 endif
 
 " Create and setup buffer/window variables, or goto Memvwr window
@@ -333,18 +365,14 @@ function! s:MemvwrOpen()
 endfunction
 
 " Format field column headers. Example of 16 bytes per row in 'hex' format:
-"           Address   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  0123456789abcdef
+"           Address   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F             ASCII
 "0x0000555555556004: 62 72 65 61 6b 00 63 61 73 65 00 63 68 61 72 00  break.case.char.
 function! s:MemvwrUpdateHeaderString()
-  let l:header_str = s:memvwr_header_const_addr_field . ' '
+  let l:header_str = s:memvwr_header_const_addr_label . ' '
   for l:byte_field in range(s:memvwr_bytes_per_row)
-    let l:header_str .= printf(" %*X", s:memvwr_field_width, l:byte_field)
+    let l:header_str .= printf(" %*X", s:memvwr_fmt_width, l:byte_field)
   endfor
-  let l:header_str .= '  '
-  for l:byte_field in range(s:memvwr_bytes_per_row)
-    " modulo 0x10 to wrap over 0xf
-    let l:header_str .= printf("%x", l:byte_field % 0x10)
-  endfor
+  let l:header_str .= printf('  %*s', s:memvwr_bytes_per_row, 'ASCII')
 
   " Save header string and set winbar evaluation function
   let s:memvwr_header_str = l:header_str
@@ -373,33 +401,35 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
   let s:memvwr_fmt           = a:fmt
 
   " Setup
-  let l:blob_len    = len(s:memvwr_blob)
-  let l:mem_lines   = []
-  let l:format_str  = ''
+  let l:blob_len   = len(s:memvwr_blob)
+  let l:mem_lines  = []
+  let l:format_str = ''
 
   if s:memvwr_fmt == 'x' || s:memvwr_fmt == 'hex'
     let l:format_str = '%02x'
-    let s:memvwr_field_width = 2
+    let s:memvwr_fmt_width = 2
   elseif s:memvwr_fmt == 'b' || s:memvwr_fmt == 'bin'
     let l:format_str = '%08b'
-    let s:memvwr_field_width = 8
+    let s:memvwr_fmt_width = 8
   elseif s:memvwr_fmt == 'd' || s:memvwr_fmt == 'dec'
     let l:format_str = '%3d'
-    let s:memvwr_field_width = 3
+    let s:memvwr_fmt_width = 3
   else
     echomsg '[MemvwrFromBlob] Invalid FMT "' . s:memvwr_fmt . '". Using fallback.'
     let s:memvwr_fmt = 'fallback'
     let l:format_str = '0x%02x'
-    let s:memvwr_field_width = 4
+    let s:memvwr_fmt_width = 4
   endif
 
+  " Update ASCII preview start column and header string caches
+  let s:memvwr_column_ascii = s:memvwr_column_bytes + s:memvwr_bytes_per_row * (s:memvwr_fmt_width + 1) + 1
   call s:MemvwrUpdateHeaderString()
 
   " Generate rows iterating over blob (byte index = i + j)
   let i = 0
   while i < l:blob_len
-    let l:values_str  = ''
-    let l:ascii_str = ''
+    let l:values_str = ''
+    let l:ascii_str  = ''
 
     let j = 0
     while j < s:memvwr_bytes_per_row
@@ -414,8 +444,8 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
         endif
       else
         " Pad with spaces
-        let l:values_str .= printf(" %*s", s:memvwr_field_width, ' ')
-        let l:ascii_str .= ' '
+        let l:values_str .= printf(" %*s", s:memvwr_fmt_width, ' ')
+        let l:ascii_str  .= ' '
       endif
 
       let j += 1
@@ -435,13 +465,55 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
   call setbufline(s:memvwr_bufnr, 1, l:mem_lines)
 endfunction
 
+"NOTE: see `:help matchaddpos()`
+function! s:MemvwrCursorMatchByteAndASCII()
+  call clearmatches()
+  let s:memvwr_cursor_match = []
+
+  if win_getid() != s:memvwr_winid | return | endif
+  let l:cursor_col = col('.', s:memvwr_winid)
+  if l:cursor_col < s:memvwr_column_bytes || l:cursor_col == s:memvwr_column_ascii - 1 | return | endif
+
+  " Real field width of byte values with separator (0a.0b.0c.)
+  let l:fmt_width_plus_sep = s:memvwr_fmt_width + 1
+
+  if l:cursor_col < s:memvwr_column_ascii
+    " Byte values to ASCII preview
+    let x = l:cursor_col - s:memvwr_column_bytes
+    let l:byte_number = x / l:fmt_width_plus_sep
+
+    " Check if the cursor didn't land on a separator
+    if (x + 1) / l:fmt_width_plus_sep != l:byte_number | return | endif
+
+    let s:memvwr_cursor_match = [line('.'), col('$') - s:memvwr_bytes_per_row + l:byte_number, 1]
+    call matchaddpos('MatchParen', [s:memvwr_cursor_match])
+  else
+    " ASCII preview to bytes values
+    let l:byte_number = l:cursor_col - s:memvwr_column_ascii
+    let s:memvwr_cursor_match = [line('.'), s:memvwr_column_bytes + l:byte_number * l:fmt_width_plus_sep, s:memvwr_fmt_width]
+    call matchaddpos('MatchParen', [s:memvwr_cursor_match])
+  endif
+endfunction
+
+function! s:MemvwrJumpCursorMatch()
+  if win_getid() == s:memvwr_winid && !empty(s:memvwr_cursor_match)
+    call cursor(s:memvwr_cursor_match[0], s:memvwr_cursor_match[1])
+  endif
+endfunction
+
 "------------------------------
-" Commands
+" Commands and maps
 "
-command!          Memvwr      call s:MemvwrOpen()
-command!          MemvwrRegen call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, s:memvwr_fmt)
-command! -nargs=1 MemvwrRefmt call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, <q-args>)
-command! -nargs=1 MemvwrRebpr call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, <args>, s:memvwr_fmt)
+command!          Memvwr       call s:MemvwrOpen()
+command!          MemvwrRegen  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, s:memvwr_fmt)
+command! -nargs=1 MemvwrRefmt  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, <q-args>)
+command! -nargs=1 MemvwrRebpr  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, <args>, s:memvwr_fmt)
+
+augroup MemvwrAUG
+  autocmd!
+  autocmd FileType memvwr autocmd CursorMoved <buffer> call s:MemvwrCursorMatchByteAndASCII()
+  autocmd FileType memvwr nnoremap   <silent> <buffer> % :call <SID>MemvwrJumpCursorMatch()<CR>
+augroup END
 
 
 "============================================================
