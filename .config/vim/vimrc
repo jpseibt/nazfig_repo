@@ -285,29 +285,12 @@ tnoremap <F12> <C-\><C-n>:hide<CR>
 "============================================================
 " Memory Viewer
 "============================================================
-" TODO: octal fmt
-" TODO: width change (grouping bytes)
+" TODO: strip leading zeros from addresses (option)
+" TODO: width change (option: grouping bytes)
 " TODO: edit values, both from bytes field or ascii preview
 " TODO: save to file
 " TODO: poke memory of debuggee (termdebug)
-
-func! DebugMemvwr()
-  echomsg '----------------'
-  echomsg printf("%-*s", 34, 's:memvwr_name:')                    . s:memvwr_name
-  echomsg printf("%-*s", 34, 's:memvwr_bufnr:')                   . s:memvwr_bufnr
-  echomsg printf("%-*s", 34, 's:memvwr_winid:')                   . s:memvwr_winid
-  echomsg printf("%-*s", 34, 's:memvwr_blob')                     . string(s:memvwr_blob)
-  echomsg printf("%-*s", 34, 's:memvwr_start_addr:')              . s:memvwr_start_addr
-  echomsg printf("%-*s", 34, 's:memvwr_bytes_per_row:')           . s:memvwr_bytes_per_row
-  echomsg printf("%-*s", 34, 's:memvwr_fmt:')                     . s:memvwr_fmt
-  echomsg printf("%-*s", 34, 's:memvwr_fmt_width:')               . s:memvwr_fmt_width
-  echomsg printf("%-*s", 34, 's:memvwr_header_str:')              . s:memvwr_header_str
-  echomsg printf("%-*s", 34, 's:memvwr_header_const_addr_label:') . s:memvwr_header_const_addr_label
-  echomsg printf("%-*s", 34, 's:memvwr_column_bytes:')            . s:memvwr_column_bytes
-  echomsg printf("%-*s", 34, 's:memvwr_column_ascii:')            . s:memvwr_column_ascii
-  echomsg printf("%-*s", 34, 's:memvwr_cursor_match:')            . string(s:memvwr_cursor_match)
-  echomsg '----------------'
-endfunc
+" TODO: add more information about analysed dump: expression, timestamp, ... (termdebug)
 
 if !exists('s:memvwr_name')
   let s:memvwr_name          = '(MEMVWR)'
@@ -414,6 +397,9 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
   elseif s:memvwr_fmt == 'd' || s:memvwr_fmt == 'dec'
     let l:format_str = '%3d'
     let s:memvwr_fmt_width = 3
+  elseif s:memvwr_fmt == 'o' || s:memvwr_fmt == 'oct'
+    let l:format_str = '%3o'
+    let s:memvwr_fmt_width = 3
   else
     echomsg '[MemvwrFromBlob] Invalid FMT "' . s:memvwr_fmt . '". Using fallback.'
     let s:memvwr_fmt = 'fallback'
@@ -461,11 +447,11 @@ function! MemvwrFromBlob(blob, start_addr, bytes_per_row, fmt)
                              \ a:start_addr, l:blob_len, s:memvwr_bytes_per_row, s:memvwr_fmt))
 
   " Clear entire buffer and write l:mem_lines to it
-  call deletebufline(s:memvwr_bufnr, 1, '$')
+  silent call deletebufline(s:memvwr_bufnr, 1, '$')
   call setbufline(s:memvwr_bufnr, 1, l:mem_lines)
 endfunction
 
-"NOTE: see `:help matchaddpos()`
+" NOTE: see `:help matchaddpos()`
 function! s:MemvwrCursorMatchByteAndASCII()
   call clearmatches()
   let s:memvwr_cursor_match = []
@@ -506,14 +492,56 @@ endfunction
 "
 command!          Memvwr       call s:MemvwrOpen()
 command!          MemvwrRegen  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, s:memvwr_fmt)
-command! -nargs=1 MemvwrRefmt  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, <q-args>)
+command! -nargs=1 MemvwrReblob call s:MemvwrOpen() | call MemvwrFromBlob(<args>, s:memvwr_start_addr, s:memvwr_bytes_per_row, s:memvwr_fmt)
+command! -nargs=1 MemvwrReaddr call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, <args>, s:memvwr_bytes_per_row, s:memvwr_fmt)
 command! -nargs=1 MemvwrRebpr  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, <args>, s:memvwr_fmt)
+command! -nargs=1 MemvwrRefmt  call s:MemvwrOpen() | call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, s:memvwr_bytes_per_row, <q-args>)
 
 augroup MemvwrAUG
   autocmd!
   autocmd FileType memvwr autocmd CursorMoved <buffer> call s:MemvwrCursorMatchByteAndASCII()
   autocmd FileType memvwr nnoremap   <silent> <buffer> % :call <SID>MemvwrJumpCursorMatch()<CR>
 augroup END
+
+"------------------------------
+" Temp / Debug - remove later
+"
+func! DebugMemvwr()
+  echomsg '----------------'
+  echomsg printf("%-*s", 34, 's:memvwr_name:')                    . s:memvwr_name
+  echomsg printf("%-*s", 34, 's:memvwr_bufnr:')                   . s:memvwr_bufnr
+  echomsg printf("%-*s", 34, 's:memvwr_winid:')                   . s:memvwr_winid
+  echomsg printf("%-*s", 34, 's:memvwr_blob')                     . string(s:memvwr_blob)
+  echomsg printf("%-*s", 34, 's:memvwr_start_addr:')              . s:memvwr_start_addr
+  echomsg printf("%-*s", 34, 's:memvwr_bytes_per_row:')           . s:memvwr_bytes_per_row
+  echomsg printf("%-*s", 34, 's:memvwr_fmt:')                     . s:memvwr_fmt
+  echomsg printf("%-*s", 34, 's:memvwr_fmt_width:')               . s:memvwr_fmt_width
+  echomsg printf("%-*s", 34, 's:memvwr_header_str:')              . s:memvwr_header_str
+  echomsg printf("%-*s", 34, 's:memvwr_header_const_addr_label:') . s:memvwr_header_const_addr_label
+  echomsg printf("%-*s", 34, 's:memvwr_column_bytes:')            . s:memvwr_column_bytes
+  echomsg printf("%-*s", 34, 's:memvwr_column_ascii:')            . s:memvwr_column_ascii
+  echomsg printf("%-*s", 34, 's:memvwr_cursor_match:')            . string(s:memvwr_cursor_match)
+  echomsg '----------------'
+endfunc
+
+" NOTE: see `:help type()` and `:help a:000`
+func! s:Mem(...)
+  let l:bytes_per_row = s:memvwr_bytes_per_row
+  let l:fmt           = s:memvwr_fmt
+
+  for l:arg in a:000
+    let x = str2nr(l:arg, 10)
+    if x > 0
+      let l:bytes_per_row = x
+    else
+      let l:fmt = l:arg
+    endif
+  endfor
+
+  echo 'l:bytes_per_row = ' . l:bytes_per_row . ' | l:fmt = ' . l:fmt
+  call MemvwrFromBlob(s:memvwr_blob, s:memvwr_start_addr, l:bytes_per_row, l:fmt)
+endfunc
+command! -nargs=* Mem call s:MemvwrOpen() | call s:Mem(<f-args>)
 
 
 "============================================================
@@ -1462,18 +1490,20 @@ autocmd InsertEnter * set cursorline
 autocmd InsertLeave * set nocursorline
 
 let s:bg_colors = ['#101622', '#000d1a', '#00080f', '#171d2a']
-let s:bg_index = 0
+let s:fg_colors = ['#c3ccdc', '#cdcccc', '#bbbdcb', '#cccccc']
+let s:index     = 0
 
 function! s:CycleBackground(prev)
   if a:prev
-    let s:bg_index = (s:bg_index - 1 + len(s:bg_colors)) % len(s:bg_colors)
+    let s:index = (s:index - 1 + len(s:bg_colors)) % len(s:bg_colors)
   else
-    let s:bg_index = (s:bg_index + 1) % len(s:bg_colors)
+    let s:index = (s:index + 1) % len(s:bg_colors)
   endif
 
-  let l:next_color = s:bg_colors[s:bg_index]
+  let l:next_bg_color = s:bg_colors[s:index]
+  let l:next_fg_color = s:fg_colors[s:index]
 
-  execute 'highlight Normal guibg=' . l:next_color
+  execute 'hi Normal guibg=' . l:next_bg_color . ' guifg=' . l:next_fg_color
 endfunction
 
 command! CycleBGNext call s:CycleBackground(0)
