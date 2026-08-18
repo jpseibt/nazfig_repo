@@ -1213,8 +1213,11 @@ set statusline=%!NazStatusline()
 
 
 "============================================================
-" Cursor & Background
+" Cursor & Gui (Neovide / GVim)
 "============================================================
+autocmd InsertEnter * set cursorline
+autocmd InsertLeave * set nocursorline
+
 if has('gui_running') || exists('g:neovide')
   if has('nvim')
     set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
@@ -1227,36 +1230,6 @@ else
   let &t_EI = "\e[1 q" " Blinking block for Normal mode
 endif
 
-autocmd InsertEnter * set cursorline
-autocmd InsertLeave * set nocursorline
-
-let s:bg_colors = ['#101622', '#000d1a', '#00080f', '#171d2a']
-let s:fg_colors = ['#c3ccdc', '#cdcccc', '#bbbdcb', '#cccccc']
-let s:index     = 0
-
-function! s:CycleBackground(prev)
-  if a:prev
-    let s:index = (s:index - 1 + len(s:bg_colors)) % len(s:bg_colors)
-  else
-    let s:index = (s:index + 1) % len(s:bg_colors)
-  endif
-
-  let l:next_bg_color = s:bg_colors[s:index]
-  let l:next_fg_color = s:fg_colors[s:index]
-
-  execute 'hi Normal guibg=' . l:next_bg_color . ' guifg=' . l:next_fg_color
-endfunction
-
-command! CycleBGNext call s:CycleBackground(0)
-command! CycleBGPrev call s:CycleBackground(1)
-
-nnoremap <leader>bgn :CycleBGNext<CR>
-nnoremap <leader>bgN :CycleBGPrev<CR>
-
-
-"============================================================
-"  Neovide & GVim
-"============================================================
 if has('gui_running') || exists('g:neovide')
   let &guifont = 'Cousine' . ((s:is_win || has('nvim')) ? ':h12' : ' 12')
 

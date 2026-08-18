@@ -19,12 +19,34 @@ let g:colors_name = 'naz'
 "------------------------------
 " Core UI Elements
 "
+" highlight Normal / Terminal
+let s:bg_colors = ['#101622', '#000d1a', '#00080f', '#171d2a']
+let s:fg_colors = ['#c3ccdc', '#cfcfcf', '#cccbbb', '#cccccc']
+let s:index     = 3
+
+func! s:CycleBackground(prev)
+  if a:prev
+    let s:index = (s:index - 1 + len(s:bg_colors)) % len(s:bg_colors)
+  else
+    let s:index = (s:index + 1) % len(s:bg_colors)
+  endif
+  let l:next_bg_color = s:bg_colors[s:index]
+  let l:next_fg_color = s:fg_colors[s:index]
+  execute 'hi Normal   guibg=' . l:next_bg_color . ' guifg=' . l:next_fg_color
+  execute 'hi Terminal guibg=' . l:next_bg_color . ' guifg=' . l:next_fg_color
+endfunc
+
+command! CycleBGNext call s:CycleBackground(0)
+command! CycleBGPrev call s:CycleBackground(1)
+nnoremap <leader>bgn :CycleBGNext<CR>
+nnoremap <leader>bgN :CycleBGPrev<CR>
+
+call s:CycleBackground(0)
+
 hi Cursor  gui=NONE guifg=Red     guibg=#00ff00
 hi iCursor gui=NONE guifg=Black   guibg=#ff0000
 hi oCursor gui=NONE guifg=Black   guibg=#00ffff
 
-hi Normal           guibg=#101622 guifg=#c3ccdc
-hi Terminal         guibg=#101622 guifg=#c3ccdc
 hi LineNr           guibg=NONE    guifg=#4b6479
 hi LineNrAbove      guibg=NONE    guifg=#4b6479
 hi LineNrBelow      guibg=NONE    guifg=#4b6479
