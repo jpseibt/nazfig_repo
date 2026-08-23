@@ -76,11 +76,13 @@ hi MoreMsg          guibg=NONE    guifg=#40ffbb
 hi WildMenu         guibg=#dddddd guifg=#0094ea
 hi Pmenu            guibg=#09243a guifg=#c3ccdc
 hi PmenuSel         guibg=#316394 guifg=#d6deeb
+
 hi Winbar           guibg=NONE    guifg=#ffc64b gui=bold,underline,italic cterm=bold,underline,italic
 hi WinbarNC         guibg=NONE    guifg=#ffc64b gui=NONE,underline,italic cterm=NONE,underline,italic
 
-hi NormalFloat      guibg=#316394 guifg=#d6deeb
+hi NormalFloat      guibg=#19344a guifg=#ffffff
 hi FloatBorder      guibg=#09243a guifg=#c3ccdc
+hi FloatTitle       guibg=#09243a guifg=#ffffff
 hi debugPC          guibg=#000255 guifg=NONE    gui=NONE cterm=NONE
 hi debugBreakpoint  guibg=#bb0000 guifg=#dddddd gui=bold cterm=bold
 
