@@ -87,7 +87,7 @@ if %V_DIFF% == 0 (
 :loop
 if "%~1" == "" goto end
 
-:: Expand file paths (chek for `-` or `+` for flags)
+:: Expand file paths (check for `-` or `+` for flags)
 :: Syntax for getting chars from arguments: %variable:~start_index,length%
 set "curr_arg=%~1"
 ::echo [DEBUG] curr_arg: %curr_arg%
