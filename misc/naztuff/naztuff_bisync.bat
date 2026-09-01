@@ -17,8 +17,9 @@ set "NAZ_CONFLICT_SUFFIX=remote,local"
 set "NAZ_BACKUP_PATH_REMOTE=%NAZ_REMOTE%/.rclone/backups/remote"
 set "NAZ_BACKUP_PATH_LOCAL=%NAZ_LOCAL%\.rclone\backups\local"
 set "NAZ_BACKUP_DELETE_EXPIRED=0"
-set "NAZ_BACKUP_EXPIRED_AGE=64d"
+set "NAZ_BACKUP_EXPIRED_AGE=30d"
 set "NAZ_DRY_RUN="
+set "NAZ_DEBUG=0"
 
 
 :: ==================================================
@@ -63,6 +64,9 @@ if "%~1" == "--resync" (
 ) else if "%~1" == "-n" (
   set "NAZ_DRY_RUN= %~1"
   shift
+) else if "%~1" == "--debug" (
+  set "NAZ_DEBUG=1"
+  shift
 ) else (
   echo _WARNING_: skipping invalid argument "%~1"
   shift
@@ -71,6 +75,23 @@ if "%~1" == "--resync" (
 goto loop
 :end
 
+if %NAZ_DEBUG% == 1 (
+  echo NAZ_REMOTE                %NAZ_REMOTE%
+  echo NAZ_LOCAL                 %NAZ_LOCAL%
+  echo NAZ_FILTER_FILE_PATH      %NAZ_FILTER_FILE_PATH%
+  echo NAZ_LOG_FILE_PATH         %NAZ_LOG_FILE_PATH%
+  echo NAZ_LOG_LEVEL             %NAZ_LOG_LEVEL%
+  echo NAZ_RESYNC                %NAZ_RESYNC%
+  echo NAZ_RESYNC_MODE           %NAZ_RESYNC_MODE%
+  echo NAZ_CONFLICT_LOSER        %NAZ_CONFLICT_LOSER%
+  echo NAZ_CONFLICT_RESOLVE      %NAZ_CONFLICT_RESOLVE%
+  echo NAZ_CONFLICT_SUFFIX       %NAZ_CONFLICT_SUFFIX%
+  echo NAZ_BACKUP_PATH_REMOTE    %NAZ_BACKUP_PATH_REMOTE%
+  echo NAZ_BACKUP_PATH_LOCAL     %NAZ_BACKUP_PATH_LOCAL%
+  echo NAZ_BACKUP_DELETE_EXPIRED %NAZ_BACKUP_DELETE_EXPIRED%
+  echo NAZ_BACKUP_EXPIRED_AGE    %NAZ_BACKUP_EXPIRED_AGE%
+  echo NAZ_DRY_RUN               %NAZ_DRY_RUN%
+)
 
 :: ==================================================
 :: Commands & Run
