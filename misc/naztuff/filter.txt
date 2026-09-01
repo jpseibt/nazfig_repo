@@ -1,0 +1,8 @@
+# Ignored
+- *.swp
+- *.log
+- /build/
+- /.rclone/
+
+# Add everything else
++ /**

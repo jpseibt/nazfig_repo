@@ -1,22 +1,24 @@
 @echo off
+setlocal
 
 :: ==================================================
 :: Config
 :: ==================================================
-set "REMOTE=gdrive:naztuff"
-set "LOCAL=D:\naztuff"
-set "LOG_FILE_PATH=%LOCAL%\.rclone\bisync.log"
-set "LOG_LEVEL=INFO"
-set "RESYNC=0"
-set "RESYNC_MODE=newer"
-set "CONFLICT_LOSER=pathname"
-set "CONFLICT_RESOLVE=none"
-set "CONFLICT_SUFFIX=remote,local"
-set "BACKUP_PATH_REMOTE=%REMOTE%/.rclone/backups/remote"
-set "BACKUP_PATH_LOCAL=%LOCAL%\.rclone\backups\local"
-set "BACKUP_DELETE_EXPIRED=0"
-set "BACKUP_EXPIRED_AGE=64d"
-set "DRY_RUN="
+set "NAZ_REMOTE=gdrive:naztuff"
+set "NAZ_LOCAL=D:\naztuff"
+set "NAZ_FILTER_FILE_PATH=%~dp0filter.txt"
+set "NAZ_LOG_FILE_PATH=%NAZ_LOCAL%\.rclone\bisync.log"
+set "NAZ_LOG_LEVEL=INFO"
+set "NAZ_RESYNC=0"
+set "NAZ_RESYNC_MODE=newer"
+set "NAZ_CONFLICT_LOSER=pathname"
+set "NAZ_CONFLICT_RESOLVE=none"
+set "NAZ_CONFLICT_SUFFIX=remote,local"
+set "NAZ_BACKUP_PATH_REMOTE=%NAZ_REMOTE%/.rclone/backups/remote"
+set "NAZ_BACKUP_PATH_LOCAL=%NAZ_LOCAL%\.rclone\backups\local"
+set "NAZ_BACKUP_DELETE_EXPIRED=0"
+set "NAZ_BACKUP_EXPIRED_AGE=64d"
+set "NAZ_DRY_RUN="
 
 
 :: ==================================================
@@ -26,40 +28,40 @@ set "DRY_RUN="
 if "%~1" == "" goto end
 
 if "%~1" == "--resync" (
-  set "RESYNC=1"
+  set "NAZ_RESYNC=1"
   shift
 ) else if "%~1" == "--resync-mode" (
-  set "RESYNC_MODE=%~2"
+  set "NAZ_RESYNC_MODE=%~2"
   shift
   shift
 ) else if "%~1" == "--log-level" (
-  set "LOG_LEVEL=%~2"
+  set "NAZ_LOG_LEVEL=%~2"
   shift
   shift
 ) else if "%~1" == "--conflict-loser" (
-  set "CONFLICT_LOSER=%~2"
+  set "NAZ_CONFLICT_LOSER=%~2"
   shift
   shift
 ) else if "%~1" == "--conflict-resolve" (
-  set "CONFLICT_RESOLVE=%~2"
+  set "NAZ_CONFLICT_RESOLVE=%~2"
   shift
   shift
 ) else if "%~1" == "--conflict-suffix" (
-  set "CONFLICT_SUFFIX=%~2"
+  set "NAZ_CONFLICT_SUFFIX=%~2"
   shift
   shift
 ) else if "%~1" == "--backup-delete-expired" (
-  set "BACKUP_DELETE_EXPIRED=1"
+  set "NAZ_BACKUP_DELETE_EXPIRED=1"
   shift
 ) else if "%~1" == "--backup-expired-age" (
-  set "BACKUP_EXPIRED_AGE=%~2"
+  set "NAZ_BACKUP_EXPIRED_AGE=%~2"
   shift
   shift
 ) else if "%~1" == "--dry-run" (
-  set "DRY_RUN= %~1"
+  set "NAZ_DRY_RUN= %~1"
   shift
 ) else if "%~1" == "-n" (
-  set "DRY_RUN= %~1"
+  set "NAZ_DRY_RUN= %~1"
   shift
 ) else (
   echo _WARNING_: skipping invalid argument "%~1"
@@ -73,25 +75,33 @@ goto loop
 :: ==================================================
 :: Commands & Run
 :: ==================================================
-set "BISYNC_CMD=rclone bisync %REMOTE% %LOCAL% --workdir %LOCAL%\.rclone\workdir --filters-file %LOCAL%\.rclone\filter.txt --log-file %LOG_FILE_PATH% --log-level %LOG_LEVEL% --progress%DRY_RUN%"
+echo Path1 ^(REMOTE^) "%NAZ_REMOTE%"
+echo Path2 ^(LOCAL^)  "%NAZ_LOCAL%"
 
-set "DELETE_CMD=rclone delete --rmdirs --min-age %BACKUP_EXPIRED_AGE% --log-file %LOG_FILE_PATH% --log-level %LOG_LEVEL% --progress%DRY_RUN%"
-
-if %RESYNC% == 1 (
-  %BISYNC_CMD% --resync --resync-mode %RESYNC_MODE% --create-empty-src-dirs
-) else (
-  %BISYNC_CMD% --backup-dir1 %BACKUP_PATH_REMOTE% --backup-dir2 %BACKUP_PATH_LOCAL% --conflict-loser %CONFLICT_LOSER% --conflict-resolve %CONFLICT_RESOLVE% --conflict-suffix %CONFLICT_SUFFIX%
+if not exist "%NAZ_LOCAL%" (
+  mkdir "%NAZ_LOCAL%"
+)
+if not exist "%NAZ_LOCAL%\.rclone" (
+  mkdir "%NAZ_LOCAL%\.rclone"
 )
 
-if %BACKUP_DELETE_EXPIRED% == 1 (
-  echo Cleaning expired backups: %BACKUP_EXPIRED_AGE%
-  echo Remote path: %BACKUP_PATH_REMOTE%
-  echo Local path:  %BACKUP_PATH_LOCAL%
+set "BISYNC_CMD=rclone bisync %NAZ_REMOTE% %NAZ_LOCAL% --workdir %NAZ_LOCAL%\.rclone\workdir --filters-file "%NAZ_FILTER_FILE_PATH%" --log-file %NAZ_LOG_FILE_PATH% --log-level %NAZ_LOG_LEVEL% --progress%NAZ_DRY_RUN%"
 
-  %DELETE_CMD% %BACKUP_PATH_REMOTE%
-  if exist "%BACKUP_PATH_LOCAL%" (
-    %DELETE_CMD% %BACKUP_PATH_LOCAL%
+set "DELETE_CMD=rclone delete --rmdirs --min-age %NAZ_BACKUP_EXPIRED_AGE% --log-file %NAZ_LOG_FILE_PATH% --log-level %NAZ_LOG_LEVEL% --progress%NAZ_DRY_RUN%"
+
+if %NAZ_RESYNC% == 1 (
+  %BISYNC_CMD% --resync --resync-mode %NAZ_RESYNC_MODE% --create-empty-src-dirs
+) else (
+  %BISYNC_CMD% --backup-dir1 %NAZ_BACKUP_PATH_REMOTE% --backup-dir2 %NAZ_BACKUP_PATH_LOCAL% --conflict-loser %NAZ_CONFLICT_LOSER% --conflict-resolve %NAZ_CONFLICT_RESOLVE% --conflict-suffix %NAZ_CONFLICT_SUFFIX%
+)
+
+if %NAZ_BACKUP_DELETE_EXPIRED% == 1 (
+  echo Cleaning expired backups: %NAZ_BACKUP_EXPIRED_AGE%
+
+  %DELETE_CMD% %NAZ_BACKUP_PATH_REMOTE%
+  if exist "%NAZ_BACKUP_PATH_LOCAL%" (
+    %DELETE_CMD% %NAZ_BACKUP_PATH_LOCAL%
   )
 )
 
-echo _INFO_: rclone operation log file path: %LOG_FILE_PATH%
+echo _INFO_: rclone operation log file path: %NAZ_LOG_FILE_PATH%
