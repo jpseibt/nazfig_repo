@@ -36,15 +36,18 @@ ToggleApp(win_title, run_cmd)
 ;==================================================
 ; App Toggle Hotkeys
 ;==================================================
-#Enter::ToggleApp("ahk_class Window Class ahk_exe neovide.exe", "neovide.exe")
+#Enter::ToggleApp("ahk_class Window Class ahk_exe neovide.exe", "neovide.bat")
 ^!t::ToggleApp("ahk_exe windowsterminal.exe", "wt.exe")
-#e::ToggleApp("ahk_exe FPilot.exe", "FPilot.exe")
+#e::ToggleApp("ahk_exe FPilot.exe", "FPilot.bat")
 #m::ToggleApp("ahk_exe spotify.exe", "spotify.exe")
-#b::ToggleApp("Google Chrome ahk_exe chrome.exe", "chrome.exe")
-#n::ToggleApp("naznotes.txt ahk_class Window Class ahk_exe neovide.exe", '"neovide.exe" --grid 80x30 "C:\users\jose.seibt\naznotes.txt"')
-#g::ToggleApp("Google Gemini ahk_exe chrome.exe", '"C:\Program Files\Google\Chrome\Application\chrome.exe" --app=https://gemini.google.com/app')
-#w::ToggleApp("web.whatsapp.com ahk_exe chrome.exe", '"C:\Program Files\Google\Chrome\Application\chrome.exe" --app=https://web.whatsapp.com')
-#;::ToggleApp("Monkeytype ahk_exe chrome.exe", '"C:\Program Files\Google\Chrome\Application\chrome.exe" --app=https://monkeytype.com')
+#n::ToggleApp("naznotes.txt ahk_exe gvim.exe", "naznotes.bat")
+#p::ToggleApp("Milton ahk_exe Milton.exe", "milton.bat")
+#b::ToggleApp("Google Chrome ahk_exe chrome.exe", "chrome.bat")
+#c::ToggleApp("Google Calendar ahk_exe chrome.exe", '"chrome.bat" --app=https://calendar.google.com/calendar')
+#g::ToggleApp("Google Gemini ahk_exe chrome.exe", '"chrome.bat" --app=https://gemini.google.com/app')
+;#w::ToggleApp("ahk_exe WhatsApp.Root.exe", 'chrome --app=https://web.whatsapp.com')
+#w::ToggleApp("ahk_exe WhatsApp.Root.exe", '"whatsapp:"')
+#;::ToggleApp("Monkeytype ahk_exe chrome.exe", '"chrome.bat" --app=https://monkeytype.com')
 
 
 ;==================================================

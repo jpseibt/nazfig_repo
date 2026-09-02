@@ -18,6 +18,7 @@ NAZ_BACKUP_PATH_LOCAL="$NAZ_LOCAL/.rclone/backups/local"
 NAZ_BACKUP_DELETE_EXPIRED="0"
 NAZ_BACKUP_EXPIRED_AGE="30d"
 NAZ_DRY_RUN=""
+NAZ_FORCE=""
 NAZ_DEBUG=0
 
 
@@ -62,6 +63,10 @@ while [[ "$#" -gt 0 ]]; do
       NAZ_DRY_RUN="$1"
       shift
       ;;
+    --force)
+      NAZ_FORCE="$1"
+      shift
+      ;;
     --debug)
       NAZ_DEBUG=1
       shift
@@ -89,6 +94,7 @@ if [ "$NAZ_DEBUG" -eq 1 ]; then
   echo "NAZ_BACKUP_DELETE_EXPIRED $NAZ_BACKUP_DELETE_EXPIRED"
   echo "NAZ_BACKUP_EXPIRED_AGE    $NAZ_BACKUP_EXPIRED_AGE"
   echo "NAZ_DRY_RUN               $NAZ_DRY_RUN"
+  echo "NAZ_FORCE                 $NAZ_FORCE"
 fi
 
 
@@ -125,8 +131,12 @@ DELETE_CMD=(
 )
 
 if [ -n "$NAZ_DRY_RUN" ]; then
-  BISYNC_CMD+=("$NAZ_DRY_RUN") 
-  DELETE_CMD+=("$NAZ_DRY_RUN") 
+  BISYNC_CMD+=("$NAZ_DRY_RUN")
+  DELETE_CMD+=("$NAZ_DRY_RUN")
+fi
+if [ -n "$NAZ_FORCE" ]; then
+  BISYNC_CMD+=("$NAZ_FORCE")
+  DELETE_CMD+=("$NAZ_FORCE")
 fi
 
 #------------------------------
@@ -135,7 +145,7 @@ fi
 if [ "$NAZ_RESYNC" -eq 1 ]; then
   "${BISYNC_CMD[@]}" --resync --resync-mode "$NAZ_RESYNC_MODE" --create-empty-src-dirs
 else
-  "${BISYNC_CMD[@]}" --backup-dir1 "$NAZ_BACKUP_PATH_REMOTE" --backup-dir2 "$NAZ_BACKUP_PATH_LOCAL" --conflict-loser "$NAZ_CONFLICT_LOSER" --conflict-resolve "$NAZ_CONFLICT_RESOLVE" --conflict-suffix "$NAZ_CONFLICT_SUFFIX"
+  "${BISYNC_CMD[@]}" --backup-dir1 "$NAZ_BACKUP_PATH_REMOTE" --backup-dir2 "$NAZ_BACKUP_PATH_LOCAL" --conflict-loser "$NAZ_CONFLICT_LOSER" --conflict-resolve "$NAZ_CONFLICT_RESOLVE" --conflict-suffix "$NAZ_CONFLICT_SUFFIX" --track-renames
 fi
 
 if [ "$NAZ_BACKUP_DELETE_EXPIRED" -eq 1 ]; then

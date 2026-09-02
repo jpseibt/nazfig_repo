@@ -5,6 +5,7 @@
 "============================================================
 " Common Settings & Misc
 "============================================================
+if !has('nvim') && has('gui') | set guioptions+=M | endif
 syntax enable
 set nocompatible
 set termguicolors
@@ -148,6 +149,7 @@ tnoremap <Esc> <C-\><C-n>
 "------------------------------
 " Global terminal buffer
 "
+" TODO: fix 'E444: Cannot close last window' when using split modes (like :Verm)
 let s:germinal_name = "(GERMINAL)"
 let s:germinal_bufnr = bufnr(s:germinal_name)
 
@@ -517,9 +519,9 @@ command! TdbgConfigReset call s:TdbgConfig()
 
 function! TermDebugSetMemvwr(start_addr, stop_addr, bytes_per_row=16, fmt='x', addr_style=2)
   let l:memvwr_info   = MemvwrGetInfo('all')
-  let l:bytes_per_row = a:bytes_per_row == -1 ? l:memvwr_info['bpr']        : a:bytes_per_row
-  let l:fmt           = empty(a:fmt)          ? l:memvwr_info['fmt']        : a:fmt
-  let l:addr_style    = empty(a:addr_style)   ? l:memvwr_info['addr_style'] : a:addr_style
+  let l:bytes_per_row = a:bytes_per_row == -1 ? l:memvwr_info['bytes_per_row'] : a:bytes_per_row
+  let l:fmt           = empty(a:fmt)          ? l:memvwr_info['fmt']           : a:fmt
+  let l:addr_style    = empty(a:addr_style)   ? l:memvwr_info['addr_style']    : a:addr_style
 
   " Create blob from memory dump
   let l:temp_file_mem_dump = tempname()
@@ -787,11 +789,13 @@ augroup END
 " Netrw
 "============================================================
 " NOTE: see `:help netrw-variables` -> configuring netrw
-let g:netrw_dirhistmax   = 32
-let g:netrw_home         = fnamemodify($MYVIMRC, ':h') . '/netrw'
-let g:netrw_keepdir      = 0
-let g:netrw_sizestyle    = 'H'
-let g:netrw_silent       = 0
+let s:netrw_home_t = fnamemodify($MYVIMRC, ':h') . '/netrw'
+if !isdirectory(s:netrw_home_t) | call mkdir(s:netrw_home_t, 'p') | endif
+let g:netrw_home       = s:netrw_home_t
+let g:netrw_dirhistmax = 32
+let g:netrw_keepdir    = 0
+let g:netrw_sizestyle  = 'H'
+let g:netrw_silent     = 0
 
 "------------------------------
 " Marked files list
@@ -1255,7 +1259,9 @@ if has('gui_running') || exists('g:neovide')
     "
     set winaltkeys=no
 
+    set guioptions-=k " Keep GUI window size
     set guioptions+=c " Use console dialogs for simple choices
+    set guioptions+=d " Use dark theme variant
     "set guioptions+=s " Enable fullscreen mode
     set guioptions-=m " Remove menu bar
     set guioptions-=T " Remove toolbar
@@ -1280,10 +1286,11 @@ if has('gui_running') || exists('g:neovide')
     command! -count=1 ScaleN call s:GVimFontScale(-<count>)
     command!          Scale  let &guifont = 'Cousine' . (s:is_win ? ':h12' : ' 12')
 
-    nnoremap <C-_> :ScaleN<CR>
     nnoremap <expr> <A-Enter> &guioptions =~# 's' ? ":set guioptions-=s<CR>" : ":set guioptions+=s<CR>"
   endif
 
+  nnoremap <A-+> :Scalen<CR>
+  nnoremap <A--> :ScaleN<CR>
   nnoremap <C-=> :Scalen<CR>
   nnoremap <C--> :ScaleN<CR>
   nnoremap <C-0> :Scale<CR>

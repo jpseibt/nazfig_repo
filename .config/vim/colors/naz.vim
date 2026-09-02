@@ -80,7 +80,7 @@ hi PmenuSel         guibg=#316394 guifg=#d6deeb
 hi Winbar           guibg=NONE    guifg=#ffc64b gui=bold,underline,italic cterm=bold,underline,italic
 hi WinbarNC         guibg=NONE    guifg=#ffc64b gui=NONE,underline,italic cterm=NONE,underline,italic
 
-hi NormalFloat      guibg=#19344a guifg=#ffffff
+hi NormalFloat      guibg=#19344a guifg=#d6deeb
 hi FloatBorder      guibg=#09243a guifg=#c3ccdc
 hi FloatTitle       guibg=#09243a guifg=#ffffff
 hi debugPC          guibg=#000255 guifg=NONE    gui=NONE cterm=NONE
@@ -190,4 +190,7 @@ if !has('nvim')
     \ '#222222', '#ff5874', '#90ee90', '#ffcb8b',
     \ '#51afef', '#d670d6', '#46ddff', '#eeeeee'
     \ ]
+  if has('gui')
+    hi TitleBar guibg=#000000
+  endif
 endif

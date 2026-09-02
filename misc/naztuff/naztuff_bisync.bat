@@ -19,6 +19,7 @@ set "NAZ_BACKUP_PATH_LOCAL=%NAZ_LOCAL%\.rclone\backups\local"
 set "NAZ_BACKUP_DELETE_EXPIRED=0"
 set "NAZ_BACKUP_EXPIRED_AGE=30d"
 set "NAZ_DRY_RUN="
+set "NAZ_FORCE="
 set "NAZ_DEBUG=0"
 
 
@@ -64,6 +65,9 @@ if "%~1" == "--resync" (
 ) else if "%~1" == "-n" (
   set "NAZ_DRY_RUN= %~1"
   shift
+) else if "%~1" == "--force" (
+  set "NAZ_FORCE= %~1"
+  shift
 ) else if "%~1" == "--debug" (
   set "NAZ_DEBUG=1"
   shift
@@ -91,6 +95,7 @@ if %NAZ_DEBUG% == 1 (
   echo NAZ_BACKUP_DELETE_EXPIRED %NAZ_BACKUP_DELETE_EXPIRED%
   echo NAZ_BACKUP_EXPIRED_AGE    %NAZ_BACKUP_EXPIRED_AGE%
   echo NAZ_DRY_RUN               %NAZ_DRY_RUN%
+  echo NAZ_FORCE                 %NAZ_FORCE%
 )
 
 :: ==================================================
@@ -106,14 +111,14 @@ if not exist "%NAZ_LOCAL%\.rclone" (
   mkdir "%NAZ_LOCAL%\.rclone"
 )
 
-set "BISYNC_CMD=rclone bisync %NAZ_REMOTE% %NAZ_LOCAL% --workdir %NAZ_LOCAL%\.rclone\workdir --filters-file "%NAZ_FILTER_FILE_PATH%" --log-file %NAZ_LOG_FILE_PATH% --log-level %NAZ_LOG_LEVEL% --progress%NAZ_DRY_RUN%"
+set "BISYNC_CMD=rclone bisync %NAZ_REMOTE% %NAZ_LOCAL% --workdir %NAZ_LOCAL%\.rclone\workdir --filters-file "%NAZ_FILTER_FILE_PATH%" --log-file %NAZ_LOG_FILE_PATH% --log-level %NAZ_LOG_LEVEL% --progress%NAZ_DRY_RUN%%NAZ_FORCE%"
 
 set "DELETE_CMD=rclone delete --rmdirs --min-age %NAZ_BACKUP_EXPIRED_AGE% --log-file %NAZ_LOG_FILE_PATH% --log-level %NAZ_LOG_LEVEL% --progress%NAZ_DRY_RUN%"
 
 if %NAZ_RESYNC% == 1 (
   %BISYNC_CMD% --resync --resync-mode %NAZ_RESYNC_MODE% --create-empty-src-dirs
 ) else (
-  %BISYNC_CMD% --backup-dir1 %NAZ_BACKUP_PATH_REMOTE% --backup-dir2 %NAZ_BACKUP_PATH_LOCAL% --conflict-loser %NAZ_CONFLICT_LOSER% --conflict-resolve %NAZ_CONFLICT_RESOLVE% --conflict-suffix %NAZ_CONFLICT_SUFFIX%
+  %BISYNC_CMD% --backup-dir1 %NAZ_BACKUP_PATH_REMOTE% --backup-dir2 %NAZ_BACKUP_PATH_LOCAL% --conflict-loser %NAZ_CONFLICT_LOSER% --conflict-resolve %NAZ_CONFLICT_RESOLVE% --conflict-suffix %NAZ_CONFLICT_SUFFIX% --track-renames
 )
 
 if %NAZ_BACKUP_DELETE_EXPIRED% == 1 (
