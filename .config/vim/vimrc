@@ -144,8 +144,6 @@ endif
 "============================================================
 " Terminal
 "============================================================
-tnoremap <Esc> <C-\><C-n>
-
 "------------------------------
 " Global terminal buffer
 "
@@ -253,6 +251,9 @@ function! s:GlobalTerminal(mode, count)
   echomsg '[s:GlobalTerminal] Using ' . s:germinal_name
 endfunction
 
+"------------------------------
+" Commands and maps
+"
 command! -bar   Germ call s:GlobalTerminal(0, 0)
 command! -count Serm call s:GlobalTerminal(1, <count>)
 command! -count Verm call s:GlobalTerminal(2, <count>)
@@ -276,12 +277,24 @@ command! -bar   Herm     call s:GerminalHere(3, 0)
 
 command! -count=12 Quake     call s:GlobalTerminal(4, <count>)
 command! -count=12 Quakehere call s:GerminalHere(4, <count>)
-nnoremap <C-`> :Quake<CR>
-tnoremap <C-`> <C-\><C-n>:hide<CR>
 
-" Fallback for Vim/gVim
-nnoremap <F12> :Quake<CR>
-tnoremap <F12> <C-\><C-n>:hide<CR>
+augroup Terminal
+  autocmd!
+  tnoremap <Esc> <C-\><C-n>
+  nnoremap <C-`> :Quake<CR>
+  tnoremap <C-`> <C-\><C-n>:hide<CR>
+
+  " Fallback for Vim/gVim
+  nnoremap <F12> :Quake<CR>
+  tnoremap <F12> <C-\><C-n>:hide<CR>
+
+  if !has('nvim')
+    " NOTE: see `:help options-in-terminal`
+    autocmd TerminalWinOpen * setlocal filetype=terminal
+    autocmd FileType terminal nnoremap <buffer> p   i<C-W>""
+    autocmd FileType terminal nnoremap <buffer> "+p i<C-W>"+
+  endif
+augroup END
 
 
 "============================================================
@@ -1073,18 +1086,18 @@ command! -bar Markclear  call s:NazrwClearGlobalMarkList()
 augroup NazNetrw
   autocmd!
   " [Y]-> Copy file/dir path under the cursor on Netrw
-  autocmd Filetype netrw nnoremap <buffer> Y  :let @+ = ShellEscape(b:netrw_curdir . '/' . expand('<cfile>')) <bar> echo '==> [' . @+ . '] copied to the clipboard <=='<CR>
-  autocmd Filetype netrw nnoremap <buffer> ~  :e ~/<CR>
-  autocmd Filetype netrw nnoremap <buffer> mp :Nazrwcp<CR>
-  autocmd Filetype netrw nnoremap <buffer> mv :Nazrwmv<CR>
-  autocmd Filetype netrw nnoremap <buffer> mz :Nazrwzip<CR>
-  autocmd Filetype netrw nnoremap <buffer> mZ :Nazrwunzip<CR>
-  autocmd Filetype netrw nnoremap <buffer> mu :Markclear <bar> Smarklast<CR>
-  autocmd Filetype netrw nnoremap <buffer> ml :Smarklist<CR>
-  autocmd Filetype netrw nnoremap <buffer> mL :Smarklast<CR>
-  autocmd Filetype netrw nmap     <buffer> ;  mf:Smarklast<CR>j
-  autocmd Filetype netrw nmap     <buffer> ,  mf:Smarklast<CR>k
-  autocmd Filetype netrw set      relativenumber
+  autocmd FileType netrw nnoremap <buffer> Y  :let @+ = ShellEscape(b:netrw_curdir . '/' . expand('<cfile>')) <bar> echo '==> [' . @+ . '] copied to the clipboard <=='<CR>
+  autocmd FileType netrw nnoremap <buffer> ~  :e ~/<CR>
+  autocmd FileType netrw nnoremap <buffer> mp :Nazrwcp<CR>
+  autocmd FileType netrw nnoremap <buffer> mv :Nazrwmv<CR>
+  autocmd FileType netrw nnoremap <buffer> mz :Nazrwzip<CR>
+  autocmd FileType netrw nnoremap <buffer> mZ :Nazrwunzip<CR>
+  autocmd FileType netrw nnoremap <buffer> mu :Markclear <bar> Smarklast<CR>
+  autocmd FileType netrw nnoremap <buffer> ml :Smarklist<CR>
+  autocmd FileType netrw nnoremap <buffer> mL :Smarklast<CR>
+  autocmd FileType netrw nmap     <buffer> ;  mf:Smarklast<CR>j
+  autocmd FileType netrw nmap     <buffer> ,  mf:Smarklast<CR>k
+  autocmd FileType netrw set      relativenumber
 augroup END
 
 
@@ -1222,6 +1235,9 @@ set statusline=%!NazStatusline()
 autocmd InsertEnter * set cursorline
 autocmd InsertLeave * set nocursorline
 
+"------------------------------
+" Cursor
+"
 if has('gui_running') || exists('g:neovide')
   if has('nvim')
     set guicursor=n-v-c:block-Cursor,i-ci-ve-t:ver25-iCursor,r-cr:hor20-iCursor,o:hor50-oCursor
@@ -1234,8 +1250,18 @@ else
   let &t_EI = "\e[1 q" " Blinking block for Normal mode
 endif
 
+"------------------------------
+" Gui & Font
+"
 if has('gui_running') || exists('g:neovide')
-  let &guifont = 'Cousine' . ((s:is_win || has('nvim')) ? ':h12' : ' 12')
+  if !exists('s:gui_font')
+    let s:gui_font = 'Liberation Mono' . ((s:is_win || has('nvim')) ? ':h12' : ' 12')
+    echomsg 'Default &guifont set to: ' . s:gui_font
+  endif
+  let &guifont = s:gui_font
+
+  command! -nargs=1 GuiFont let s:gui_font = <q-args> . ((s:is_win || has('nvim')) ? ':h12' : ' 12')
+                         \| echo '==> source "' . $MYVIMRC . '" to apply `&guifont=' . s:gui_font . '` <=='
 
   if has('nvim')
     "------------------------------
@@ -1273,7 +1299,7 @@ if has('gui_running') || exists('g:neovide')
       " Grab the trailing digits and add a:amount
       let l:font_size = matchstr(&guifont, '\d\+$')
       if l:font_size == ''
-        echomsg '[GVimFontScale] Something went wrong. guifont should be "Font Name N" (N is the size).'
+        echomsg '[s:GVimFontScale] Something went wrong. guifont should be "Font Name N" (N is the size).'
         echo &guifont
         return
       endif
@@ -1284,7 +1310,7 @@ if has('gui_running') || exists('g:neovide')
 
     command! -count=1 Scalen call s:GVimFontScale(<count>)
     command! -count=1 ScaleN call s:GVimFontScale(-<count>)
-    command!          Scale  let &guifont = 'Cousine' . (s:is_win ? ':h12' : ' 12')
+    command!          Scale  let &guifont = s:gui_font . (s:is_win ? ':h12' : ' 12')
 
     nnoremap <expr> <A-Enter> &guioptions =~# 's' ? ":set guioptions-=s<CR>" : ":set guioptions+=s<CR>"
   endif
