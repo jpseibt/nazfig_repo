@@ -136,7 +136,6 @@ if [ -n "$NAZ_DRY_RUN" ]; then
 fi
 if [ -n "$NAZ_FORCE" ]; then
   BISYNC_CMD+=("$NAZ_FORCE")
-  DELETE_CMD+=("$NAZ_FORCE")
 fi
 
 #------------------------------
