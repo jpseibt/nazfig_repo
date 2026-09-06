@@ -376,7 +376,7 @@ bindsym $mod+e exec --no-startup-id ~/nazcripts/app-toggle.sh thunar
 bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
 bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
-bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh pinta
+bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh milton
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
@@ -416,7 +416,7 @@ workspace $ws1 output HDMI-A-0
 #workspace $ws4 output HDMI-0
 workspace $ws5 output eDP
 workspace $ws6 output eDP
-workspace $ws7 output HDMI-A-0
+workspace $ws7 output eDP
 workspace $ws8 output eDP
 workspace $ws9 output eDP
 workspace $ws10 output HDMI-A-0
@@ -429,6 +429,7 @@ assign [title="^The RAD Debugger"] $ws4
 assign [window_role="btop"] $ws5
 assign [instance="web.whatsapp.com"] $ws6
 assign [instance="Mail"] $ws6
+assign [instance="Milton"] $ws7
 assign [instance="pinta"] $ws7
 assign [instance="gemini.google.com__app"] $ws8
 assign [instance="monkeytype"] $ws10
@@ -444,6 +445,7 @@ assign [class="Vial"] $ws10
 
 # automatic set focus new window if it opens on another workspace than the current:
 for_window [class=Xfce4-terminal] focus
+for_window [instance="Milton"] focus
 for_window [instance="pinta"] focus
 for_window [instance="web.whatsapp.com"] focus
 for_window [instance="Mail"] focus
@@ -453,6 +455,7 @@ for_window [class=(?i)firefox] focus
 for_window [class=Thunar] focus
 for_window [class=Vial] focus
 for_window [class=Spotify] focus
+
 
 ##############
 # compositor #

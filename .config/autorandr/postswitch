@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Re-apply the keyboard layout and toggle option and tablet output after a monitor switch
+setxkbmap -layout 'us,br' -option 'grp:win_space_toggle'
+xsetwacom --set "UGTABLET 6 inch PenTablet Pen stylus" MapToOutput eDP
+
+notify-send "autorandr" "ran postswitch"

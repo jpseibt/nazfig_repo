@@ -24,6 +24,11 @@ case "$APP" in
     CRITERIA_VALUE="gemini.google.com__app"
     LAUNCH_CMD="chromium --app=https://gemini.google.com/app"
     ;;
+  milton)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="Milton"
+    LAUNCH_CMD="milton"
+    ;;
   monkeytype)
     CRITERIA_TYPE="instance"
     CRITERIA_VALUE="monkeytype.com"
