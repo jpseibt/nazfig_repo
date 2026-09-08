@@ -377,6 +377,7 @@ bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
 bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh milton
+bindsym $mod+Shift+d exec --no-startup-id ~/nazcripts/app-toggle.sh rnote
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
@@ -384,7 +385,7 @@ bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
 bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill
 bindsym $mod+p exec --no-startup-id clipmenu
-bindsym $mod+n exec --no-startup-id neovide ~/naznotes.txt --x11-wm-class neovide_floating
+bindsym $mod+n exec --no-startup-id neovide /mnt/Win/D/naztuff/naznotes.txt --x11-wm-class neovide_floating
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec --no-startup-id ~/.config/i3/scripts/power-profiles
 
@@ -409,14 +410,10 @@ set $ws10 "10:⁰"
 # use workspaces on different displays:
 # where you have to replace VGA-0/HDMI-0 with the names for your displays
 # you can get from xrandr command
-#workspace $ws1 output VGA-0
 workspace $ws1 output HDMI-A-0
-#workspace $ws2 output VGA-0
-#workspace $ws3 output HDMI-0
-#workspace $ws4 output HDMI-0
 workspace $ws5 output eDP
 workspace $ws6 output eDP
-workspace $ws7 output eDP
+workspace $ws7 output HDMI-A-0
 workspace $ws8 output eDP
 workspace $ws9 output eDP
 workspace $ws10 output HDMI-A-0
@@ -430,6 +427,7 @@ assign [window_role="btop"] $ws5
 assign [instance="web.whatsapp.com"] $ws6
 assign [instance="Mail"] $ws6
 assign [instance="Milton"] $ws7
+assign [instance="rnote"] $ws7
 assign [instance="pinta"] $ws7
 assign [instance="gemini.google.com__app"] $ws8
 assign [instance="monkeytype"] $ws10

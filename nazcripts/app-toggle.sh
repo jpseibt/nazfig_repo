@@ -44,6 +44,11 @@ case "$APP" in
     CRITERIA_VALUE="pinta"
     LAUNCH_CMD="pinta"
     ;;
+  rnote)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="rnote"
+    LAUNCH_CMD="rnote"
+    ;;
   spotify)
     CRITERIA_TYPE="instance"
     CRITERIA_VALUE="spotify"

@@ -1,7 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Re-apply the keyboard layout and toggle option and tablet output after a monitor switch
+# Re-apply the keyboard layout and toggle option 
 setxkbmap -layout 'us,br' -option 'grp:win_space_toggle'
-xsetwacom --set "UGTABLET 6 inch PenTablet Pen stylus" MapToOutput eDP
+
+# Map tablet output to target monitor
+TARGET_MONITOR="eDP"
+if xrandr --listmonitors | grep -q "HDMI-A-0"; then
+  TARGET_MONITOR="HDMI-A-0"
+fi
+
+STYLUS_DEV="UGTABLET 6 inch PenTablet Pen stylus"
+ERASER_DEV="UGTABLET 6 inch PenTablet Pen eraser"
+
+if xsetwacom --list devices | grep -q "$STYLUS_DEV"; then
+  xsetwacom --set "$STYLUS_DEV" MapToOutput $TARGET_MONITOR
+fi
+if xsetwacom --list devices | grep -q "$ERASER_DEV"; then
+  xsetwacom --set "$ERASER_DEV" MapToOutput $TARGET_MONITOR
+fi
 
 notify-send "autorandr" "ran postswitch"
