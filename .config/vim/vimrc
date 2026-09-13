@@ -1256,7 +1256,7 @@ endif
 if has('gui_running') || exists('g:neovide')
   if !exists('s:gui_font')
     let s:gui_font = 'Liberation Mono' . ((s:is_win || has('nvim')) ? ':h12' : ' 12')
-    echomsg 'Default &guifont set to: ' . s:gui_font
+    silent! echomsg 'Default &guifont set to: ' . s:gui_font
   endif
   let &guifont = s:gui_font
 

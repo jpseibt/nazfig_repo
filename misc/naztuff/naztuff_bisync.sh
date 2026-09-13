@@ -20,6 +20,7 @@ NAZ_BACKUP_EXPIRED_AGE="30d"
 NAZ_DRY_RUN=""
 NAZ_FORCE=""
 NAZ_DEBUG=0
+NAZ_TREE=0
 
 
 #==================================================
@@ -69,6 +70,10 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --debug)
       NAZ_DEBUG=1
+      shift
+      ;;
+    --tree)
+      NAZ_TREE=1
       shift
       ;;
     *)
@@ -157,3 +162,7 @@ if [ "$NAZ_BACKUP_DELETE_EXPIRED" -eq 1 ]; then
 fi
 
 echo _INFO_: rclone operation log file path: "$NAZ_LOG_FILE_PATH"
+
+if [ "$NAZ_TREE" -eq 1 ]; then
+  tree -C $NAZ_LOCAL
+fi

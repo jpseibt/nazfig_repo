@@ -21,6 +21,7 @@ set "NAZ_BACKUP_EXPIRED_AGE=30d"
 set "NAZ_DRY_RUN="
 set "NAZ_FORCE="
 set "NAZ_DEBUG=0"
+set "NAZ_TREE=0"
 
 
 :: ==================================================
@@ -70,6 +71,9 @@ if "%~1" == "--resync" (
   shift
 ) else if "%~1" == "--debug" (
   set "NAZ_DEBUG=1"
+  shift
+) else if "%~1" == "--tree" (
+  set "NAZ_TREE=1"
   shift
 ) else (
   echo _WARNING_: skipping invalid argument "%~1"
@@ -131,3 +135,7 @@ if %NAZ_BACKUP_DELETE_EXPIRED% == 1 (
 )
 
 echo _INFO_: rclone operation log file path: %NAZ_LOG_FILE_PATH%
+
+if %NAZ_TREE% == 1 (
+  tree /F %NAZ_LOCAL%
+)
