@@ -868,6 +868,8 @@ endfunction
 " NOTE (OS file system behavior):
 " - Windows: copying/moving a folder into an existing folder will cause a MERGE
 " - Linux:   copying/moving a folder into an existing folder will cause a NEST (`dest/src_tail`)
+" TODO: look into `:help job`. Can be used for doing asynchronous copying/archiving operations
+"       without blocking Vim when dealing with big files.
 function! s:GetCopyMoveCmd(is_move, is_dir)
   if a:is_move
     if s:is_win
@@ -1220,7 +1222,7 @@ function! NazStatusline()
   elseif winwidth > 62
     let l:statusline_str .= ' %=%l:%c ↓%p%%'
   else
-    let l:statusline_str .= ' %=↓%p%%'
+    let l:statusline_str .= ' %=%l:%c'
   endif
 
   return l:statusline_str
