@@ -59,6 +59,28 @@ ToggleApp(win_title, run_cmd)
 #f::WinMaximize("A")
 #^f::WinSetStyle("^0xC00000", "A") ; Toggles the WS_CAPTION style
 
+;==================================================
+; OpenTabletDriver
+;==================================================
+otd_tablet_name := "XP-Pen Deco Fun S (CT640)"
+otd_display_idx := 0
+
+OTDMapToNextDisplay()
+{
+  global otd_tablet_name, otd_display_idx
+
+  otd_display_idx := otd_display_idx + 1
+
+  if otd_display_idx > 2
+  {
+    otd_display_idx := 0
+  }
+
+  Run('"OpenTabletDriver.bat" maptodisplayindex "' otd_tablet_name '" ' otd_display_idx)
+}
+
+#!d::OTDMapToNextDisplay()
+
 
 ;==================================================
 ; Vim-like Navigation Keys
