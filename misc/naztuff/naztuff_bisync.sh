@@ -100,6 +100,7 @@ if [ "$NAZ_DEBUG" -eq 1 ]; then
   echo "NAZ_BACKUP_EXPIRED_AGE    $NAZ_BACKUP_EXPIRED_AGE"
   echo "NAZ_DRY_RUN               $NAZ_DRY_RUN"
   echo "NAZ_FORCE                 $NAZ_FORCE"
+  echo "NAZ_TREE                  $NAZ_TREE"
 fi
 
 

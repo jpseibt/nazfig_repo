@@ -378,6 +378,7 @@ bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh milton
 bindsym $mod+Shift+d exec --no-startup-id ~/nazcripts/app-toggle.sh rnote
+bindsym $mod+Shift+o exec --no-startup-id ~/nazcripts/dtablet-map-to-output.sh next
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
@@ -514,9 +515,11 @@ exec --no-startup-id autorandr --change
 # screen temperature script (runs on every i3 reset)
 exec_always --no-startup-id ~/nazcripts/screen-temperature.sh
 
-# configure multiple keyboard layouts and hotkey to switch (Alt+CAPSLOCK in this example)
-#exec --no-startup-id setxkbmap -layout 'us,br' -option 'grp:win_space_toggle'
+# configure multiple keyboard layouts and hotkey to switch
 bindsym $mod+space exec --no-startup-id ~/nazcripts/swap-keyboard-layout.sh
+
+# setup drawing tablets
+exec --no-startup-id sleep 4 && ~/nazcripts/dtablet-setup.sh
 
 # start conky:
 #exec_always --no-startup-id conky
@@ -526,8 +529,6 @@ bindsym $mod+space exec --no-startup-id ~/nazcripts/swap-keyboard-layout.sh
 exec --no-startup-id ~/.screenlayout/monitor.sh
 
 # set wallpaper
-# exec --no-startup-id sleep 2 && nitrogen --restore
-##exec --no-startup-id sleep 1 && feh --bg-fill /usr/share/endeavouros/backgrounds/endeavouros-wallpaper.png
 exec --no-startup-id sleep 1 && feh ~/Pictures/wallpapers -z --bg-fill 
 
 # set powersavings for display:
@@ -561,9 +562,8 @@ exec --no-startup-id /usr/bin/dunst
 #exec_always --no-startup-id autotiling
 
 # Autostart apps as you like
-exec --no-startup-id sleep 2 && ~/.config/vim/v/v --term
-exec --no-startup-id sleep 7 && chromium https://git-scm.com/docs/gittutorial#_managing_branches
-exec --no-startup-id clipmenud
+exec --no-startup-id sleep 2 && ~/.config/vim/v/v.sh --term
+exec --no-startup-id sleep 2 clipmenud
 
 ###############
 # system tray #
