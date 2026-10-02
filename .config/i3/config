@@ -312,7 +312,7 @@ bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
 # split in horizontal orientation (Vim's vertical)
-bindsym $mod+v split h
+bindsym $mod+Shift+v split h
 
 # split in vertical orientation (Vim's horizontal)
 bindsym $mod+s split v
@@ -378,14 +378,14 @@ bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh milton
 bindsym $mod+Shift+d exec --no-startup-id ~/nazcripts/app-toggle.sh rnote
-bindsym $mod+Shift+o exec --no-startup-id ~/nazcripts/dtablet-map-to-output.sh next
+bindsym $mod+Shift+o exec --no-startup-id ~/nazcripts/dtablet-setup.sh --map-to-output next
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
 bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
 bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill
-bindsym $mod+p exec --no-startup-id clipmenu
+bindsym $mod+v exec --no-startup-id clipmenu
 bindsym $mod+n exec --no-startup-id neovide /mnt/Win/D/naztuff/naznotes.txt --x11-wm-class neovide_floating
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec --no-startup-id ~/.config/i3/scripts/power-profiles
@@ -519,7 +519,7 @@ exec_always --no-startup-id ~/nazcripts/screen-temperature.sh
 bindsym $mod+space exec --no-startup-id ~/nazcripts/swap-keyboard-layout.sh
 
 # setup drawing tablets
-exec --no-startup-id sleep 4 && ~/nazcripts/dtablet-setup.sh
+exec --no-startup-id sleep 4 && ~/nazcripts/dtablet-setup.sh --pen-buttons
 
 # start conky:
 #exec_always --no-startup-id conky
