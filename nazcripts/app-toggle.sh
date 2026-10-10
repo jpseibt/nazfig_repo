@@ -2,17 +2,23 @@
 
 APP=$1
 
+# NOTE: `i3-msg -t get_tree` to search for a pattern
 # Pattern matches the i3 criteria type and value
 case "$APP" in
   ""|-h|--help)
     echo "Usage: app-toggle.sh <application_nickname>"
-    printf "nicknames: \n\tbtop \n\tchromium \n\tgemini \n\tmonkeytype \n\tneovide \n\tpinta \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
+    printf "nicknames: \n\tbtop \n\tcalendar \n\tchromium \n\tgemini \n\tmilton \n\tmonkeytype \n\tneovide \n\tpinta \n\tqualculate \n\trnote \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
     exit 0
     ;;
   btop)
     CRITERIA_TYPE="window_role"
     CRITERIA_VALUE="btop"
     LAUNCH_CMD="$TERMINAL --role=btop --disable-server -T btop -x btop"
+    ;;
+  calendar)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="calendar.google.com__calendar"
+    LAUNCH_CMD="chromium --app=https://calendar.google.com/calendar"
     ;;
   chromium)
     CRITERIA_TYPE="instance"
@@ -43,6 +49,11 @@ case "$APP" in
     CRITERIA_TYPE="instance"
     CRITERIA_VALUE="pinta"
     LAUNCH_CMD="pinta"
+    ;;
+  qalculate)
+    CRITERIA_TYPE="instance"
+    CRITERIA_VALUE="qalculate-gtk"
+    LAUNCH_CMD="qalculate-gtk"
     ;;
   rnote)
     CRITERIA_TYPE="instance"

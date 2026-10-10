@@ -372,6 +372,7 @@ bindsym $mod+o exec --no-startup-id ~/.config/i3/scripts/audio-device-switch
 bindsym Ctrl+Shift+Escape exec --no-startup-id ~/nazcripts/app-toggle.sh btop
 bindsym $mod+Return exec --no-startup-id ~/nazcripts/app-toggle.sh neovide
 bindsym $mod+b exec --no-startup-id ~/nazcripts/app-toggle.sh chromium
+bindsym $mod+c exec --no-startup-id ~/nazcripts/app-toggle.sh calendar
 bindsym $mod+e exec --no-startup-id ~/nazcripts/app-toggle.sh thunar
 bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
 bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
@@ -381,6 +382,7 @@ bindsym $mod+Shift+d exec --no-startup-id ~/nazcripts/app-toggle.sh rnote
 bindsym $mod+Shift+o exec --no-startup-id ~/nazcripts/dtablet-setup.sh --map-to-output next
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
 bindsym $mod+semicolon exec --no-startup-id ~/nazcripts/app-toggle.sh monkeytype
+bindsym XF86Calculator exec --no-startup-id ~/nazcripts/app-toggle.sh qalculate
 bindsym Print exec --no-startup-id ~/nazcripts/screenshot.sh
 bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
@@ -587,6 +589,7 @@ exec --no-startup-id sleep 2 clipmenud
 # set floating (nontiling) for apps needing it
 for_window [class="Yad" instance="yad"] floating enable
 for_window [class="Galculator" instance="galculator"] floating enable
+for_window [class="Qalculate-gtk" instance="qalculate-gtk"] floating enable
 for_window [class="Blueberry.py" instance="blueberry.py"] floating enable
 
 for_window [class="neovide_floating"] floating enable, move container to workspace current, resize set 1200 700, move position center, focus
