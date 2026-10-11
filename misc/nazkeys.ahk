@@ -49,6 +49,7 @@ ToggleApp(win_title, run_cmd)
 #w::ToggleApp("web.whatsapp.com ahk_exe chrome.exe", '"chrome.bat" --app=https://web.whatsapp.com')
 ;#w::ToggleApp("ahk_exe WhatsApp.Root.exe", '"whatsapp:"')
 #;::ToggleApp("Monkeytype ahk_exe chrome.exe", '"chrome.bat" --app=https://monkeytype.com')
+sc121::ToggleApp("Qalculate! ahk_exe qalculate.exe", '"qalculate.bat"')
 
 
 ;==================================================
@@ -58,6 +59,8 @@ ToggleApp(win_title, run_cmd)
 #-::WinMinimize("A")
 #f::WinMaximize("A")
 #^f::WinSetStyle("^0xC00000", "A") ; Toggles the WS_CAPTION style
+#^t::WinSetAlwaysOnTop(-1, "A")
+
 
 ;==================================================
 ; OpenTabletDriver
