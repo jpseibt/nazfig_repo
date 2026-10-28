@@ -1,6 +1,7 @@
 " => "Handmade" Development Environment <=
 " Zero dependencies vimrc: naz
 " Built-in packages used:  netrw, termdebug
+" Optional packages used:  Memvwr
 
 "============================================================
 " Common Settings & Misc
@@ -669,13 +670,6 @@ command! -range=0 Tdbgwatchthis execute 'Evaluate ' . s:GetVisualOrCursorArea(<r
 command! -nargs=+ Tdbgmem32     call TermDebugSendCommand('x/32xb ' . <q-args>)
 command! -nargs=+ Tdbgmem64     call TermDebugSendCommand('x/64xb ' . <q-args>)
 
-" MemvwrTdbg
-if exists(':Memvwr')
-  command! Tdbgmem       MemvwrTdbg
-  command! Tdbgmemthis   MemvwrTdbgThis
-  command! Tdbgmemaround MemvwrTdbgAround
-endif
-
 function! s:BuildAndDebugDefaultMaps()
   nnoremap <F5>    :Build<CR>
   "raddbg:
@@ -711,7 +705,15 @@ function! s:TdbgSetup()
   tnoremap <F5>    <C-\><C-n>:Tdbgcmd continue<CR>i
   nnoremap <A-w>   :Tdbgwatchthis<CR>
   vnoremap <A-w>   :Tdbgwatchthis<CR>
-  if exists(':MemvwrTdbg')
+  " Memvwr termdebug integration - preffer `Comm` variation (GDB/MI)
+  if exists(':MemvwrTdbgComm')
+    nnoremap <A-g> :MemvwrTdbgCommThis<CR>
+    vnoremap <A-g> :MemvwrTdbgCommThis<CR>
+    nnoremap <A-G> :MemvwrTdbgCommAround<CR>
+    vnoremap <A-G> :MemvwrTdbgCommAround<CR>
+    nnoremap <A-r> :MemvwrTdbgCommRefresh<CR>
+    vnoremap <A-r> :MemvwrTdbgCommRefresh<CR>
+  elseif exists(':MemvwrTdbg')
     nnoremap <A-g> :MemvwrTdbgThis<CR>
     vnoremap <A-g> :MemvwrTdbgThis<CR>
     nnoremap <A-G> :MemvwrTdbgAround<CR>
@@ -729,8 +731,10 @@ function! s:TdbgSetup()
   execute 'resize 24'
   execute 'vert resize 108'
   execute 'Gdb'
-  execute 'Memvwr'
-  execute 'Gdb'
+  if exists(':Memvwr')
+    execute 'Memvwr'
+    execute 'Gdb'
+  endif
 endfunction
 
 function! s:TdbgTearDown()
