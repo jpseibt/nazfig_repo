@@ -770,10 +770,11 @@ function! s:TdbgTearDown()
   silent! execute 'Gdb'
 endfunction
 
-augroup Termdebug
+augroup TermdebugAndMemvwr
   autocmd!
-  autocmd User TermdebugStartPost call s:TdbgSetup()
-  autocmd User TermdebugStopPre   call s:TdbgTearDown() | call s:BuildAndDebugDefaultMaps()
+  " MemvwrTdbgSetup and MemvwrTdbgTearDown happen after TermdebugStartPost and TermdebugStopPost
+  autocmd User MemvwrTdbgSetup    call s:TdbgSetup()
+  autocmd User MemvwrTdbgTearDown call s:TdbgTearDown() | call s:BuildAndDebugDefaultMaps()
 augroup END
 
 
