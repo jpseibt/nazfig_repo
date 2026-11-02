@@ -378,6 +378,7 @@ bindsym $mod+m exec --no-startup-id ~/nazcripts/app-toggle.sh spotify
 bindsym $mod+w exec --no-startup-id ~/nazcripts/app-toggle.sh whatsapp
 bindsym $mod+g exec --no-startup-id ~/nazcripts/app-toggle.sh gemini
 bindsym $mod+d exec --no-startup-id ~/nazcripts/app-toggle.sh milton
+bindsym $mod+n exec --no-startup-id ~/nazcripts/app-toggle.sh naznotes
 bindsym $mod+Shift+d exec --no-startup-id ~/nazcripts/app-toggle.sh rnote
 bindsym $mod+Shift+o exec --no-startup-id ~/nazcripts/dtablet-setup.sh --map-to-output next
 bindsym $mod+slash exec --no-startup-id ~/nazcripts/app-toggle.sh vial
@@ -388,7 +389,6 @@ bindsym Ctrl+Print exec --no-startup-id ~/nazcripts/screenshot.sh -s
 #bindsym $mod+Home exec --no-startup-id ~/nazcripts/wallpaper-rd.sh ~/Pictures/wallpapers && notify-send "wallpaper-rd executed"
 bindsym $mod+Home exec --no-startup-id feh ~/Pictures/wallpapers -z --bg-fill
 bindsym $mod+v exec --no-startup-id clipmenu
-bindsym $mod+n exec --no-startup-id neovide /mnt/Win/D/naztuff/naznotes.txt --x11-wm-class neovide_floating
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec --no-startup-id ~/.config/i3/scripts/power-profiles
 

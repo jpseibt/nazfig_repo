@@ -7,7 +7,7 @@ APP=$1
 case "$APP" in
   ""|-h|--help)
     echo "Usage: app-toggle.sh <application_nickname>"
-    printf "nicknames: \n\tbtop \n\tcalendar \n\tchromium \n\tgemini \n\tmilton \n\tmonkeytype \n\tneovide \n\tpinta \n\tqualculate \n\trnote \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
+    printf "nicknames: \n\tbtop \n\tcalendar \n\tchromium \n\tgemini \n\tmilton \n\tmonkeytype \n\tnaznotes \n\tneovide \n\tpinta \n\tqualculate \n\trnote \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
     exit 0
     ;;
   btop)
@@ -39,6 +39,11 @@ case "$APP" in
     CRITERIA_TYPE="instance"
     CRITERIA_VALUE="monkeytype.com"
     LAUNCH_CMD="chromium --app=https://monkeytype.com"
+    ;;
+  naznotes)
+    CRITERIA_TYPE="title"
+    CRITERIA_VALUE="/mnt/Win/D/naztuff/naznotes.txt"
+    LAUNCH_CMD="neovide /mnt/Win/D/naztuff/naznotes.txt --x11-wm-class neovide_floating"
     ;;
   neovide)
     CRITERIA_TYPE="instance"
