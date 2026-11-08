@@ -6,6 +6,6 @@ if xrandr --listmonitors | grep -q "HDMI-A-0"; then
   TARGET_MONITOR="HDMI-A-0"
 fi
 
-~/nazcripts/dtablet-map-to-output.sh $TARGET_MONITOR
+~/nazcripts/dtablet-setup.sh --map-to-output $TARGET_MONITOR
 
 notify-send "autorandr" "ran ~/.config/autorandr/postswitch"
