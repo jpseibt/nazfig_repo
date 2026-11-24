@@ -126,6 +126,67 @@ function! s:GetFileInfoFormatStr(file_path)
   return l:result
 endfunction
 
+"------------------------------
+" Naz Sudow
+"
+let s:sudow_winid = 0
+let s:sudow_bufnr = 0
+let s:sudow_job_bufnr = 0
+let s:sudow_temp_file = ''
+
+"TODO: implement windows solution
+function! s:NazSudoWrite()
+  let l:fname = expand('%:p')
+
+  if s:is_win || &buftype != '' || empty(l:fname) || s:sudow_bufnr != 0
+    return
+  endif
+
+  let s:sudow_winid = win_getid()
+  let s:sudow_bufnr = bufnr('%')
+  let s:sudow_temp_file = tempname()
+  execute 'write ' . fnameescape(s:sudow_temp_file)
+
+  let l:cmd = 'echo "==> Naz Sudow: ' . l:fname . ' <=="; sudo tee ' . ShellEscape(l:fname) . ' < ' . ShellEscape(s:sudow_temp_file) . ' > /dev/null'
+  execute '2new'
+
+  if has('nvim')
+    call jobstart(['sh', '-c', l:cmd], {'term': v:true, 'on_exit': function('s:NazSudoWriteEnd')})
+    let s:sudow_job_bufnr = bufnr('%')
+    execute 'startinsert'
+  else
+    let s:sudow_job_bufnr = term_start(['sh', '-c', l:cmd], {'curwin': v:true, 'exit_cb': function('s:NazSudoWriteEnd')})
+  endif
+endfunction
+
+" See `:help on_exit` for the arguments passed to callback function
+function! s:NazSudoWriteEnd(job_id, exit_code, ...)
+  if a:exit_code == 0
+    call delete(s:sudow_temp_file)
+    if win_gotoid(s:sudow_winid) && bufnr('%') == s:sudow_bufnr
+      execute 'edit!'
+    endif
+    echohl OkMsg | echo '==> Write Successful <==' | echohl None
+  else
+    let l:panswer = input('Writing file failed (temp file: ' . s:sudow_temp_file . ").\nDelete temp file? [y,N]: ")
+    if l:panswer ==? 'y' || l:panswer ==? 'yes'
+      call delete(s:sudow_temp_file)
+    else
+      let l:panswer = input('Open temp file? [y,N]: ')
+      if l:panswer ==? 'y' || l:panswer ==? 'yes'
+        execute 'split ' . fnameescape(s:sudow_temp_file)
+      endif
+    endif
+  endif
+
+  execute 'bd! ' . s:sudow_job_bufnr
+  let s:sudow_winid = 0
+  let s:sudow_bufnr = 0
+  let s:sudow_job_bufnr = 0
+  let s:sudow_temp_file = ''
+endfunction
+
+command! Sudow :call s:NazSudoWrite()
 command! Cpath :let @+ = ShellEscape((&filetype == 'netrw') ? b:netrw_curdir : expand('%:p')) | echo '==> [' . @+ . '] copied to the clipboard <=='
 
 let mapleader = "\<Backspace>"
