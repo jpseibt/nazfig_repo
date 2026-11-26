@@ -7,7 +7,7 @@ APP=$1
 case "$APP" in
   ""|-h|--help)
     echo "Usage: app-toggle.sh <application_nickname>"
-    printf "nicknames: \n\tbtop \n\tcalendar \n\tchromium \n\tgemini \n\tmilton \n\tmonkeytype \n\tnaznotes \n\tneovide \n\tpinta \n\tqualculate \n\trnote \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
+    printf "nicknames: \n\tbtop \n\tcalendar \n\tchromium \n\tgemini \n\tmilton \n\tmonkeytype \n\tnaznotes \n\tneovide \n\tpinta \n\tqalculate \n\trnote \n\tspotify \n\tthunar \n\tvial \n\twhatsapp\n"
     exit 0
     ;;
   btop)
@@ -51,8 +51,8 @@ case "$APP" in
     LAUNCH_CMD="neovide"
     ;;
   pinta)
-    CRITERIA_TYPE="instance"
-    CRITERIA_VALUE="pinta"
+    CRITERIA_TYPE="title"
+    CRITERIA_VALUE="Pinta$"
     LAUNCH_CMD="pinta"
     ;;
   qalculate)
@@ -71,8 +71,8 @@ case "$APP" in
     LAUNCH_CMD="spotify"
     ;;
   thunar)
-    CRITERIA_TYPE="instance"
-    CRITERIA_VALUE="thunar"
+    CRITERIA_TYPE="class"
+    CRITERIA_VALUE="Thunar"
     LAUNCH_CMD="thunar"
     ;;
   vial)
@@ -92,5 +92,5 @@ esac
 
 # Toggle logic
 if i3-msg "[$CRITERIA_TYPE=\"$CRITERIA_VALUE\"] focus" | grep -q '"success":false'; then
-  $LAUNCH_CMD &
+  i3-msg "exec --no-startup-id $LAUNCH_CMD" > /dev/null
 fi
